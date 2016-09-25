@@ -267,6 +267,8 @@ GROWTH Console (コンソール)を使うと、手動で検出器の状態を確
 事前に上述のインストールを済ませて、Raspberry Piの電源投入後に`growth_controller`が起動している
 ようにしてください。
 
+### 4.1. コンソールの使い方
+
 コンソールは以下のようにすると起動します。
 
 ```ruby
@@ -410,3 +412,78 @@ I, [2016-09-25T13:18:00.328782 #9241]  INFO -- : [hk] Sending command: {"command
 
 [9] pry(main)> quit
 ```
+
+### 4.2. 自動観測実行・停止の解説
+
+上の例では、自動観測実行・停止を試験するために、`growth_config.yaml`内の温度リミット設定を45 degCという、とても低い温度にしていました。
+ちょうど試験中に温度が変化して、リミットを超えて観測が自動的に停止されている様子を以下に順に開設します。
+
+[3]でHKを確認した時点ではSlowADCのCh.0とCh.1のPCB温度が以下のように45 degC以下だった:
+
+```ruby
+[3] pry(main)> hk.read
+"0"=>{"raw"=>871, "voltage"=>0.7019047619047618, "converted_value"=>44.464761904761886, "converted_string"=>"FPGA Temperature 44.46 degC", "units"=>"degC"},
+"1"=>{"raw"=>875, "voltage"=>0.7051282051282051, "converted_value"=>44.98051282051281, "converted_string"=>"DCDC Temperature 44.98 degC", "units"=>"degC"},
+```
+
+ので、DAQプログラムの自動観測が実行されているため、[4]でDAQプログラムのステータスを確認したときに、
+
+```ruby
+[4] pry(main)> daq.status
+=> {"daqStatus"=>"Running",     <===== 観測実行中
+ "elapsedTime"=>92,
+ "elapsedTimeOfCurrentOutputFile"=>92,
+ "nEvents"=>8,
+ "nEventsOfCurrentOutputFile"=>4,
+ "outputFileName"=>"20160925_131542.fits",
+ "status"=>"ok",
+ "unixTime"=>1474809434,
+ "subsystem"=>"daq"}
+```
+
+となっています。
+
+観測実行中はHVのステータスも以下のようになっており、HVが出力されています(設定値は適当な値をgrowth_config.yamlに書いていたので、あくまで例です)。
+
+```ruby
+[5] pry(main)> hv.status
+=> {"status"=>"ok", 
+    "0"=>{"status"=>"on", "value_in_mV"=>130.0}, <=== Ch.0 ON == 出力中
+    "1"=>{"status"=>"on", "value_in_mV"=>330.0}, <=== CH.1 ON == 出力中
+    "subsystem"=>"hv"}
+```
+
+その後しばらくして、PCBの温度が上昇しました。OLEDディスプレイの表示によると観測が自動停止したので、`daq.status()`を送信してみると、以下のように一時停止されていました。
+
+```ruby
+[6] pry(main)> daq.status
+=> {"daqStatus"=>"Paused",   <==== 観測一時停止中
+ "elapsedTime"=>130,
+ "elapsedTimeOfCurrentOutputFile"=>0,
+ "nEvents"=>8,
+ "nEventsOfCurrentOutputFile"=>4,
+ "outputFileName"=>"None",
+ "status"=>"ok",
+ "unixTime"=>1474809472,
+ "subsystem"=>"daq"}
+```
+
+HV出力もOFFになっています。
+
+```ruby
+[7] pry(main)> hv.status
+=> {"status"=>"ok", 
+    "0"=>{"status"=>"off", "value_in_mV"=>0}, <=== HV Ch.0 OFF
+    "1"=>{"status"=>"off", "value_in_mV"=>0}, <=== HV Ch.1 OFF
+    "subsystem"=>"hv"}
+```
+
+HKで温度を確認すると以下のように、SlowADC Ch.1で計測しているDCDCコンバータ付近の温度計の値が45 degCを超えており、これが原因で自動停止されたことが確認できます。
+
+```ruby
+[8] pry(main)> hk.read
+    {"0"=>{"raw"=>871, "voltage"=>0.7019047619047618, "converted_value"=>44.464761904761886, "converted_string"=>"FPGA Temperature 44.46 degC", "units"=>"degC"},
+     "1"=>{"raw"=>876, "voltage"=>0.7059340659340658, "converted_value"=>45.10945054945053, "converted_string"=>"DCDC Temperature 45.11 degC", "units"=>"degC"},
+```
+
+実際の観測運用では、リミット温度はもう少し高く設定することになる予定です。
