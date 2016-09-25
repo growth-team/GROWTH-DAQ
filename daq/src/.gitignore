@@ -1,0 +1,9 @@
+test_serial
+test_serial_receive
+test_serial_ssdtp
+test_rmaphandler
+test_rmap_to_fpga
+test_messageserver
+test_growth_fy2015_adc_loadConfigurationFile
+test_growth_fy2015_adc_cpuTrigger
+growth_fy2015_adc_measure_exposure

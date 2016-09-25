@@ -1,0 +1,15 @@
+detectorID: growth-fy2016z
+hv:
+    conversion:
+        0: (x/3300)*1000
+        1: (x/3300)*1000
+    default:
+        0: 130
+        1: 330
+limits:
+    temperature:
+        lower: -50
+        upper: 45
+    hv:
+        0: 900
+        1: 900

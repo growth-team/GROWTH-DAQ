@@ -1,0 +1,8 @@
+DetectorID: fy2015_version_a
+PreTriggerSamples: 10
+PostTriggerSamples: 500
+SamplesInEventPacket: 510 
+DownSamplingFactorForSavedWaveform: 1
+ChannelEnable: [no,no,no,yes]
+TriggerThresholds: [810, 810, 810, 590]
+TriggerCloseThresholds: [800, 800, 800, 570]

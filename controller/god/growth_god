@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+### BEGIN INIT INFO
+# Provides:          growth_god
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: growth_god
+### END INIT INFO
+
+RUBY_PATH=/usr/local/bin/ruby
+GOD=/usr/local/bin/god
+LOG_FILE=/var/log/god.log
+GOD_CONFIG_FILE=/etc/god/growth.god.conf
+
+test -x $GOD || exit 0
+
+RETVAL=0
+
+god_start() {
+  $GOD -l $LOG_FILE || echo -en "god is already started"
+  RETVAL=$?
+  if [ "$RETVAL" == '0' ]; then
+    sleep 2
+    if [ -f ${GOD_CONFIG_FILE} ]; then
+      $GOD load ${GOD_CONFIG_FILE}
+    fi
+  fi
+
+  return $RETVAL
+}
+
+god_stop() {
+  stop_cmd="$GOD terminate"
+  $stop_cmd || echo -en "god has not been started"
+}
+
+case "$1" in
+  start)
+    god_start
+    RETVAL=$?
+    ;;
+  stop)
+    god_stop
+    RETVAL=$?
+    ;;
+  restart)
+    god_stop
+    god_start
+    RETVAL=$?
+    ;;
+  status)
+    $GOD status
+    RETVAL=$?
+    ;;
+  *)
+    echo "Usage: god {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit $RETVAL

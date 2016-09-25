@@ -1,0 +1,375 @@
+##############################################
+##############################################
+##############################################
+#
+# zsh intialization file
+#
+##############################################
+##############################################
+##############################################
+
+
+##############################################
+# Shell Environmental Variables
+##############################################
+export EDITOR="nano"
+export LC_CTYPE=ja_JP.UTF-8
+export LANG=ja_JP.UTF-8
+export LESSCHARSET=utf-8
+
+
+##############################################
+# zsh related
+##############################################
+setopt auto_pushd
+setopt pushd_ignore_dups
+setopt auto_cd
+HISTFILE=~/.zsh_histfile
+HISTSIZE=500000
+SAVEHIST=500000
+setopt share_history
+
+
+if [ -d $HOME/Dropbox/zshrc/completion ]; then
+	fpath=($HOME/Dropbox/zshrc/completion $fpath)
+fi
+
+autoload -U compinit
+compinit
+autoload history-search-end
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end history-search-end
+bindkey "^P" history-beginning-search-backward-end
+bindkey "^N" history-beginning-search-forward-end 
+bindkey "^H" kill-word
+setopt list_packed
+zstyle ':completion:*:default' menu select=1
+unsetopt promptcr
+
+#ignore case when searching
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+
+# cdr, add-zsh-hook を有効にする
+#autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
+#add-zsh-hook chpwd chpwd_recent_dirs
+ 
+# cdr の設定
+#zstyle ':completion:*' recent-dirs-insert both
+#zstyle ':chpwd:*' recent-dirs-max 500
+#zstyle ':chpwd:*' recent-dirs-default true
+#zstyle ':chpwd:*' recent-dirs-file "$HOME/.cache/shell/chpwd-recent-dirs"
+#zstyle ':chpwd:*' recent-dirs-pushd true
+
+
+##############################################
+# Prompt
+##############################################
+#export PS1='\u@\[\033[1;33m\]\h\[\033[0m\][\W]\$ '
+local GREEN=$'%{\e[1;32m%}'
+local YELLOW=$'%{\e[1;33m%}'
+local BLUE=$'%{\e[1;34m%}'
+local RED=$'%{\e[1;31m%}'
+local DEFAULT=$'%{\e[1;m%}'
+
+local MACHINE_NAME_COLOR=$YELLOW
+
+if [ `hostname -s` = hikari ]; then
+MACHINE_NAME_COLOR=$ORANGE
+fi
+if [ `hostname -s` = galaxy ]; then
+MACHINE_NAME_COLOR=$BLUE
+fi
+if [ `hostname -s` = xray ]; then
+MACHINE_NAME_COLOR=$GREEN
+fi
+if [ `hostname -s` = ahproc ]; then
+MACHINE_NAME_COLOR=$RED
+fi
+if [ `hostname -s` = suzaku ]; then
+MACHINE_NAME_COLOR=$RED
+fi
+
+PROMPT='%n@'$MACHINE_NAME_COLOR'%m'$DEFAULT'[''%1~'$DEFAULT']%(!.#.$) '
+
+#if [ `hostname -s` = hikari ]; then
+#PROMPT='%n@'$RED'%m'$DEFAULT'[%1~'$DEFAULT']%(!.#.$) '
+#fi
+
+##############################################
+# Alias commands
+##############################################
+
+#---------------------------------------------
+# make
+#---------------------------------------------
+alias m8="make -j8"
+alias m6="make -j6"
+alias m4="make -j4"
+alias m2="make -j2"
+alias m1="make -j1"
+alias m="make"
+alias mc="make clean"
+alias mi="make install"
+alias makei="make install"
+alias mcm="make clean;make"
+alias mcmv="make clean;make VERBOSE=1"
+alias nm="nano Makefile"
+alias mn="nano Makefile"
+alias mav="make VERBOSE=1"
+alias makev="make VERBOSE=1"
+alias rmcmake="rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake"
+function mkb(){
+	echo "Creating build dir for cmake build"
+	if [ $(basename $(pwd)) = build ]; then
+		echo "Exiting from build/"
+		cd ..
+	fi
+	if [ -d build ]; then
+		echo "Deleting existing build dir"
+		rm -rf build
+	fi
+	mkdir build
+	echo "cd to new build/"
+	pushd build > /dev/null
+}
+
+#---------------------------------------------
+# compression
+#---------------------------------------------
+alias untar="tar zxf"
+
+#---------------------------------------------
+# git related
+#---------------------------------------------
+function gitc(){
+if [ _$1 = _ ]; then
+ git commit -a
+else
+ git commit $@
+fi
+}
+alias gitcl="git clone"
+alias giti="git init"
+alias gitibs="git init --bare --share"
+alias gitch="git checkout"
+alias gita="git add"
+alias gitp="git push origin master"
+alias gitpush="git push origin master"
+alias gitpo="git push origin master"
+alias gitpom="git push origin master"
+alias gitd="git diff "
+alias gity="open -a /opt/homebrew-cask/Caskroom/github/latest/GitHub.app"
+alias gitpull="git pull origin master"
+alias gitpul="git pull origin master"
+alias gitrv="git remote -v"
+alias gitfo="git fetch origin"
+alias gitco="git checkout"
+alias gitl="git log"
+alias gitlog="git log"
+alias gitb="git branch"
+alias gitbr="git branch --remote"
+alias sha="openssl sha1"
+alias sha1="openssl sha1"
+function getsha(){
+	url=$1
+	filename=`basename ${url}`
+	echo "Downloading ${filename}..."
+	wget ${url} &> /dev/null
+	if [ -f $filename ]; then
+		echo "Completed"
+		openssl sha1 $filename
+		rm $filename
+	fi
+}
+
+#---------------------------------------------
+# network-related
+#---------------------------------------------
+alias ns="nslookup"
+alias pin="ping"
+alias pi="ping"
+alias ip="ifconfig | egrep '133.|192.|134.|172.'"
+alias known="nano $HOME/.ssh/known_hosts"
+alias hosts="nano /etc/hosts"
+
+#---------------------------------------------
+# shell
+#---------------------------------------------
+alias b="bash"
+
+#---------------------------------------------
+# change directory
+#---------------------------------------------
+alias up="cd .."
+alias upup="cd ../.."
+alias "cd..."="cd ../.."
+alias "cd.."="cd .."
+alias desk="cd ~/Desktop"
+alias cdd="cd ~/Desktop"
+alias d="cd ~/Desktop"
+alias ws="cd $WORKSPACE"
+alias dro="cd $HOME/Dropbox"
+alias des="cd ~/Desktop"
+
+#---------------------------------------------
+# ls commands
+#---------------------------------------------
+alias ls="ls -Gh"
+alias sl="ls"
+alias la="ls -lah"
+alias lsl="ls -lah"
+alias l="ls -lh"
+alias lsla="ls -lah"
+alias ll="ls -lh"
+alias lpa="ls -a |less"
+alias les="less"
+alias lp="ls |less"
+alias ks="ls"
+alias sk="ls"
+alias lsd="ls -d */"
+alias lsdir="ls -d */"
+alias l2="ls 2*"
+alias lss="ls |less"
+alias lsc="ls |cat"
+
+#---------------------------------------------
+# pager and editor
+#---------------------------------------------
+alias onano="/usr/bin/env nano -w "
+alias nw="nanow"
+alias ec="echo"
+alias eh="echo"
+alias exho="echo"
+alias t="open -t"
+alias h="cd $HOME"
+alias nano="nano -w -i"
+alias n="nano"
+alias n="nano -wi"
+alias nn="nano -wi"
+alias nanao="nano -wi"
+alias ge="gedit "
+alias ncm="nano CMakeLists.txt"
+alias opcm="open -t CMakeLists.txt"
+alias grep="grep -n --color"
+alias ogrep="/usr/bin/grep"
+
+#---------------------------------------------
+# basic commands
+#---------------------------------------------
+alias s="source"
+alias p="cat"
+function spe(){
+if [ -f $SPECIFIC_INITIALIZATION_FILE ]; then
+	nano $SPECIFIC_INITIALIZATION_FILE
+fi
+}
+alias quit="exit"
+alias rep="source ~/.zshrc"
+alias pur="rm *~;ls"
+alias cp="cp -r"
+function cph(){
+if [ -f $1 -o -d $1 ]; then
+cp -r $1 .
+fi
+}
+function mvh(){
+if [ -f $1 -o -d $1 ]; then
+mv $1 .
+fi
+}
+alias w="which"
+
+#---------------------------------------------
+#edit shell initialization file
+#---------------------------------------------
+alias z="open -t ~/Dropbox/zshrc/01_general_setting.sh"
+alias za="nano ~/Dropbox/zshrc/02_analysis_tools.sh"
+alias zs="nano $SPECIFIC_INITIALIZATION_FILE"
+alias chown="chown -R"
+alias chmod="chmod -R"
+alias x="chmod -R 755"
+alias pw="pwd"
+alias pd="pwd"
+
+#---------------------------------------------
+# applications
+#---------------------------------------------
+alias gp="gnuplot"
+
+#---------------------------------------------
+# ls coloring
+#---------------------------------------------
+export LSCOLORS=gxfxxxxxcxxxxxxxxxgxgx
+export LS_COLORS='di=01;36:ln=01;35:ex=01;32'
+zstyle ':completion:*' list-colors 'di=36' 'ln=35' 'ex=32'
+
+#---------------------------------------------
+# heasoft
+#---------------------------------------------
+alias ds=ds9
+alias fh=fhelp
+alias xsp=xspec
+alias xsl=xselect
+
+#---------------------------------------------
+# Path
+#---------------------------------------------
+export PATH=$HOME/bin:/sbin:/usr/sbin:$PATH
+
+alias du="du -h"
+alias scp="scp -r"
+alias rs="rsync -auv "
+alias rmcmake="rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake"
+
+#############################################
+# gem
+#############################################
+alias gi="gem install"
+alias gemi="gem install"
+alias gemin="gem install"
+
+export PATH=$HOME/work/install/bin:$PATH
+
+#---------------------------------------------
+# ssh
+#---------------------------------------------
+function sshkey(){
+	sshkeyFile=$HOME/.ssh/id_rsa.pub
+	echo 'sshkey copied to clipboard'
+	cat $sshkeyFile | pbcopy
+	echo "---------------------------------------------"
+	cat $sshkeyFile
+	echo "---------------------------------------------"
+}
+
+function sshconfig(){
+	sshConfigFile=$HOME/.ssh/config
+	if [ -f $sshConfigFile ]; then
+		open -t $sshConfigFile
+	fi
+}
+
+#---------------------------------------------
+# Utility functions
+#---------------------------------------------
+function chrun(){
+	chmod 755 $@
+}
+
+function fp(){
+	if [ _$1 = _ ]; then
+		pwd
+		return
+	fi
+	ruby -e "path=File::expand_path('$1');puts path"
+}
+
+
+function set_date(){
+	echo "date -s '`date +'%Y%m%dT%H:%M:%S'`'"
+}
+
+export RUBYLIB=$HOME/git/GROWTH-DAQ/controller/lib:$RUBYLIB
+export GROWTH_REPOSITORY=$HOME/git/GROWTH-DAQ
+export GROWTH_KEY_FILE=$HOME/git/GROWTH-Keys/growth-keys.json
+export $HOME/git/GROWTH-DAQ/controller/bin:$PATH
