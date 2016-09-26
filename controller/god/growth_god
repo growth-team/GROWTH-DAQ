@@ -19,7 +19,7 @@ test -x $GOD || exit 0
 RETVAL=0
 
 god_start() {
-  $GOD -l $LOG_FILE || echo -en "god is already started"
+  $GOD -l $LOG_FILE --log-level debug || echo -en "god is already started"
   RETVAL=$?
   if [ "$RETVAL" == '0' ]; then
     sleep 2
