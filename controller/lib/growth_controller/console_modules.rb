@@ -121,6 +121,11 @@ class ConsoleModuleDisplay < ConsoleModule
 		super(name, logger: logger)
 	end
 
+	# Stops the display server
+	def stop()
+		return send_command("stop")
+	end
+
 	# Clears the display output
 	def clear()
 		return send_command("clear")

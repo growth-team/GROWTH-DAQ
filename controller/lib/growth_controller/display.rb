@@ -12,6 +12,7 @@ class ControllerModuleDisplay < ControllerModule
 
 	def initialize(name, zmq_context, logger: nil)
 		super(name, logger: logger)
+		define_command("stop")
 		define_command("clear")
 		define_command("display")
 		define_command("connected")
@@ -73,6 +74,22 @@ class ControllerModuleDisplay < ControllerModule
 	#---------------------------------------------
 	# Implemented commands
 	#---------------------------------------------
+	# Stops the display server
+	def stop(option_json)
+		pid = 0
+		message = "failed to stop display server"
+		str = `pgrep -f growth_display_server.py`.strip()
+		if (str.length!=0) then
+			pid = str.to_i
+			if(pid!=0)then
+				`kill #{pid}`
+				message = "Stopped display server #{pid}"
+				log_warn("Display server stopped (#{pid})")
+			end
+		end
+		return {status: "ok", message: message, pid: pid}
+	end
+	
 	# Clears display
 	def clear(option_json)
 		log_debug("clear command invoked")
