@@ -3,13 +3,14 @@
 require "growth_controller/logger"
 require "growth_controller/config"
 require "growth_controller/console_modules"
+require "json"
 
 # Loggs HK data.
 
 class HKLogger
 
   SAMPLING_PERIOD_SEC = 120
-  FILE_SWITCHING_PERIOD_SEC = 86400 * 7
+  FILE_SWITCHING_PERIOD_SEC = 86400
   
   def initialize()
     @logger = GROWTH.logger(ARGV, "growth_hk_logger")
@@ -30,13 +31,18 @@ class HKLogger
       # Time stamp
       unix_time = Time.now().to_i()
       # Read HK/status from subsystems
-      hk_data = @hk.read()
-      daq_status = @daq.status()
-      hv_status = @hv.stats()
+      begin
+        hk_data = @hk.read()
+        daq_status = @daq.status()
+        hv_status = @hv.status()
+      rescue => e
+        @logger.warn("Subsystem communication error (#{e})")
+      end
       # Write to file if output file is opened
       if(@output_file!=nil)then
         line = { timestamp: unix_time, hk: hk_data, daq: daq_status, hv: hv_status}
-        @output_file.puts line
+        @output_file.puts line.to_json
+        @output_file.flush
       else
         @logger.warn("Output file is nil (should not reach here)")
       end
@@ -52,10 +58,10 @@ class HKLogger
         @output_file.close()
         try_compress()
       end
-      @logger.info("New log file #{@output_file_name} was created")
       @output_file_name = get_new_output_file_name()
       begin
-        @output_file = open(@output_file_name)
+        @logger.info("Current directory = #{Dir.pwd}")
+        @output_file = open(@output_file_name, "w")
         @logger.info("New log file #{@output_file_name} was created")
       rescue => e
         @logger.fatal("Failed to create #{@output_file_name} (#{e})")
@@ -95,7 +101,7 @@ class HKLogger
   def get_new_output_file_name()
     now = Time.now()
     @file_creation_time_unix_time = now.to_i()
-    return now.strftime("hk_%Y%m$d_%H%M%S.text")
+    return now.strftime("hk_%Y%m%d_%H%M%S.text")
   end
 
 end
