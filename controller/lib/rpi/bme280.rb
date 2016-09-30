@@ -30,7 +30,7 @@ module RPi
 	class BME280
 		include Validations
 		
-		ADDRESS = 0x76
+		ADDRESS = 0x77
 		
 		R_DIG_T1 = 0x88
 		R_DIG_P1 = 0x8E
