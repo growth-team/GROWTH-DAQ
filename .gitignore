@@ -1,0 +1,11 @@
+.DS_Store
+.cproject
+.project
+CMakeFiles
+CMakeCache
+*.fits
+*.fits.gz
+*.text.gz
+a
+b
+aaa
