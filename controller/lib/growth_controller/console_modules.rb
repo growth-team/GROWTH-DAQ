@@ -35,7 +35,7 @@ class ConsoleModule < LoggingInterface
 
 	def send_command(command, option_hash={})
 		json_command = {command: name+"."+command, option: option_hash}.to_json
-		log_info("Sending command: #{json_command}")
+		log_debug("Sending command: #{json_command}")
 		begin
 			if(@requester==nil)then
 				connect()
