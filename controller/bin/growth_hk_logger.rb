@@ -41,8 +41,14 @@ class HKLogger
       # Write to file if output file is opened
       if(@output_file!=nil)then
         line = { timestamp: unix_time, hk: hk_data, daq: daq_status, hv: hv_status}
-        @output_file.puts line.to_json
-        @output_file.flush
+        begin
+          @output_file.puts line.to_json
+          @output_file.flush
+        rescue => e
+          @logger.fatal("Failed to write to #{@output_file_name} (#{e})")
+          @logger.fatal("Exiting...")
+          exit 1
+        end
       else
         @logger.warn("Output file is nil (should not reach here)")
       end
