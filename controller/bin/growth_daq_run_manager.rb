@@ -45,14 +45,7 @@ class DAQRunManager
           # If auto run conditions are met, start a new run. 
           if(@daq_run_can_be_started)then
             @logger.info("Automatic run can be started (conditions are met)")
-            @logger.info("Turning on HV")
-            for ch in [0,1]
-              dac_mV = @growth_config.get_detault_hv_DAC_mV(ch)
-              if(dac_mV!=0 and dac_mV>0)then
-                @hv.set(ch, dac_mV)
-                @hv.on(ch)
-              end
-            end
+            hv_on()
             @logger.info("Resuming DAQ run")
             @daq.resume()
           else
@@ -63,6 +56,13 @@ class DAQRunManager
           # If DAQ is running, check if the run can be continued.
           if(@daq_run_can_be_started)then
             @logger.debug("DAQ program is running.")
+            # Check HV output status
+            hv_status = @hv.status()
+            if(hv_status["status"]=="ok" and (hv_status["0"]["status"]!="on" or hv_status["1"]["status"]!="on"))then
+              @logger.info("For some reasons, HV is turned off. Try turning on...")
+              # Turn on HV
+              hv_on()
+            end
             # Check elapsed time, and switch output file if exposure exceeds the limit.
             elapsed_sec = daq_status["elapsedTimeOfCurrentOutputFile"]
             @logger.debug("Current file = #{daq_status["outputFileName"]} Elapsed time = #{elapsed_sec}")
@@ -85,6 +85,7 @@ class DAQRunManager
     end
   end
 
+  private
   def check_hk()
     @time_since_last_hk_check += WAIT_DURATION_SEC
     if(@time_since_last_hk_check>=HK_CHECK_PERIOD_SEC)then
@@ -112,7 +113,7 @@ class DAQRunManager
           temperature_valid = (fpga_board_temp0_valid and fpga_board_temp1_valid)
           @logger.debug("HKChecker: FPGA Board Temperature #{fpga_board_temp0} degC and #{fpga_board_temp1} degC")
         else
-		  @logger.debug("HKChecker: SlowADC temperature read failed")
+          @logger.debug("HKChecker: SlowADC temperature read failed")
         end
 
         # TODO: add current limit check
@@ -132,6 +133,19 @@ class DAQRunManager
 
       @logger.debug("HKChecker: Automatic DAQ start = #{@daq_run_can_be_started}")
     end
+  end
+
+  private
+  def hv_on()
+    @logger.info("Turning on HV")
+    for ch in [0,1]
+      dac_mV = @growth_config.get_detault_hv_DAC_mV(ch)
+      if(dac_mV!=0 and dac_mV>0)then
+        @hv.set(ch, dac_mV)
+        @hv.on(ch)
+      end
+    end
+    @logger.info("HV status: #{@hv.status()}")
   end
 
 end
