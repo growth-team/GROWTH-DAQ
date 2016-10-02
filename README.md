@@ -23,6 +23,8 @@ TODO: 各プログラムの関連を表す図を作成する。
 | growth_daq_run_manager.rb | DAQプログラム(ガンマ線イベント取得用プログラム)の観測開始・停止を制御。              |
 | growth_display_server.py  | OLEDディスプレイを制御するデーモン。                                                 |
 | growth_display_updater.rb | 定期的にHK情報や検出器の動作状況を収集して、OLEDディスプレイの表示内容を構築し表示。 |
+| growth_hk_logger.rb       | HK情報をファイルに記録。 |
+| growth_file_relocator.rb  | 定期的にDAQプログラムやHK Loggerの出力ファイルを圧縮してYYYYMM/というサブディレクトリに移動。 |
 
 ### 1.2 ガンマ線イベント取得用DAQプログラム
 
@@ -105,14 +107,14 @@ hv:
         0: (x/3300)*1000
         1: (x/3300)*1000
     default:
-        0: 130
+        0: 130  <== DACの出力値(mV)で指定 ★HVの出力電圧ではないので注意★
         1: 330
 limits:
     temperature:
         lower: -50
         upper: 45
     hv:
-        0: 900
+        0: 900  <== HVの出力値(V)で指定
         1: 900
 ```
 
@@ -253,6 +255,27 @@ sudo make
 
 として、Godの設定ファイルをインストールしなおしてください。
 
+### 3.4. デーモンの再起動
+
+単体のデーモンだけ起動・再起動
+
+```
+sudo god start (デーモン名(.rbは除く))
+sudo god restart (デーモン名(.rbは除く))
+
+例:
+sudo god start growth_daq_run_manager
+sudo god restart growth_daq_run_manager
+```
+
+Godそのものと、すべてのデーモンを起動・停止・再起動
+(`growth.god.conf`を更新してその結果を反映したいときなど)
+
+```
+sudo /etc/init.d/growth_god start
+sudo /etc/init.d/growth_god stop
+sudo /etc/init.d/growth_god restart
+```
 
 ## 4. GROWTH Consoleによる検出器の手動制御・状態の監視
 
