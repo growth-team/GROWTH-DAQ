@@ -16,7 +16,7 @@ class TelemetryTransmitter
   SAMPLING_PERIOD_SEC = 300
   
   def initialize()
-    @logger = GROWTH.logger(ARGV, "TelemetryTransmitter")
+    @logger = GROWTH.logger(ARGV, "growth_telemetry_transmitter")
     # @growth_config = GROWTH::Config.new(logger: @logger)
     @growth_keys = GROWTH::Keys.new(logger: @logger)
 
