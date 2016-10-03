@@ -1,12 +1,12 @@
 require "json"
-require "growth_controller/constans"
+require "growth_controller/constants"
 require "growth_controller/logger"
 require "growth_controller/config"
 
 module GROWTH
 
   class Keys < LoggingInterface
-  	def initialize(logger: nil)
+    def initialize(logger: nil)
       # Construct a logger instance
       set_logger(logger, module_name: "config")
 
@@ -37,14 +37,14 @@ module GROWTH
     private
     def load_m2x_keys()      
       # Get M2X keys
-      if(GROWTH_KEYS_FILE=="" or !File.exist?(GROWTH_KEYS_FILE))then
+      if(GROWTH_KEYS_FILE==nil or GROWTH_KEYS_FILE=="" or !File.exist?(GROWTH_KEYS_FILE))then
         log_warn "GROWTH-Keys file not found. Check if GROWTH_KEYS_FILE environment variable is set."
         log_warn "Telemetry will not be sent to M2X."
         return
       end
 
       # Load the file
-      @key_json = JSON.load(GROWTH_KEYS_FILE)
+      @key_json = JSON.load(open(GROWTH_KEYS_FILE))
       if(@key_json[@detector_id]==nil)then
         log_fatal "M2X device ID and API key for #{@detector_id} is not defined in #{GROWTH_KEYS_FILE}"
         exit(1)

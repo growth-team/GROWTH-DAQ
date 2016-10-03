@@ -4,7 +4,7 @@ require "yaml"
 require "socket"
 require "logger"
 
-require "growth_controller/constans"
+require "growth_controller/constants"
 require "growth_controller/logger"
 require "growth_controller/config"
 require "growth_controller/controller_module"
