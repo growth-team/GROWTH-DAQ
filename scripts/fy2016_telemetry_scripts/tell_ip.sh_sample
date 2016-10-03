@@ -1,0 +1,4 @@
+#!/bin/bash
+#
+# growth-fy2016hoge.mydns.jp
+wget -O - 'http://userID:password@www.mydns.jp/login.html'
