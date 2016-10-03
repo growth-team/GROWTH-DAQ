@@ -17,16 +17,16 @@ module GROWTH
       # Initialize instance variables
       @device_id = nil
       @primary_endpoint = nil
-      @primary_api_key = nil
+      @api_key = nil
 
       # Load key file
       load_m2x_keys()
   	end
 
-    attr_accessor :device_id, :primary_endpoint, :primary_api_key
+    attr_accessor :device_id, :primary_endpoint, :api_key
 
     def m2x_key_set()
-      if(@device_id!=nil and @primary_api_key!=nil)then
+      if(@device_id!=nil and @api_key!=nil)then
         return true
       else
         return false
@@ -52,7 +52,7 @@ module GROWTH
 
       @device_id = @key_json[@detector_id]["m2x"]["device-id"]
       @primary_endpoint = "/devices/#{@device_id}"
-      @primary_api_key = @key_json[@detector_id]["m2x"]["primary-api-key"]
+      @api_key = @key_json[@detector_id]["m2x"]["primary-api-key"]
     end
 
 
