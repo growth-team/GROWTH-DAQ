@@ -5,6 +5,9 @@ require "growth_controller/config"
 require "growth_controller/keys"
 require "growth_controller/console_modules"
 require "json"
+require "m2x"
+require "pp"
+require "time"
 
 # Transmit telemtry data to M2X and/or other cloud-base storage.
 
@@ -29,6 +32,7 @@ class TelemetryTransmitter
   def run()
     while(true)
       @logger.info("Sending telemetry to M2X")
+      @timestamp = Time.now.iso8601
       # Read status then send to M2X
       begin
         hk_data = @hk.read()
@@ -152,14 +156,19 @@ class TelemetryTransmitter
       if(@client==nil or @device==nil)then
         connect_to_m2x()
       end
-      @device.
+      data = {}
+      data[stream_id] = [ {"value" => value, "timestamp" => @timestamp} ]
+      if(!@device.post_updates(values: data).success?)then
+        raise "Failed"
+      end
     rescue => e
       @logger.error("Stream #{stream_id} value #{value} could not be sent")
       reset_m2x()
+      raise e
     end
   end
 
-  STREAM_DEFINITIONS = [
+  STREAM_DEFINITIONS = {
     "temperature-fpga" => {unit: { label: "celsius", symbol: "degC" } },
     "temperature-dcdc" => {unit: { label: "celsius", symbol: "degC" } },
     "temperature-daughter" => {unit: { label: "celsius", symbol: "degC" } },
@@ -167,7 +176,7 @@ class TelemetryTransmitter
     "humidity"         => {unit: { label: "humidity", symbol: "%" } },
     "daq-status"       => {unit: { label: "Paused/Running", symbol: "" } },
     "hv-status-2bit"    => {unit: { label: "Off/On", symbol: "" } },
-  ]
+  }
 
   private
   def reset_m2x()
@@ -178,10 +187,23 @@ class TelemetryTransmitter
   def connect_to_m2x()
     begin
       @logger.info("Connecting to M2X")
-      @client = M2X::Client.new(@growth_keys.primary_api_key)
+      if(@growth_keys.api_key.to_s=="" or @growth_keys.device_id.to_s=="")then
+        @logger.fatal("GROWTH-Keys contains error for this detector ID")
+        exit(1)
+      end
+      @client = M2X::Client.new(@growth_keys.api_key)
+      if(@client==nil)then
+        @logger.error("M2X Client instantiation failed")
+        raise "Failed"
+      end
       @logger.info("M2X client instantiated")
-      @device = client.device(@growth_keys.device_id)
-      @logger.info("M2X device #{@device.name} instantiated")
+      @device = @client.device(@growth_keys.device_id)
+      if(@device==nil and @device["name"]!="")then
+        @logger.error("Device retrieval failed")
+        raise "Device retrieval failed"
+      else
+        @logger.info("M2X device #{@device["name"]} instantiated")
+      end
       check_stream_existence()
     rescue => e
       @logger.error("Could not connect to M2X (#{e})")
@@ -191,16 +213,19 @@ class TelemetryTransmitter
   end
 
   def check_stream_existence()
+    last_stream_id = nil
+    streams = @device.streams
     begin
       STREAM_DEFINITIONS.each(){|stream_id, map|
-        if(@device.streams[stream_id]==nil)then
+        last_stream_id = stream_id
+        if(streams==nil and streams.map(){|e| e["name"]}.count(stream_id)==0)then
           create_stream(stream_id, map[:units])
         else
           @logger.info("Stream #{stream_id} already exists")
         end
       }
     rescue => e
-      @logger.error("Could not check existence of stream '#{stream_id}' (#{e})")
+      @logger.error("Could not check existence of stream '#{last_stream_id}' (#{e})")
       raise e
     end
   end
@@ -209,9 +234,13 @@ class TelemetryTransmitter
     begin
       @logger.info("Creating stream #{stream_id}")
       @device.create_stream(stream_id, unit: units_definition)
-      @logger.info("Stream #{stream_id} successfully created")
+      if(@device.streams!=nil and @device.streams.map(){|e| e["name"]}.count(stream_id)==0)then
+        raise "Creation failed"
+      else
+        @logger.info("Stream #{stream_id} successfully created")
+      end
     rescue => e
-      @logger.error("Stream creation failed")
+      @logger.error("Stream #{stream_id} creation failed")
       raise e
     end
   end

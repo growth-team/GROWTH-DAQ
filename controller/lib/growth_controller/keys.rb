@@ -21,7 +21,7 @@ module GROWTH
 
       # Load key file
       load_m2x_keys()
-  	end
+    end
 
     attr_accessor :device_id, :primary_endpoint, :api_key
 
@@ -52,7 +52,7 @@ module GROWTH
 
       @device_id = @key_json[@detector_id]["m2x"]["device-id"]
       @primary_endpoint = "/devices/#{@device_id}"
-      @api_key = @key_json[@detector_id]["m2x"]["primary-api-key"]
+      @api_key = @key_json[@detector_id]["m2x"]["api-key"]
     end
 
 
