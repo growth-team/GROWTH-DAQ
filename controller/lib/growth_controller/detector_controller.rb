@@ -4,6 +4,7 @@ require "yaml"
 require "socket"
 require "logger"
 
+require "growth_controller/constans"
 require "growth_controller/logger"
 require "growth_controller/config"
 require "growth_controller/controller_module"
@@ -14,10 +15,6 @@ require "growth_controller/hk"
 require "growth_controller/daq"
 
 module GROWTH
-  # Constants
-  USE_M2X = false
-  GROWTH_KEY_FILE    = ENV["GROWTH_KEY_FILE"]
-  GROWTH_REPOSITORY  = ENV["GROWTH_REPOSITORY"]
 
   class DetectorController < LoggingInterface
 
@@ -33,20 +30,12 @@ module GROWTH
       @growth_config = GROWTH::Config.new(logger: logger)
       @detector_id = @growth_config.detector_id
 
-      # Use M2X telemetry logging?
-      @use_m2x = USE_M2X
-
       # Check constant definitions
       check_constants()
 
       # Initialize instance variables
       @stopped = false
       @controller_modules = {}
-
-      # Load detector configuration file and M2X keys
-      if(USE_M2X)then
-        load_keys()
-      end
 
       # Start ZeroMQ server
       @context = ZMQ::Context.new
@@ -71,7 +60,7 @@ module GROWTH
 
     private
     def check_constants()
-      {GROWTH_KEY_FILE: GROWTH_KEY_FILE,
+      {
        GROWTH_REPOSITORY: GROWTH_REPOSITORY
       }.each(){|label,file|
         if(file==nil or file=="")then
@@ -83,30 +72,6 @@ module GROWTH
           exit(-1)
         end
       }
-    end
-
-    # Load M2X keys
-    def load_keys()
-      @device_id = nil
-      @primary_endpoint = nil
-      @primary_api_key = nil
-      # Get M2X keys
-      if(GROWTH_KEY_FILE=="" or !File.exist?(GROWTH_KEY_FILE))then
-        log_warn "M2X key file not found. Check if GROWTH_KEY_FILE environment variable is set."
-        log_warn "M2X telemetry recording will be stopped."
-        @use_m2x = false
-        return
-      end
-      # Load the file
-      @key_json = JSON.load(GROWTH_KEY_FILE)
-      if(@key_json[@detector_id]==nil)then
-        @use_m2x = false
-        return
-      end
-
-      @device_id = @key_json[@detector_id]["m2x"]["device-id"]
-      @primary_endpoint = "/devices/#{@device_id}"
-      @primary_api_key = @key_json[@detector_id]["m2x"]["primary-api-key"]
     end
 
     # Process received JSON command
