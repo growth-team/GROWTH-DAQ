@@ -218,7 +218,7 @@ class TelemetryTransmitter
     begin
       STREAM_DEFINITIONS.each(){|stream_id, map|
         last_stream_id = stream_id
-        if(streams==nil and streams.map(){|e| e["name"]}.count(stream_id)==0)then
+        if(streams==nil or streams.map(){|e| e["name"]}.count(stream_id)==0)then
           create_stream(stream_id, map[:units])
         else
           @logger.info("Stream #{stream_id} already exists")
@@ -234,7 +234,7 @@ class TelemetryTransmitter
     begin
       @logger.info("Creating stream #{stream_id}")
       @device.create_stream(stream_id, unit: units_definition)
-      if(@device.streams!=nil and @device.streams.map(){|e| e["name"]}.count(stream_id)==0)then
+      if(@device.streams!=nil or @device.streams.map(){|e| e["name"]}.count(stream_id)==0)then
         raise "Creation failed"
       else
         @logger.info("Stream #{stream_id} successfully created")
