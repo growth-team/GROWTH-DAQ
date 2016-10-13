@@ -4,5 +4,5 @@ PostTriggerSamples: 1000
 SamplesInEventPacket: 1
 DownSamplingFactorForSavedWaveform: 1
 ChannelEnable: [yes,no,no,no]
-TriggerThresholds: [2080, 2100, 2100, 2100]
+TriggerThresholds: [2120, 2100, 2100, 2100]
 TriggerCloseThresholds: [2060, 2090, 2090, 2090]
