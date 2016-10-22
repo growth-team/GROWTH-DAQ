@@ -7,6 +7,7 @@ require "json"
 require "uri"
 require "net/http"
 require "date"
+require "open3"
 
 # Transmit telemtry data to M2X and/or other cloud-base storage.
 
@@ -14,6 +15,10 @@ class RemoteCommandExecutor
 
   COMMAND_FETCH_PERIOD_SEC = 600
   COMMAND_TIMESTAMP_LOG_FILE_PATH = "/var/log/growth/command.timestamp.log"
+  COMMAND_ORIGIN = "https://thdr.info"
+  UPLOAD_COMMAND = "rsync -auv "
+  # UPLOAD_DESTINATION = "galileo:/work-galileo/home/growth-data/upload"
+  UPLOAD_DESTINATION = "thdr:growth-data/upload"
 
   def initialize()
     @logger = GROWTH.logger(ARGV, "growth_remote_command_executor")
@@ -23,7 +28,7 @@ class RemoteCommandExecutor
     @last_command_timestamp = get_last_command_timestamp()
 
     # Command download URI
-    @uri = URI.parse("https://thdr.info/command/#{@growth_config.detector_id}/command.json")
+    @uri = URI.parse("#{COMMAND_ORIGIN}/command/#{@growth_config.detector_id}/command.json")
     @logger.info "Command JSON file fetched from #{@uri}"
   end
   
@@ -153,7 +158,18 @@ class RemoteCommandExecutor
             timestamp = extract_yyyymmdd_hhmmss_as_integer(gz_file_path)
             @logger.debug "Timestamp = #{timestamp}"
             if(from_yyyymmddhhmmss<=timestamp and timestamp<=to_yyyymmddhhmmss)then
-              @logger.info "Upload #{File.basename(gz_file_path)}"
+              @logger.info "Upload #{gz_file_path}"
+              upload_path = UPLOAD_DESTINATION + "/" + gz_file_path.split("/data/")[-1].gsub("//","/").gsub("/","_-_")
+              command = "#{UPLOAD_COMMAND} #{gz_file_path} #{upload_path}"
+              @logger.info "Executing shell command '#{"#{command}"}'"
+              begin
+                stdout, stderr, status = Open3.capture3(command)
+                @logger.info "Status = #{status}"
+                @logger.info "STDOUT = #{stdout}"
+                @logger.info "STDERR = #{stderr}"
+              rescue => e
+                @logger.error "Error occurred during shell command execution (#{e}). This shell command is skipped."
+              end
             end
           }
         end
