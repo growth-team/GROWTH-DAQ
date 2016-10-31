@@ -1,0 +1,19 @@
+#!/bin/bash
+
+ping -c 1 thdr.info >> /dev/null
+if [ $? == 0 ];then
+    #echo "connected"
+    exit 0
+fi
+sleep 5s
+ping -c 1 thdr.info >> /dev/null
+if [ $? == 0 ];then
+    #echo "connected"
+    exit 0
+fi
+echo "reset"
+date
+/sbin/dhclient -r wlan0
+/sbin/ifdown wlan0
+/sbin/ifup wlan0
+/sbin/dhclient wlan0
