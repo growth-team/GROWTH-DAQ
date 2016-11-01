@@ -8,6 +8,8 @@ module GROWTH
     DEFAULT_DAQ_EXPOSURE_SEC = 1800
     DEFAULT_HK_SAMPLING_PERIOD = 120
 
+    GROWTH_DAQ_RUN_ROOT_DIR = "/home/pi/work/growth/data"
+
     def initialize(logger: nil)
       @growth_config_file = ""
       # Set config file path
@@ -30,6 +32,9 @@ module GROWTH
 
       # Load configuration file
       load_config_file()
+
+      # Set misc parameters
+      @daq_run_dir = "#{GROWTH_DAQ_RUN_ROOT_DIR}/#{@detector_id}"
     end
 
     attr_accessor :detector_id
@@ -40,7 +45,8 @@ module GROWTH
     attr_accessor :has_hv_limit
     attr_accessor :autorun_daq_exposure_sec
     attr_accessor :autorun_hk_sampling_period_sec
-
+    attr_accessor :daq_run_dir
+    
     def growth_config_file_path()
       return @growth_config_file
     end
