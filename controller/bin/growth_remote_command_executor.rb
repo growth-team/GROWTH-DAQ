@@ -17,8 +17,8 @@ class RemoteCommandExecutor
   COMMAND_TIMESTAMP_LOG_FILE_PATH = "/var/log/growth/command.timestamp.log"
   COMMAND_ORIGIN = "https://thdr.info"
   UPLOAD_COMMAND = "rsync -auv "
-  # UPLOAD_DESTINATION = "galileo:/work-galileo/home/growth-data/upload"
-  UPLOAD_DESTINATION = "thdr:growth-data/upload"
+  UPLOAD_DESTINATION = "galileo:/work-galileo/home/growth-data/upload"
+  #UPLOAD_DESTINATION = "thdr:growth-data/upload"
 
   def initialize()
     @logger = GROWTH.logger(ARGV, "growth_remote_command_executor")
