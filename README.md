@@ -5,15 +5,9 @@ GROWTH実験のfy2016以降の検出器用の、検出器制御・ガンマ線�
 以下の説明は、検出器システムに組み込むRaspberry Pi上に、GROWTH-DAQをインストールする手順を説明しています。
 GROWTH FPGA/ADCボードのみをMac等から利用する場合は、別途`daq/README.md`を参照してください。
 
-## 0. TODO
-
-- HK保存スクリプトを作成する
-- M2Xへのテレメトリ送信スクリプトを作成する
-- rsyncスクリプトを作成する(cronで十分?)
-
 ## 1. 構成
 
-TODO: 各プログラムの関連を表す図を作成する。
+GROWTH-DAQには、以下のようなプログラムが含まれています。
 
 ### 1.1 検出器制御デーモン
 
@@ -23,8 +17,13 @@ TODO: 各プログラムの関連を表す図を作成する。
 | growth_daq_run_manager.rb | DAQプログラム(ガンマ線イベント取得用プログラム)の観測開始・停止を制御。              |
 | growth_display_server.py  | OLEDディスプレイを制御するデーモン。                                                 |
 | growth_display_updater.rb | 定期的にHK情報や検出器の動作状況を収集して、OLEDディスプレイの表示内容を構築し表示。 |
-| growth_hk_logger.rb       | HK情報をファイルに記録。 |
 | growth_file_relocator.rb  | 定期的にDAQプログラムやHK Loggerの出力ファイルを圧縮してYYYYMM/というサブディレクトリに移動。 |
+| growth_hk_logger.rb       | HK情報をファイルに記録。 |
+|growth_telemetry_transmitter.rb | [AT&T M2X](https://m2x.att.com)にテレメトリを送信。 |
+|growth_remote_command_executor.rb | 指定されたURLから定期的にJSONファイルをダウンロードして、リモートコマンドを実行。|
+
+これらのデーモンは、[ZeroMQ](http://zeromq.org)というメッセージ通信フレームワークをもちいたプロセス間通信
+(Inter Process Communication; IPC)により、データや制御コマンドをやり取りし合います。
 
 ### 1.2 ガンマ線イベント取得用DAQプログラム
 
@@ -39,11 +38,18 @@ TODO: 各プログラムの関連を表す図を作成する。
 | :--:              | :--                      |
 | growth_console.rb | 検出器制御用コンソール。 |
 
+手動制御用コンソール(`growth_console`)を使うと、pryを用いたRubyのインタラクティブなコンソールが起動し、
+コマンドラインから各デーモンの状態を監視したりコマンドを送信することができます。
+
 ### 1.4 ユーティリティ
 
 | プログラム名           | 処理内容                                       |
 | :--:                   | :--                                            |
 | growth_parse_config.rb | growth_conifg.yamlをパースしてエラーチェック。 |
+
+### 1.5 各種プログラムの相関関係
+
+![](doc/figures/GROWTH-DAQ_Block_Diagram.png)
 
 ## 2. ダウンロードとインストール
 
@@ -65,9 +71,9 @@ git clone https://github.com/growth-team/GROWTH-DAQ.git
 
 ### 2.2. 依存関係のインストール
 
-TODO: ここを詳しく記述する。
-
 以下を参考に、依存関係をインストールしてください。
+
+Raspberry Piの場合:
 
 ```
 cd $HOME/git/GROWTH-DAQ/setup
@@ -174,9 +180,9 @@ cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/work/install
 
 ### 2.5. 自動起動の設定ファイルのインストール
 
-以下のコマンドを実行すると、各プログラムを自動実行(とプロセスの存在を監視)するために使用する
-[God](http://godrb.com)の設定ファイルとinit.dスクリプトがインストールされ、さらに、起動時に
-そのinit.dスクリプトを用いてGod(と、設定したgrowth関連のスクリプト)を起動してくれるようになります。
+以下のコマンドを実行すると、各プログラム(デーモン)を自動実行し、プロセスの存在を監視するために使用する
+[God](http://godrb.com)の設定ファイルとinit.dスクリプトがインストールされます。次回の起動時から、
+そのinit.dスクリプトによって、God自体と設定したgrowth関連のスクリプトがデーモンとして起動されます。
 
 ```
 cd $HOME/git/GROWTH-DAQ/controller/
@@ -205,9 +211,7 @@ root       785  0.6  1.3  46444 12792 ?  Ssl  13:44   0:15 python /home/pi/git/G
 
 ### 3.2. 観測の自動実行・停止
 
-TODO: ここを詳しく記述する。
-
-自動起動スクリプトが設定されている場合、`growth_daq_run_manager.rb`が一定間隔でHKデータを確認しており、
+Godによる各種デーモンの自動起動が設定されている場合、`growth_daq_run_manager.rb`が一定間隔でHKデータを確認しています。
 以下の条件が満たされると、(1) HVをデフォルト値に設定し、(2) HV出力をONしてから、(3) DAQプログラムに`daq.resume()`コマンドを送信して観測を開始します。
 
 **自動観測開始の条件**
