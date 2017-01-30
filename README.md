@@ -281,7 +281,38 @@ sudo /etc/init.d/growth_god stop
 sudo /etc/init.d/growth_god restart
 ```
 
-## 4. GROWTH Consoleによる検出器の手動制御・状態の監視
+## 4. 各プログラムの詳細
+
+### 4.1 growth_gps_logger
+
+GPSから出力されるシリアルデータ(NMEA)を受信して、定期的(デフォルトでは120秒ごと)にファイルにJSON形式で保存します。
+ファイル名は`gps_YYYYMMDD_HHMMSS.text`という形式で、HKと同じディレクトリに保存されます。
+
+```
+{"unixtime":1485749488,"datetime":"2017-01-30T12:11:28+08:00","message":"$GPVTG,80.22,T,,M,47.66,N,88.31,K,N*0B\r\n"}
+{"unixtime":1485749489,"datetime":"2017-01-30T12:11:29+08:00","message":"$GPGGA,041129.304,,,,,0,3,,,M,,M,,*43\r\n"}
+{"unixtime":1485749489,"datetime":"2017-01-30T12:11:29+08:00","message":"$GPGSA,A,1,,,,,,,,,,,,,,,*1E\r\n"}
+{"unixtime":1485749489,"datetime":"2017-01-30T12:11:29+08:00","message":"$GPRMC,041129.304,V,,,,,70.11,79.62,300117,,,N*4C\r\n"}
+{"unixtime":1485749489,"datetime":"2017-01-30T12:11:29+08:00","message":"$GPVTG,79.62,T,,M,70.11,N,129.92,K,N*3E\r\n"}
+{"unixtime":1485749490,"datetime":"2017-01-30T12:11:30+08:00","message":"$GPGGA,041130.092,,,,,0,3,,,M,,M,,*47\r\n"}
+{"unixtime":1485749490,"datetime":"2017-01-30T12:11:30+08:00","message":"$GPGSA,A,1,,,,,,,,,,,,,,,*1E\r\n"}
+{"unixtime":1485749490,"datetime":"2017-01-30T12:11:30+08:00","message":"$GPGSV,1,1,03,18,,,29,24,,,26,32,,,30*78\r\n"}
+{"unixtime":1485749490,"datetime":"2017-01-30T12:11:30+08:00","message":"$GPRMC,041130.092,V,,,,,47.94,80.02,300117,,,N*41\r\n"}
+{"unixtime":1485749490,"datetime":"2017-01-30T12:11:30+08:00","message":"$GPVTG,80.02,T,,M,47.94,N,88.84,K,N*0A\r\n"}
+{"unixtime":1485749491,"datetime":"2017-01-30T12:11:31+08:00","message":"$GPGGA,041131.092,,,,,0,3,,,M,,M,,*46\r\n"}
+{"unixtime":1485749491,"datetime":"2017-01-30T12:11:31+08:00","message":"$GPGSA,A,1,,,,,,,,,,,,,,,*1E\r\n"}
+```
+
+RubyでNMEAをパースする[nmea_plus](https://github.com/ifreecarve/nmea_plus)というライブラリを使うと、
+上記のテキストファイルに保存されたNMEAデータを解析することができます。
+
+トラックしている衛星数は`$GPGSV`行に保存されています。衛星数が4より少ない(3以下)の場合、位置データと
+時刻データ(FPGA内でラッチしているGPSの1 PPSとGPS時刻)は正確でない可能性があります。
+
+NMEAデータのフォーマットは使用しているGPSモジュールのデータシートを参照してください。
+- [FGPMMOPA6C GPS Standard Module Datasheet](https://cdn-shop.adafruit.com/datasheets/GlobalTop-FGPMMOPA6C-Datasheet-V0A-Preliminary.pdf)
+
+## 5. GROWTH Consoleによる検出器の手動制御・状態の監視
 
 Godによる自動起動の設定をしたあとは、Raspberry Piの電源を入れると、検出器制御やOLEDディスプレイの更新、
 DAQプログラムが自動的に起動し、観測開始の条件が満たされると(スライドスイッチ、PCBの温度など)、ガンマ線の
