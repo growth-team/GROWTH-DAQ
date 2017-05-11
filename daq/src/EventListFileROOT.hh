@@ -21,7 +21,7 @@ private:
 	TTree* eventTree;
 	TFile* outputFile = NULL;
 	std::string detectorID;
-	SpaceFibreADC::Event eventEntry;
+	GROWTH_FY2015_ADC_Type::Event eventEntry;
 	std::string configurationYAMLFile;
 
 public:
