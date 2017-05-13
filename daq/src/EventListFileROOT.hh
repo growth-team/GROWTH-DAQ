@@ -17,22 +17,39 @@
 #include "TGraph.h"
 
 class EventListFileROOT: public EventListFile {
-private:
-	TTree* eventTree;
-	TFile* outputFile = NULL;
-	std::string detectorID;
-	GROWTH_FY2015_ADC_Type::Event eventEntry;
-	std::string configurationYAMLFile;
-
 public:
 	EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "") :
 			EventListFile(fileName), detectorID(detectorID), configurationYAMLFile(configurationYAMLFile) {
+		eventEntry.waveform = new uint16_t[SpaceFibreADC::MaxWaveformLength];
 		createOutputRootFile();
 	}
 
-public:
 	~EventListFileROOT() {
 		close();
+		delete eventEntry.waveform;
+	}
+
+	void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
+		unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+		for (auto& event : events) {
+			copyEventData(event, &eventEntry);
+			eventTree->Fill();
+		}
+	}
+
+	size_t getEntries() {
+		return eventTree->GetEntries();
+	}
+
+	void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) {}
+
+	void close() {
+		if (outputFile != NULL) {
+			eventTree->Write();
+			outputFile->Close();
+			delete outputFile;
+			outputFile = NULL;
+		}
 	}
 
 private:
@@ -56,6 +73,7 @@ private:
 
 		eventTree->Branch("boardIndexAndChannel", &eventEntry.ch, "boardIndexAndChannel/i");
 		eventTree->Branch("timeTag", &eventEntry.timeTag, "timeTag/l");
+		eventTree->Branch("unixTime", &unixTime, "unixTime/i");
 		eventTree->Branch("triggerCount", &eventEntry.triggerCount, "triggerCount/i");
 		eventTree->Branch("nSamples", &eventEntry.nSamples, "nSamples/i");
 		eventTree->Branch("phaMax", &eventEntry.phaMax, "phaMax/s");
@@ -64,7 +82,21 @@ private:
 		writeHeader();
 	}
 
-private:
+	void copyEventData(GROWTH_FY2015_ADC_Type::Event* from, GROWTH_FY2015_ADC_Type::Event* to) {
+		to->ch = from->ch;
+		to->timeTag = from->timeTag;
+		to->triggerCount = from->triggerCount;
+		to->phaMax = from->phaMax;
+		to->phaMaxTime = from->phaMaxTime;
+		to->phaMin = from->phaMin;
+		to->phaFirst = from->phaFirst;
+		to->phaLast = from->phaLast;
+		to->maxDerivative = from->maxDerivative;
+		to->baseline = from->baseline;
+		to->nSamples = from->nSamples;
+		memcpy(to->waveform, from->waveform, sizeof(uint16_t)*from->nSamples);
+	}
+	
 	void writeHeader(){
 		CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate",
 				CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS());
@@ -75,31 +107,13 @@ private:
 		}
 	}
 
-public:
-	void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
-		for (auto& event : events) {
-			eventEntry = *event;
-			eventTree->Fill();
-		}
-	}
-
-public:
-	size_t getEntries() {
-		return eventTree->GetEntries();
-	}
-
-public:
-	void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) {}
-
-public:
-	void close() {
-		if (outputFile != NULL) {
-			eventTree->Write();
-			outputFile->Close();
-			delete outputFile;
-			outputFile = NULL;
-		}
-	}
+private:
+	TTree* eventTree;
+	TFile* outputFile = NULL;
+	std::string detectorID;
+	uint32_t unixTime;
+	GROWTH_FY2015_ADC_Type::Event eventEntry;
+	std::string configurationYAMLFile;
 };
 
 #endif /* EVENTLISTFILEROOT_HH_ */
