@@ -54,7 +54,6 @@ public:
 
 private:
 	void createOutputRootFile() {
-		using namespace std;
 		outputFile = new TFile(fileName.c_str(), "recreate");
 		eventTree = new TTree("eventTree", "eventTree");
 
@@ -71,12 +70,18 @@ private:
 		// - l : a 64 bit unsigned integer (ULong64_t)
 		// - O : [the letter 'o', not a zero] a boolean (Bool_t)
 
-		eventTree->Branch("boardIndexAndChannel", &eventEntry.ch, "boardIndexAndChannel/i");
+		eventTree->Branch("boardIndexAndChannel", &eventEntry.ch, "boardIndexAndChannel/b");
 		eventTree->Branch("timeTag", &eventEntry.timeTag, "timeTag/l");
 		eventTree->Branch("unixTime", &unixTime, "unixTime/i");
-		eventTree->Branch("triggerCount", &eventEntry.triggerCount, "triggerCount/i");
-		eventTree->Branch("nSamples", &eventEntry.nSamples, "nSamples/i");
+		eventTree->Branch("triggerCount", &eventEntry.triggerCount, "triggerCount/s");
+		eventTree->Branch("nSamples", &eventEntry.nSamples, "nSamples/s");
 		eventTree->Branch("phaMax", &eventEntry.phaMax, "phaMax/s");
+		eventTree->Branch("phaMaxTime", &eventEntry.phaMax, "phaMaxTime/s");
+		eventTree->Branch("phaMin", &eventEntry.phaMax, "phaMin/s");
+		eventTree->Branch("phaFirst", &eventEntry.phaMax, "phaFirst/s");
+		eventTree->Branch("phaLast", &eventEntry.phaMax, "phaLast/s");
+		eventTree->Branch("maxDerivative", &eventEntry.phaMax, "maxDerivative/s");
+		eventTree->Branch("baseline", &eventEntry.phaMax, "baseline/s");
 		eventTree->Branch("waveform", eventEntry.waveform, "waveform[nSamples]/s");
 
 		writeHeader();
@@ -96,7 +101,7 @@ private:
 		to->nSamples = from->nSamples;
 		memcpy(to->waveform, from->waveform, sizeof(uint16_t)*from->nSamples);
 	}
-	
+
 	void writeHeader(){
 		CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate",
 				CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS());
@@ -108,8 +113,8 @@ private:
 	}
 
 private:
-	TTree* eventTree;
-	TFile* outputFile = NULL;
+	TTree* eventTree = nullptr;
+	TFile* outputFile = nullptr;
 	std::string detectorID;
 	uint32_t unixTime;
 	GROWTH_FY2015_ADC_Type::Event eventEntry;
