@@ -9,11 +9,8 @@ if( CMAKE_SIZEOF_VOID_P EQUAL 4 )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 4 )
 
 if(USE_ROOT)
+    find_package(ROOT REQUIRED)
     add_definitions(-DUSE_ROOT)
-    set(ROOT_INCLUDE_DIR $ENV{ROOTSYS}/include/root)
-    set(ROOT_LIB_DIR $ENV{ROOTSYS}/lib/root)
-    set(ROOT_LIBS Core Cint RIO Net Hist Graf Graf3d Gpad
-      Tree Rint Postscript Matrix Physics MathCore Thread)
 endif(USE_ROOT)
 
 #=============================================
@@ -31,14 +28,14 @@ include_directories(
   include/SpaceWireRMAPLibrary/includes/SpaceWireRMAPLibrary
   include/XMLUtilities/include
   include/CxxUtilities/includes
-  ${ROOT_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIRS}
 )
 
 #=============================================
 # Link directories
 #=============================================
 link_directories(
-  ${ROOT_LIB_DIR}
+  ${ROOT_LIBRARY_DIR}
 )
 
 #=============================================
@@ -61,7 +58,7 @@ target_link_libraries(growth_daq
   xerces-c
   boost_system
   boost_thread-mt
-  ${ROOT_LIBS}
+  ${ROOT_LIBRARIES}
 )
 if (__APPLE__)
 else(__APPLE__)
