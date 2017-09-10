@@ -13,3 +13,6 @@ else
   output_file.puts "1"
   output_file.close
 end
+
+# Wait until Raspberry Pi is rebooted
+sleep
