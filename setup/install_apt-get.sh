@@ -11,6 +11,8 @@ apt-get install -y curl-dev
 apt-get install -y dpkg-dev
 apt-get install -y fswebcam
 apt-get install -y git
+apt-get install -y gcc
+apt-get install -y gfortran
 apt-get install -y i2c-tools
 apt-get install -y imagemagick
 apt-get install -y libboost1.50-all
