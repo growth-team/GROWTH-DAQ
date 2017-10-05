@@ -7,4 +7,5 @@ gem install git
 gem install rbczmq
 gem install pry
 gem install god
+gem install serialport
 gem install m2x
