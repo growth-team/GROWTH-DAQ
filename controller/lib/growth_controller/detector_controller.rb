@@ -13,6 +13,7 @@ require "growth_controller/hv"
 require "growth_controller/display"
 require "growth_controller/hk"
 require "growth_controller/daq"
+require "growth_controller/heartbeat"
 
 module GROWTH
 
@@ -49,6 +50,7 @@ module GROWTH
       add_controller_module(ControllerModuleDisplay.new("disp", @context, logger: logger))
       add_controller_module(ControllerModuleHK.new("hk", logger: logger))
       add_controller_module(ControllerModuleDAQ.new("daq", @context, logger: logger))
+      add_controller_module(ControllerModuleHeartBeat.new("heartbeat", @context, logger: logger))
 
       # Send a log message to M2X
       send_log_to_m2x(LOG_MESSAGE_CONTROLLER_STARTED)
@@ -126,10 +128,15 @@ module GROWTH
     # Main loop
     public
     def run()
+      # Start heartbeat thread
+      hearbeat_module = @controller_modules["heartbeat"]
+      thread_heartbeat = Thread.new do
+        log_info("Starting heartbeat thread")
+        hearbeat_module.start_increment()
+      end
       while(!@stopped)
         # Wait for a JSON message from a client
         message = @socket.recv()
-        #log_info "Receive status: #{status} (#{ZMQ::Util.error_string}) message: #{message.inspect}"
         log_info "Receive status: message: #{message.inspect}"
 
         # Process JSON commands
@@ -139,6 +146,11 @@ module GROWTH
         end
         @socket.send(replyMessage)
       end
+      # Stop heartbeat thread
+      log_info("Stopping heartbeat thread")
+      hearbeat_module.stop()
+      thread_heartbeat.join()
+      log_info("Heartbeat thread stopped")
       # Finalize
       log_info "Controller stopped"
     end
