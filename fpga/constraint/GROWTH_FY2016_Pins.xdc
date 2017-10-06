@@ -260,8 +260,3 @@ set_property IOSTANDARD LVCMOS18 [get_ports {AD2_DA[9]}]
 set_property PACKAGE_PIN A10 [get_ports {AD1_DB[3]}]
 set_property PACKAGE_PIN A9 [get_ports {AD1_DB[0]}]
 set_property PACKAGE_PIN E15 [get_ports {AD1_DA[9]}]
-
-
-
-
-
