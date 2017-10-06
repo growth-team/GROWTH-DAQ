@@ -1,2 +1,2 @@
-ip filter=lfs diff=lfs merge=lfs -text
-imports filter=lfs diff=lfs merge=lfs -text
+ip/*.xci filter=lfs diff=lfs merge=lfs -text
+imports/* filter=lfs diff=lfs merge=lfs -text
