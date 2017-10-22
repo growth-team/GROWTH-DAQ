@@ -21,6 +21,7 @@ class DisplayUpdater
     @disp = GROWTH::ConsoleModuleDisplay.new("disp", logger: @logger)
     @hk   = GROWTH::ConsoleModuleHK.new("hk", logger: @logger)
     @daq  = GROWTH::ConsoleModuleDAQ.new("daq", logger: @logger)
+    @heartbeat = GROWTH::ConsoleModuleHeartBeat.new("heartbeat", logger: @logger)
 
     # Variables used to calculate count rate
     @daq_count_previous = 0
@@ -42,7 +43,7 @@ class DisplayUpdater
     # Line 1 | DAQ Running 150 Hz AT | [Status] [Cnt Rate] [Auto run (slide switch)]
     # Line 2 | 5/3/12 580 140 300 mA | [Volt] [Current]
     # Line 3 | 28.7deg 1008hPa 63.1% | [Temp] [Pressure] [Humidity]
-    # Line 4 | IP 192.168.0.104    | [LAN/WiFi] [IP Address]
+    # Line 4 | IP 192.168.0.104 HB 3 | [LAN/WiFi] [IP Address] [Hearbeat count]
     # Line 5 | HV 1000V ON  1000V ON | [HV Volt/Status]
     #        + ----------------------+
 
@@ -66,6 +67,12 @@ class DisplayUpdater
     	ip=@det.ip()["ip"]
     rescue => e
     	ip="N/A"
+    end
+    heartbeat_count = ""
+    begin
+        heartbeat_count = @heartbeat.get_heartbeat_value()["heartbeat_value"].to_str()
+    rescue => e
+        heartbeat_count = "*"
     end
 
     #---------------------------------------------
@@ -156,7 +163,7 @@ class DisplayUpdater
     #---------------------------------------------
     str = <<EOS
 #{detector_id_latter} #{mmdd} #{hhmmss}
-IP #{ip}
+IP #{ip} HB #{heartbeat_count}
 #{daq_str}
 #{current_str}
 #{bme280_str}

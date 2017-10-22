@@ -183,4 +183,22 @@ class ConsoleModuleDAQ < ConsoleModule
 	end
 end
 
+class ConsoleModuleHeartBeat < ConsoleModule
+	def initialize(name, logger: nil)
+		super(name, logger: logger)
+	end
+
+	def get_heartbeat_value()
+		return send_command("get_heartbeat_value")
+	end
+
+	def get_wait_duration_sec()
+		return send_command("get_wait_duration_sec")
+	end
+	
+	def set_wait_duration_sec(duration_sec)
+		return send_command("set_wait_duration_sec", {wait_duration_sec: duration_sec})
+	end
+end
+
 end
