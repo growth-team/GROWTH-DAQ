@@ -105,8 +105,10 @@ architecture Behavioral of UserModule_ChannelModule is
   component UserModule_ChModule_Trigger
     port(
       ChModule2InternalModule : in  Signal_ChModule2InternalModule;
-      --
+      -- Prompt ADC data
       AdcDataIn               : in  std_logic_vector(ADCResolution-1 downto 0);
+      -- Delayed ADC data (used for baseline calculation in the baseline-corrected trigger mode)
+      DelayedAdcDataIn        : in  std_logic_vector(ADCResolution-1 downto 0);
       --
       TriggerOut              : out std_logic;
       Veto                    : out std_logic;
@@ -533,6 +535,7 @@ begin
       ChModule2InternalModule => ChModule2InternalModule,
       --
       AdcDataIn               => AdcDataIn,
+      DelayedAdcDataIn        => delayed_AdcData,
       --
       TriggerOut              => Trigger,
       Veto                    => TriggerModuleVeto,

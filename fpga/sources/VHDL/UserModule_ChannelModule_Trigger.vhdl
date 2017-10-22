@@ -8,9 +8,6 @@
 --file created
 --based on UserModule_Template_with_BusIFLite.vhdl (ver20071021)
 
----------------------------------------------------
---Declarations of Libraries
----------------------------------------------------
 library ieee, work;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
@@ -25,8 +22,10 @@ use work.UserModule_Library.all;
 entity UserModule_ChModule_Trigger is
   port(
     ChModule2InternalModule : in  Signal_ChModule2InternalModule;
-    --
+    -- Prompt ADC data
     AdcDataIn               : in  std_logic_vector(ADCResolution-1 downto 0);
+    -- Delayed ADC data (used for baseline calculation in the baseline-corrected trigger mode)
+    DelayedAdcDataIn        : in  std_logic_vector(ADCResolution-1 downto 0);
     --
     TriggerOut              : out std_logic;
     Veto                    : out std_logic;
@@ -38,34 +37,17 @@ entity UserModule_ChModule_Trigger is
     );
 end UserModule_ChModule_Trigger;
 
----------------------------------------------------
---Behavioral description
----------------------------------------------------
 architecture Behavioral of UserModule_ChModule_Trigger is
 
-  ---------------------------------------------------
-  --Declarations of Components
-  ---------------------------------------------------
-
-  ---------------------------------------------------
-  --Declarations of Signals
-  ---------------------------------------------------
   --Signals
   signal Trigger                    : std_logic := '0';
   signal Veto_latched_in_Idle_state : std_logic := '0';
-
-  --Registers
-  signal ave_b1, ave_b2, ave_b3, ave_b4 : std_logic_vector(15 downto 0) := (others => '0');
-  signal Average_Before4                : std_logic_vector(17 downto 0) := (others => '0');
-  signal ave_a1, ave_a2, ave_a3, ave_a4 : std_logic_vector(15 downto 0) := (others => '0');
-  signal Average_After4                 : std_logic_vector(17 downto 0) := (others => '0');
 
   --Counters
   signal SampledNumber : integer range 0 to 1024 := 0;
   signal TriggerEnd    : std_logic               := '0';
 
   --State Machines' State-variables
-
   type UserModule_StateMachine_State is
     (Initialize, Idle, Triggered, Finalize);
   signal UserModule_state : UserModule_StateMachine_State := Initialize;
@@ -97,23 +79,9 @@ begin
   Trigger <= '1' when UserModule_state = Triggered and TriggerEnd = '0' else '0';
   Veto    <= '1' when UserModule_state = Triggered                      else '0';
 
-
-  Average : process (Clock, GlobalReset)
-  begin
-    --is this process invoked with GlobalReset?
-    if (GlobalReset = '0') then
-      --is this process invoked with Clock Event?
-    elsif (Clock'event and Clock = '1') then
-      ave_a1          <= "0000" & AdcDataIn; ave_a2 <= ave_a1; ave_a3 <= ave_a2; ave_a4 <= ave_a3;
-      ave_b1          <= ave_a4; ave_b2 <= ave_b1; ave_b3 <= ave_b2; ave_b4 <= ave_b3;
-      Average_Before4 <= ("00" & ave_b1) + ("00" & ave_b2) + ("00" & ave_b3) + ("00" & ave_b4);
-      Average_After4  <= ("00" & ave_a1) + ("00" & ave_a2) + ("00" & ave_a3) + ("00" & ave_a4);
-    end if;
-  end process;
-
   --UserModule main state machine
   MainProcess : process (Clock, GlobalReset)
-    variable a, b, c, d, e, N : integer;
+    variable a, b, c, d, N : integer;
   begin
     --is this process invoked with GlobalReset?
     if (GlobalReset = '0') then
@@ -142,12 +110,11 @@ begin
           a             := conv_integer(AdcDataIn);
           b             := conv_integer(ChModule2InternalModule.ThresholdStarting);
           c             := conv_integer(ChModule2InternalModule.ThresholdClosing);
-          d             := conv_integer(Average_Before4(17 downto 2));
-          e             := conv_integer(Average_After4(17 downto 2));
-                                        -- 20141102 Takayuki Yuasa
-                                        -- veto check will be done outside the process (to realize trigger counter)
-                                        --if (ChModule2InternalModule.Veto='0') then
+          d             := conv_integer(DelayedAdcData);
 
+          -- 20141102 Takayuki Yuasa
+          -- veto check will be done outside the process (to realize trigger counter)
+          --if (ChModule2InternalModule.Veto='0') then
           Veto_latched_in_Idle_state <= ChModule2InternalModule.Veto;
 
           case ChModule2InternalModule.TriggerMode is
@@ -168,8 +135,10 @@ begin
                 end if;
                 UserModule_state <= Triggered;
               end if;
-            when Mode_4_Average4_StartingTh_NumberOfSamples =>
-              if (e > d+b) then
+            when Mode_4_DeltaAboveDelayedADC_NumberOfSamples =>
+              -- If prompt ADC data is larger than "baseline (delayed ADC data)
+              -- + threshold (delta from baseline)", trigger is fired.
+              if ( a > d + b) then
                 UserModule_state <= Triggered;
               end if;
             when Mode_5_CPUTrigger =>
@@ -222,8 +191,9 @@ begin
               else
                 SampledNumber <= SampledNumber + 1;
               end if;
-            when Mode_4_Average4_StartingTh_NumberOfSamples =>
+            when Mode_4_DeltaAboveDelayedADC_NumberOfSamples =>
               if (SampledNumber = N) then
+              TriggerEnd       <= '1';
                 UserModule_state <= Finalize;
               else
                 SampledNumber <= SampledNumber + 1;
@@ -258,5 +228,4 @@ begin
       end case;
     end if;
   end process;
-  
 end Behavioral;

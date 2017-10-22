@@ -73,13 +73,13 @@ package UserModule_Library is
   constant WidthOfTriggerBus      : integer := 8;  -- 8 lines
 
   --trigger mode
-  constant Mode_1_StartingTh_NumberOfSamples           : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"1";
-  constant Mode_2_CommonGateIn_NumberOfSamples         : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"2";
-  constant Mode_3_StartingTh_NumberOfSamples_ClosingTh : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"3";
-  constant Mode_4_Average4_StartingTh_NumberOfSamples  : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"4";
-  constant Mode_5_CPUTrigger                           : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"5";
-  constant Mode_8_TriggerBusSelectedOR                 : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"8";
-  constant Mode_9_TriggerBusSelectedAND                : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"9";
+  constant Mode_1_StartingTh_NumberOfSamples            : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"1";
+  constant Mode_2_CommonGateIn_NumberOfSamples          : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"2";
+  constant Mode_3_StartingTh_NumberOfSamples_ClosingTh  : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"3";
+  constant Mode_4_DeltaAboveDelayedADC_NumberOfSamples  : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"4";
+  constant Mode_5_CPUTrigger                            : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"5";
+  constant Mode_8_TriggerBusSelectedOR                  : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"8";
+  constant Mode_9_TriggerBusSelectedAND                 : std_logic_vector(WidthOfTriggerMode-1 downto 0) := x"9";
 
   type Signal_ChModule2InternalModule is record
     --ADC Module
