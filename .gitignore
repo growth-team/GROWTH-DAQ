@@ -1,8 +1,11 @@
 .DS_Store
 .cproject
 .project
+.settings
 CMakeFiles
 CMakeCache
+**/*.root
+**/build*/
 *.fits
 *.fits.gz
 *.text.gz
