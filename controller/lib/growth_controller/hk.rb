@@ -4,6 +4,8 @@ require "rpi"
 
 module GROWTH
 
+BOOT_COUNT_FILE = "/home/pi/bootcount.text"
+
 class ControllerModuleHK < ControllerModule
 
 	# I2C bus number to be used
@@ -89,11 +91,21 @@ class ControllerModuleHK < ControllerModule
 			slide_switch_status = "off"
 		end
 
+		# Boot count
+		boot_count = -1
+		if File.exist?(BOOT_COUNT_FILE) then
+			boot_count = File.read(BOOT_COUNT_FILE).to_i
+		end
+
 		# Return result
 		time = Time.now
 		return {
 			status: "ok", unixtime:time.to_i, time:time.strftime("%Y-%m-%dT%H-%M-%S"),
-			hk: {slow_adc:slowadc_result, bme280:bme280_result, slide_switch: slide_switch_status}
+			hk: {
+			    slow_adc:slowadc_result, bme280:bme280_result,
+			    slide_switch: slide_switch_status,
+			    boot_count: boot_count
+			}
 		}
 	end
 end
