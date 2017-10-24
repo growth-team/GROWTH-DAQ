@@ -6,6 +6,7 @@ sudo apt-get install -y automake
 apt-get install -y binutils
 apt-get install -y build-essential
 apt-get install -y chromium
+apt-get install -y cmake
 apt-get install -y curl
 apt-get install -y curl-dev
 apt-get install -y dpkg-dev
