@@ -1,0 +1,6 @@
+Scripts Setup Manual
+1. Move 'scripts' folder to $HOME.
+2. Edit *.sh_sample and rename to *.sh
+   - detector ID (stand_alone_system/fits_backup.sh_sample)
+   - portfoward port number (stand_alone_system/auto_portforward.sh_sample)
+3. Copy cron_setup/cronrab.txt and crontab_sudo.txt to `crontab -e` and `sudo crontab -e`, respectively.

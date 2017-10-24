@@ -1,0 +1,11 @@
+#!/bin/bash
+
+detectorID=growth-fy2017z
+devicePath=/media/pi/GROWTH-DATA
+month=$1
+
+mountpoint /media/pi/GROWTH-DATA
+mountVerify=$?
+if [ ${mountVerify} == 0 ]; then
+    sudo find ${devicePath}/data/${detectorID}/${month}/ -name '*.fits.gz' | xargs rm -rf
+fi

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+detectorID=growth-fy2017z
+#detectorIP=192.168.179.10
+detectorIP=133.11.165.113
+devicePath=/media/pi/GROWTH-DATA
+syncPath=/home/growth/work/growth/data
+
+if [ ! -e ${syncPath}/${detectorID} ]; then
+    mkdir -p ${syncPath}/${detectorID}
+fi 
+
+month=`date -d "1 months ago" +"%Y%m"`
+rsync -avr pi@${detectorIP}:${devicePath}/data/${detectorID}/${month} ${syncPath}/${detectorID}/
+status=$?
+
+if [ $status == 0 ]; then
+    ssh pi@${detectorIP} "sudo /home/pi/scripts/collimator_system/delete_data.sh ${month}"
+fi
+
+month=`date +"%Y%m"`
+rsync -avr pi@${detectorIP}:${devicePath}/data/${detectorID}/${month} ${syncPath}/${detectorID}/
+status=$?
+
+if [ $status == 0 ]; then
+    ssh pi@${detectorIP} "sudo /home/pi/scripts/collimator_system/delete_data.sh ${month}"
+fi
