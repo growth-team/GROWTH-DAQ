@@ -552,7 +552,7 @@ architecture Behavioral of GROWTH_FY2016_FPGA is
 
   -- Version register
   constant FPGAType    : std_logic_vector(31 downto 0) := x"20160110";
-  constant FPGAVersion : std_logic_vector(31 downto 0) := x"20171005";
+  constant FPGAVersion : std_logic_vector(31 downto 0) := x"20171031";
 
   --GPS data FIFO
   signal gpsDataFIFOReset                  : std_logic := '0';
@@ -599,7 +599,7 @@ begin
   -- ADC clock output
   adcClock <= Clock50MHz; -- 50MHz
   AD1_CLK  <= adcClock;
-  AD2_CLK <= Clock10MHz;
+  AD2_CLK <= adcClock;
   -- ADC clock input (used to sample ADC data)
   bufgADCCh0 : BUFG
   port map (
@@ -611,6 +611,7 @@ begin
     I => AD1_DCOB,
     O => adcClockIn(1)
   );
+  
   process(AD2_DCOA, Reset)
   begin
     if(rising_edge(AD2_DCOA))then
@@ -637,12 +638,14 @@ begin
 
   bufgADCCh2 : BUFG
   port map (
-    I => dividedADCClockA,
+    -- I => dividedADCClockA,
+    I => AD2_DCOA,
     O => adcClockIn(2)
   );
   bufgADCCh3 : BUFG
   port map (
-    I => dividedADCClockB,
+    -- I => dividedADCClockB,
+    I => AD2_DCOB,
     O => adcClockIn(3)
   );
 
@@ -793,17 +796,17 @@ begin
   end process;
 
   -- For FY2016
-  -- adcData(0) <= AD1_DA;
-  -- adcData(1) <= AD1_DB;
-  -- adcData(2) <= AD2_DA;
-  -- adcData(3) <= AD2_DB;
+   adcData(0) <= AD1_DA;
+   adcData(1) <= AD1_DB;
+   adcData(2) <= AD2_DA;
+   adcData(3) <= AD2_DB;
 
-  -- TODO: Changed for GROWTH-FY2016 large energy deposite investigation
-  -- 2017-04-06
-  adcData(0) <= AD1_DA;
-  adcData(1) <= x"FFF" - AD1_DB;
-  adcData(2) <= AD2_DA;
-  adcData(3) <= x"FFF" - AD2_DB;
+--  -- TODO: Changed for GROWTH-FY2016 large energy deposite investigation
+--  -- 2017-04-06
+--  adcData(0) <= AD1_DA;
+--  adcData(1) <= x"FFF" - AD1_DB;
+--  adcData(2) <= AD2_DA;
+--  adcData(3) <= x"FFF" - AD2_DB;
 
   ---------------------------------------------
   -- Clocking Wizard
@@ -1192,7 +1195,7 @@ begin
     elsif(Clock100MHz = '1' and Clock100MHz'event)then
       EventFIFOReset     <= EventFIFOReset_from_ConsumerMgr or Reset;
 
-      if(gps1PPSSingleShot = '1' or gpsDateTimeUpdatedSingleShot='1')then
+      if(gps1PPSSingleShot = '1')then
         gpsYYMMDDHHMMSS_latched <=
           gpsDDMMYY(15 downto 0) & gpsDDMMYY(31 downto 16) & gpsDDMMYY(47 downto 32)
           & gpsHHMMSS_SSS(71 downto 24);
