@@ -110,7 +110,7 @@ begin
           a             := conv_integer(AdcDataIn);
           b             := conv_integer(ChModule2InternalModule.ThresholdStarting);
           c             := conv_integer(ChModule2InternalModule.ThresholdClosing);
-          d             := conv_integer(DelayedAdcData);
+          d             := conv_integer(DelayedAdcDataIn);
 
           -- 20141102 Takayuki Yuasa
           -- veto check will be done outside the process (to realize trigger counter)
