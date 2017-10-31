@@ -8,7 +8,7 @@
 #ifndef GROWTH_FY2015_ADC_TYPES_HH_
 #define GROWTH_FY2015_ADC_TYPES_HH_
 
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Constants.hh"
+#include "GROWTH_FY2015_ADCModules/Constants.hh"
 
 namespace GROWTH_FY2015_ADC_Type {
 enum class TriggerMode
@@ -16,6 +16,7 @@ enum class TriggerMode
 		StartThreshold_NSamples_AutoClose = 1, //
 	CommonGateIn = 2, //
 	StartThreshold_NSamples_CloseThreshold = 3, //
+	DeltaAboveDelayedADC_NumberOfSamples = 4, //
 	CPUTrigger = 5, //
 	TriggerBusSelectedOR = 8, //
 	TriggerBusSelectedAND = 9

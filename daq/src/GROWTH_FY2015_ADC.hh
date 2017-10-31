@@ -82,14 +82,14 @@
  cout << "Setting trigger mode" << endl;
 
  // Trigger Mode: CPU Trigger
- adc->setTriggerMode(ch, SpaceFibreADC::TriggerMode::CPUTrigger);
+ adc->setTriggerMode(ch, TriggerMode::CPUTrigger);
 
  // Trigger Mode: StartingThreshold-NSamples-ClosingThreshold
  // uint16_t startingThreshold=2300;
  // uint16_t closingThreshold=2100;
  // adc->setStartingThreshold(ch, startingThreshold);
  // adc->setClosingThreshold(ch, closingThreshold);
- //adc->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+ //adc->setTriggerMode(ch, TriggerMode::StartThreshold_NSamples_CloseThreshold);
 
  //---------------------------------------------
  // Waveform record length
@@ -172,16 +172,17 @@
  */
 
 #include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Constants.hh"
+#include "GROWTH_FY2015_ADCModules/Constants.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
 #include "GROWTH_FY2015_ADCModules/Debug.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 #include "GROWTH_FY2015_ADCModules/ConsumerManagerEventFIFO.hh"
 #include "GROWTH_FY2015_ADCModules/EventDecoder.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelModule.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelManager.hh"
+#include "GROWTH_FY2015_ADCModules/ChannelModule.hh"
+#include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
 #include "yaml-cpp/yaml.h"
+
+using GROWTH_FY2015_ADC_Type::TriggerMode;
 
 enum class SpaceFibreADCException {
 	InvalidChannelNumber, OpenDeviceFailed, CloseDeviceFailed,
@@ -232,10 +233,14 @@ public:
 				nReceivedEvents_latch = parent->nReceivedEvents;
 				delta = nReceivedEvents_latch - nReceivedEvents_previous;
 				nReceivedEvents_previous = nReceivedEvents_latch;
-				cout << "GROWTH_FY2015_ADC received " << dec << parent->nReceivedEvents << " events (delta=" << dec << delta
-						<< ")." << endl;
-				cout << "GROWTH_FY2015_ADC_Type::EventDecoder available Event instances = " << dec
-						<< this->eventDecoder->getNAllocatedEventInstances() << endl;
+				cout << "GROWTH_FY2015_ADC received " << dec
+						<< parent->nReceivedEvents << " events (delta=" << dec
+						<< delta << ")." << endl;
+				cout
+						<< "GROWTH_FY2015_ADC_Type::EventDecoder available Event instances = "
+						<< dec
+						<< this->eventDecoder->getNAllocatedEventInstances()
+						<< endl;
 			}
 		}
 	};
@@ -286,7 +291,8 @@ public:
 		adcRMAPTargetNode->setTargetLogicalAddress(0xFE);
 		adcRMAPTargetNode->setInitiatorLogicalAddress(0xFE);
 
-		this->rmapHandler = new RMAPHandlerUART(deviceName, { adcRMAPTargetNode });
+		this->rmapHandler = new RMAPHandlerUART(deviceName,
+				{ adcRMAPTargetNode });
 		bool connected = this->rmapHandler->connectoToSpaceWireToGigabitEther();
 		if (!connected) {
 			cerr << "SpaceWire interface could not be opened." << endl;
@@ -296,17 +302,21 @@ public:
 		}
 
 		//
-		rmapIniaitorForGPSRegisterAccess = new RMAPInitiator(this->rmapHandler->getRMAPEngine());
+		rmapIniaitorForGPSRegisterAccess = new RMAPInitiator(
+				this->rmapHandler->getRMAPEngine());
 
 		//create an instance of ChannelManager
-		this->channelManager = new ChannelManager(rmapHandler, adcRMAPTargetNode);
+		this->channelManager = new ChannelManager(rmapHandler,
+				adcRMAPTargetNode);
 
 		//create an instance of ConsumerManager
-		this->consumerManager = new ConsumerManagerEventFIFO(rmapHandler, adcRMAPTargetNode);
+		this->consumerManager = new ConsumerManagerEventFIFO(rmapHandler,
+				adcRMAPTargetNode);
 
 		//create instances of ADCChannelRegister
 		for (size_t i = 0; i < SpaceFibreADC::NumberOfChannels; i++) {
-			this->channelModules[i] = new ChannelModule(rmapHandler, adcRMAPTargetNode, i);
+			this->channelModules[i] = new ChannelModule(rmapHandler,
+					adcRMAPTargetNode, i);
 		}
 
 		//event decoder
@@ -323,7 +333,9 @@ public:
 public:
 	~GROWTH_FY2015_ADC() {
 		using namespace std;
-		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deconstructing GROWTH_FY2015_ADC instance." << endl;
+		cout
+				<< "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deconstructing GROWTH_FY2015_ADC instance."
+				<< endl;
 		/*
 		 cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Stopping dump thread." << endl;
 		 if (this->dumpThread != NULL && this->dumpThread->isInRunMethod()) {
@@ -331,11 +343,15 @@ public:
 		 delete this->dumpThread;
 		 }*/
 
-		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting RMAP Handler." << endl;
+		cout
+				<< "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting RMAP Handler."
+				<< endl;
 		delete rmapIniaitorForGPSRegisterAccess;
 		delete rmapHandler;
 
-		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting internal modules." << endl;
+		cout
+				<< "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting internal modules."
+				<< endl;
 		delete this->channelManager;
 		delete this->consumerManager;
 		for (size_t i = 0; i < SpaceFibreADC::NumberOfChannels; i++) {
@@ -343,7 +359,9 @@ public:
 		}
 		delete eventDecoder;
 
-		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting GPS Data FIFO read buffer." << endl;
+		cout
+				<< "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting GPS Data FIFO read buffer."
+				<< endl;
 		if (gpsDataFIFOReadBuffer != NULL) {
 			delete gpsDataFIFOReadBuffer;
 		}
@@ -358,28 +376,31 @@ private:
 	std::vector<uint8_t> gpsDataFIFOData;
 
 public:
-  /** Returns FPGA Type as string.
-   */
-  uint32_t  getFPGAType(){
-    uint32_t fpgaType = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
-    return fpgaType;
-  }
+	/** Returns FPGA Type as string.
+	 */
+	uint32_t getFPGAType() {
+		uint32_t fpgaType = this->rmapHandler->read32BitRegister(
+				adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
+		return fpgaType;
+	}
 
 public:
-  /** Returns FPGA Version as string.
-   */
-  uint32_t getFPGAVersion(){
-    using namespace std;
-    uint32_t fpgaVersion = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
-    return fpgaVersion;
-  }
+	/** Returns FPGA Version as string.
+	 */
+	uint32_t getFPGAVersion() {
+		using namespace std;
+		uint32_t fpgaVersion = this->rmapHandler->read32BitRegister(
+				adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
+		return fpgaVersion;
+	}
 
 public:
 	/** Returns a GPS Register value.
 	 */
 	std::string getGPSRegister() {
 		using namespace std;
-		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister,
+				LengthOfGPSTimeRegister, gpsTimeRegister);
 		std::stringstream ss;
 		for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
 			ss << gpsTimeRegister[i];
@@ -389,7 +410,8 @@ public:
 
 public:
 	uint8_t* getGPSRegisterUInt8() {
-		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister,
+				LengthOfGPSTimeRegister, gpsTimeRegister);
 		gpsTimeRegister[LengthOfGPSTimeRegister] = 0x00;
 		return gpsTimeRegister;
 	}
@@ -400,7 +422,8 @@ public:
 	 */
 	void clearGPSDataFIFO() {
 		uint8_t dummy[2];
-		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, 2, dummy);
+		this->rmapHandler->read(adcRMAPTargetNode,
+				AddressOfGPSDataFIFOResetRegister, 2, dummy);
 	}
 
 public:
@@ -414,9 +437,11 @@ public:
 		if (gpsDataFIFOReadBuffer == NULL) {
 			gpsDataFIFOReadBuffer = new uint8_t[GPSDataFIFODepthInBytes];
 		}
-		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, GPSDataFIFODepthInBytes,
+		this->rmapHandler->read(adcRMAPTargetNode,
+				AddressOfGPSDataFIFOResetRegister, GPSDataFIFODepthInBytes,
 				gpsDataFIFOReadBuffer);
-		memcpy(&(gpsDataFIFOData[0]), gpsDataFIFOReadBuffer, GPSDataFIFODepthInBytes);
+		memcpy(&(gpsDataFIFOData[0]), gpsDataFIFOReadBuffer,
+				GPSDataFIFODepthInBytes);
 		return gpsDataFIFOData;
 	}
 
@@ -428,7 +453,8 @@ public:
 	ChannelModule* getChannelRegister(int chNumber) {
 		using namespace std;
 		if (Debug::adcbox()) {
-			cout << "GROWTH_FY2015_ADC::getChannelRegister(" << chNumber << ")" << endl;
+			cout << "GROWTH_FY2015_ADC::getChannelRegister(" << chNumber << ")"
+					<< endl;
 		}
 		return channelModules[chNumber];
 	}
@@ -553,7 +579,7 @@ public:
 //=============================================
 public:
 	/** Set trigger mode of the specified channel.
-	 * SpaceFibreADC::TriggerMode;<br>
+	 * TriggerMode;<br>
 	 * StartTh->N_samples = StartThreshold_NSamples_AutoClose<br>
 	 * Common Gate In = CommonGateIn<br>
 	 * StartTh->N_samples->ClosingTh = StartThreshold_NSamples_CloseThreshold<br>
@@ -561,14 +587,16 @@ public:
 	 * Trigger Bus (OR) = TriggerBusSelectedOR<br>
 	 * Trigger Bus (AND) = TriggerBusSelectedAND<br>
 	 * @param chNumber channel number
-	 * @param triggerMode trigger mode (see SpaceFibreADC::TriggerMode)
+	 * @param triggerMode trigger mode (see TriggerMode)
 	 */
-	void setTriggerMode(size_t chNumber, SpaceFibreADC::TriggerMode triggerMode) throw (SpaceFibreADCException) {
+	void setTriggerMode(size_t chNumber, TriggerMode triggerMode)
+			throw (SpaceFibreADCException) {
 		if (chNumber < SpaceFibreADC::NumberOfChannels) {
 			channelModules[chNumber]->setTriggerMode(triggerMode);
 		} else {
 			using namespace std;
-			cerr << "Error in setTriggerMode(): invalid channel number " << chNumber << endl;
+			cerr << "Error in setTriggerMode(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -608,12 +636,14 @@ public:
 	/** Sets Leading Trigger Threshold.
 	 * @param threshold an adc value for leading trigger threshold
 	 */
-	void setStartingThreshold(size_t chNumber, uint32_t threshold) throw (SpaceFibreADCException) {
+	void setStartingThreshold(size_t chNumber, uint32_t threshold)
+			throw (SpaceFibreADCException) {
 		if (chNumber < SpaceFibreADC::NumberOfChannels) {
 			channelModules[chNumber]->setStartingThreshold(threshold);
 		} else {
 			using namespace std;
-			cerr << "Error in setStartingThreshold(): invalid channel number " << chNumber << endl;
+			cerr << "Error in setStartingThreshold(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -622,12 +652,14 @@ public:
 	/** Sets Trailing Trigger Threshold.
 	 * @param threshold an adc value for trailing trigger threshold
 	 */
-	void setClosingThreshold(size_t chNumber, uint32_t threshold) throw (SpaceFibreADCException) {
+	void setClosingThreshold(size_t chNumber, uint32_t threshold)
+			throw (SpaceFibreADCException) {
 		if (chNumber < SpaceFibreADC::NumberOfChannels) {
 			channelModules[chNumber]->setClosingThreshold(threshold);
 		} else {
 			using namespace std;
-			cerr << "Error in setClosingThreshold(): invalid channel number " << chNumber << endl;
+			cerr << "Error in setClosingThreshold(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -636,12 +668,14 @@ public:
 	/** Sets TriggerBusMask which is used in TriggerMode==TriggerBus.
 	 * @param enabledChannels array of enabled trigger bus channels.
 	 */
-	void setTriggerBusMask(size_t chNumber, std::vector<size_t> enabledChannels) throw (SpaceFibreADCException) {
+	void setTriggerBusMask(size_t chNumber, std::vector<size_t> enabledChannels)
+			throw (SpaceFibreADCException) {
 		if (chNumber < SpaceFibreADC::NumberOfChannels) {
 			channelModules[chNumber]->setTriggerBusMask(enabledChannels);
 		} else {
 			using namespace std;
-			cerr << "Error in setTriggerBusMask(): invalid channel number " << chNumber << endl;
+			cerr << "Error in setTriggerBusMask(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -652,12 +686,14 @@ public:
 	 * before of the trigger timing.
 	 * @param depthOfDelay number of samples retarded
 	 */
-	void setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay) throw (SpaceFibreADCException) {
+	void setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay)
+			throw (SpaceFibreADCException) {
 		if (chNumber < SpaceFibreADC::NumberOfChannels) {
 			channelModules[chNumber]->setDepthOfDelay(depthOfDelay);
 		} else {
 			using namespace std;
-			cerr << "Error in setDepthOfDelay(): invalid channel number " << chNumber << endl;
+			cerr << "Error in setDepthOfDelay(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -671,7 +707,8 @@ public:
 			return channelModules[chNumber]->getLivetime();
 		} else {
 			using namespace std;
-			cerr << "Error in getLivetime(): invalid channel number " << chNumber << endl;
+			cerr << "Error in getLivetime(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -685,7 +722,8 @@ public:
 			return channelModules[chNumber]->getCurrentADCValue();
 		} else {
 			using namespace std;
-			cerr << "Error in getCurrentADCValue(): invalid channel number " << chNumber << endl;
+			cerr << "Error in getCurrentADCValue(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -698,7 +736,8 @@ public:
 			channelModules[chNumber]->turnADCPower(true);
 		} else {
 			using namespace std;
-			cerr << "Error in turnOnADCPower(): invalid channel number " << chNumber << endl;
+			cerr << "Error in turnOnADCPower(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -711,7 +750,8 @@ public:
 			channelModules[chNumber]->turnADCPower(false);
 		} else {
 			using namespace std;
-			cerr << "Error in turnOffADCPower(): invalid channel number " << chNumber << endl;
+			cerr << "Error in turnOffADCPower(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -774,7 +814,8 @@ public:
 			channelModules[chNumber]->sendCPUTrigger();
 		} else {
 			using namespace std;
-			cerr << "Error in sendCPUTrigger(): invalid channel number " << chNumber << endl;
+			cerr << "Error in sendCPUTrigger(): invalid channel number "
+					<< chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
 		}
 	}
@@ -785,7 +826,8 @@ public:
 	 */
 	void sendCPUTrigger() {
 		using namespace std;
-		for (size_t chNumber = 0; chNumber < SpaceFibreADC::NumberOfChannels; chNumber++) {
+		for (size_t chNumber = 0; chNumber < SpaceFibreADC::NumberOfChannels;
+				chNumber++) {
 			if (this->ChannelEnable[chNumber] == true) { //if enabled
 				cout << "CPU Trigger to Channel " << chNumber << endl;
 				channelModules[chNumber]->sendCPUTrigger();
@@ -856,7 +898,8 @@ public:
 			//livetime
 			hkData.livetime[i] = channelModules[i]->getLivetime();
 			//acquisition status
-			hkData.acquisitionStarted[i] = channelManager->isAcquisitionCompleted(i);
+			hkData.acquisitionStarted[i] =
+					channelManager->isAcquisitionCompleted(i);
 		}
 
 		return hkData;
@@ -875,6 +918,11 @@ public:
 	std::string DetectorID;
 	size_t PreTriggerSamples = 4;
 	size_t PostTriggerSamples = 1000;
+	std::vector<TriggerMode> TriggerMode {
+			TriggerMode::StartThreshold_NSamples_CloseThreshold,
+			TriggerMode::StartThreshold_NSamples_CloseThreshold,
+			TriggerMode::StartThreshold_NSamples_CloseThreshold,
+			TriggerMode::StartThreshold_NSamples_CloseThreshold };
 	size_t SamplesInEventPacket = 1000;
 	size_t DownSamplingFactorForSavedWaveform = 1;
 	std::vector<bool> ChannelEnable;
@@ -883,7 +931,8 @@ public:
 
 public:
 	size_t getNSamplesInEventListFile() {
-		return (this->SamplesInEventPacket) / this->DownSamplingFactorForSavedWaveform;
+		return (this->SamplesInEventPacket)
+				/ this->DownSamplingFactorForSavedWaveform;
 	}
 
 public:
@@ -918,16 +967,18 @@ public:
 	void loadConfigurationFile(std::string inputFileName) {
 		using namespace std;
 		YAML::Node yaml_root = YAML::LoadFile(inputFileName);
-		std::vector<std::string> mustExistKeywords = { "DetectorID", "PreTriggerSamples", "PostTriggerSamples",
-				"SamplesInEventPacket", "DownSamplingFactorForSavedWaveform", "ChannelEnable", "TriggerThresholds",
-				"TriggerCloseThresholds" };
+		std::vector<std::string> mustExistKeywords = { "DetectorID",
+				"PreTriggerSamples", "PostTriggerSamples",
+				"SamplesInEventPacket", "DownSamplingFactorForSavedWaveform",
+				"ChannelEnable", "TriggerThresholds", "TriggerCloseThresholds" };
 
 		//---------------------------------------------
 		//check keyword existence
 		//---------------------------------------------
 		for (auto keyword : mustExistKeywords) {
 			if (!yaml_root[keyword].IsDefined()) {
-				cerr << "Error: " << keyword << " is not defined in the configuration file." << endl;
+				cerr << "Error: " << keyword
+						<< " is not defined in the configuration file." << endl;
 				dumpMustExistKeywords();
 				exit(-1);
 			}
@@ -939,11 +990,23 @@ public:
 		this->DetectorID = yaml_root["DetectorID"].as<std::string>();
 		this->PreTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
 		this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
-		this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
-		this->DownSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
-		this->ChannelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
-		this->TriggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<uint16_t>>();
-		this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<uint16_t>>();
+		{
+			// Convert integer-type trigger mode to TriggerMode enum type
+			const std::vector<size_t> triggerModeInt = yaml_root["TriggerMode"].as<std::vector<size_t>>();
+			for (size_t i = 0; i < triggerModeInt.size(); i++) {
+				this->TriggerMode[i] = static_cast<enum TriggerMode>(triggerModeInt.at(i));
+			}
+		}
+		this->SamplesInEventPacket =
+				yaml_root["SamplesInEventPacket"].as<size_t>();
+		this->DownSamplingFactorForSavedWaveform =
+				yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
+		this->ChannelEnable =
+				yaml_root["ChannelEnable"].as<std::vector<bool>>();
+		this->TriggerThresholds = yaml_root["TriggerThresholds"].as<
+				std::vector<uint16_t>>();
+		this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<
+				std::vector<uint16_t>>();
 
 		//---------------------------------------------
 		//dump setting
@@ -951,15 +1014,34 @@ public:
 		cout << "#---------------------------------------------" << endl;
 		cout << "# Configuration" << endl;
 		cout << "#---------------------------------------------" << endl;
-		cout << "DetectorID: " << this->DetectorID << endl;
-		cout << "PreTriggerSamples: " << this->PreTriggerSamples << endl;
-		cout << "PostTriggerSamples: " << this->PostTriggerSamples << endl;
-		cout << "SamplesInEventPacket: " << this->SamplesInEventPacket << endl;
-		cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
-		cout << "ChannelEnable: [" << CxxUtilities::String::join(this->ChannelEnable, ", ") << "]" << endl;
-		cout << "TriggerThresholds: [" << CxxUtilities::String::join(this->TriggerThresholds, ", ") << "]" << endl;
-		cout << "TriggerCloseThresholds: [" << CxxUtilities::String::join(this->TriggerCloseThresholds, ", ") << "]"
+		cout << "DetectorID                        : " << this->DetectorID
 				<< endl;
+		cout << "PreTriggerSamples                 : "
+				<< this->PreTriggerSamples << endl;
+		cout << "PostTriggerSamples                : "
+				<< this->PostTriggerSamples << endl;
+		{
+			cout << "TriggerMode                       : [";
+			std::vector<size_t> triggerModeInt { };
+			for (const auto mode : this->TriggerMode) {
+				triggerModeInt.push_back(static_cast<size_t>(mode));
+			}
+			cout << CxxUtilities::String::join(triggerModeInt, ", ") << "]"
+					<< endl;
+		}
+		cout << "SamplesInEventPacket              : "
+				<< this->SamplesInEventPacket << endl;
+		cout << "DownSamplingFactorForSavedWaveform: "
+				<< this->DownSamplingFactorForSavedWaveform << endl;
+		cout << "ChannelEnable                     : ["
+				<< CxxUtilities::String::join(this->ChannelEnable, ", ") << "]"
+				<< endl;
+		cout << "TriggerThresholds                 : ["
+				<< CxxUtilities::String::join(this->TriggerThresholds, ", ")
+				<< "]" << endl;
+		cout << "TriggerCloseThresholds            : ["
+				<< CxxUtilities::String::join(this->TriggerCloseThresholds,
+						", ") << "]" << endl;
 		cout << endl;
 
 		cout << "//---------------------------------------------" << endl;
@@ -975,14 +1057,16 @@ public:
 				this->setDepthOfDelay(ch, PreTriggerSamples);
 
 				//trigger mode
-				this->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+				const auto triggerMode = this->TriggerMode.at(ch);
+				this->setTriggerMode(ch, triggerMode);
 
 				//threshold
 				this->setStartingThreshold(ch, TriggerThresholds[ch]);
 				this->setClosingThreshold(ch, TriggerCloseThresholds[ch]);
 
 				//adc clock 50MHz
-				this->setAdcClock(SpaceFibreADC::ADCClockFrequency::ADCClock50MHz);
+				this->setAdcClock(
+						SpaceFibreADC::ADCClockFrequency::ADCClock50MHz);
 
 				//turn on ADC
 				this->turnOnADCPower(ch);
