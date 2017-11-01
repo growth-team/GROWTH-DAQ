@@ -876,7 +876,7 @@ public:
 	std::string DetectorID;
 	size_t PreTriggerSamples = 4;
 	size_t PostTriggerSamples = 1000;
-	std::vector<TriggerMode> TriggerMode { TriggerMode::StartThreshold_NSamples_CloseThreshold,
+	std::vector<enum TriggerMode> TriggerModes { TriggerMode::StartThreshold_NSamples_CloseThreshold,
 			TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold,
 			TriggerMode::StartThreshold_NSamples_CloseThreshold };
 	size_t SamplesInEventPacket = 1000;
@@ -945,9 +945,9 @@ public:
 		this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
 		{
 			// Convert integer-type trigger mode to TriggerMode enum type
-			const std::vector<size_t> triggerModeInt = yaml_root["TriggerMode"].as<std::vector<size_t>>();
+			const std::vector<size_t> triggerModeInt = yaml_root["TriggerModes"].as<std::vector<size_t>>();
 			for (size_t i = 0; i < triggerModeInt.size(); i++) {
-				this->TriggerMode[i] = static_cast<enum TriggerMode>(triggerModeInt.at(i));
+				this->TriggerModes[i] = static_cast<enum TriggerMode>(triggerModeInt.at(i));
 			}
 		}
 		this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
@@ -966,9 +966,9 @@ public:
 		cout << "PreTriggerSamples                 : " << this->PreTriggerSamples << endl;
 		cout << "PostTriggerSamples                : " << this->PostTriggerSamples << endl;
 		{
-			cout << "TriggerMode                       : [";
+			cout << "TriggerModes                      : [";
 			std::vector<size_t> triggerModeInt { };
-			for (const auto mode : this->TriggerMode) {
+			for (const auto mode : this->TriggerModes) {
 				triggerModeInt.push_back(static_cast<size_t>(mode));
 			}
 			cout << CxxUtilities::String::join(triggerModeInt, ", ") << "]" << endl;
@@ -996,7 +996,7 @@ public:
 				this->setDepthOfDelay(ch, PreTriggerSamples);
 
 				//trigger mode
-				const auto triggerMode = this->TriggerMode.at(ch);
+				const auto triggerMode = this->TriggerModes.at(ch);
 				this->setTriggerMode(ch, triggerMode);
 
 				//threshold
