@@ -41,13 +41,13 @@ begin
     if (GlobalReset = '0') then
     elsif (Clock'event and Clock = '1') then
       -- Shift register
-      AdcDataArray <= AdcDataArray(MaximumOfDelay downto 1) & AdcDataIn;
+      AdcDataArray <= AdcDataArray(MaximumOfDelay-1 downto 0) & AdcDataIn;
 
       -- Select output
       if (a < MaximumOfDelay) then
         AdcDataOut <= AdcDataArray(a);
       end if;
-      if (a < MaximumOfDelay) then
+      if (conv_integer(ChModule2InternalModule.DepthOfDelay) < MaximumOfDelay) then
         a <= conv_integer(ChModule2InternalModule.DepthOfDelay);
       else
         a <= 0;
