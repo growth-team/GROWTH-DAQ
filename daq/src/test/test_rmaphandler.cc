@@ -7,8 +7,8 @@
 #include <algorithm>
 #include "GROWTH_FY2015_ADC.hh"
 // ChannelManager
-static const uint32_t InitialAddressOf_ChMgr = 0x01010000;
-static const uint32_t ChMgrBA                = InitialAddressOf_ChMgr;  // Base Address of ChMgr
+static const uint32_t InitialAddressOf_ChMgr               = 0x01010000;
+static const uint32_t ChMgrBA                              = InitialAddressOf_ChMgr;  // Base Address of ChMgr
 static const uint32_t AddressOf_StartStopRegister          = ChMgrBA + 0x0002;
 static const uint32_t AddressOf_StartStopSemaphoreRegister = ChMgrBA + 0x0004;
 static const uint32_t AddressOf_PresetModeRegister         = ChMgrBA + 0x0006;
