@@ -8,8 +8,8 @@
 #ifndef CHANNELMANAGER_HH_
 #define CHANNELMANAGER_HH_
 
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/RMAPHandler.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 
 /** A class which represents ChannelManager module on VHDL logic.
  * This module controls start/stop, preset mode, livetime, and
