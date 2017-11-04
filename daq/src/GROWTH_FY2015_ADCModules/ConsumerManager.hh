@@ -232,7 +232,7 @@ class ConsumerManager {
       try {
         rmaphandler->read(adcboxRMAPNode, addressFrom, (addressTo - addressFrom + 2), &returneddata[0]);
         //				cerr << hex << (uint32_t)addressFrom << " " << (uint32_t)(addressTo -
-        //addressFrom +  2)
+        // addressFrom +  2)
         //<< endl;
         nextreadfrom = increment_address(readpointer);
       } catch (...) {
