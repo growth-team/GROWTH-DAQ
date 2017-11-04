@@ -30,3 +30,13 @@ Example:
 $ growth_daq /dev/ttyUSB1 configuration.yaml 100
 ```
 
+## Source code
+### Auto format
+
+Install `clang-format` to use auto-formating of the C++ source/header files.
+
+```
+brew install clang-format
+```
+
+`CMakeLists.txt` defines `clangformat`, and this can be used by running `make clangformat` in the build directory.
