@@ -1,6 +1,6 @@
 #!/bin/bash
 
-detectorID=growth-fy2017z
+detectorID=growth-fy2017
 devicePath=/dev/sda1
 
 if [ ! -e /media/pi/GROWTH-DATA ]; then
