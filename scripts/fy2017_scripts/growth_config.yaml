@@ -1,4 +1,4 @@
-detectorID: growth-fy2017z
+detectorID: growth-fy2017
 hv:
     conversion:
         0: (x/3300)*1650
