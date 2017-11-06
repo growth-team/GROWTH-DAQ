@@ -1,5 +1,5 @@
-detectorID=growth-fy2016g
-portNumber=2107
+detectorID=growth-fy2017
+portNumber=2100
 HOMEDIR=/home/pi
 
 cp -r ${HOMEDIR}/git/GROWTH-DAQ/scripts/fy2017_scripts/scripts ${HOMEDIR}
@@ -15,7 +15,7 @@ cd ${HOMEDIR}/git/GROWTH-DAQ/daq/configurationFile
 cp configuration_growth-fy2017_triggerMode.yaml configuration_${detectorID}.yaml
 sed -i -e "s/growth-fy2017/${detectorID}/g" configuration_${detectorID}.yaml
 rm ${HOMEDIR}/bootcount.text
-rm -rf ${HOMEDIR}/work/growth/data/growth-fy2017z
+ls $HOME/work/growth/data/ | grep -v -E "${detectorID}" | xargs rm -rf
 rm -rf /var/log/growth/*
 
 echo "Modify crontab"
