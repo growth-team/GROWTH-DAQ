@@ -82,14 +82,14 @@
  cout << "Setting trigger mode" << endl;
 
  // Trigger Mode: CPU Trigger
- adc->setTriggerMode(ch, SpaceFibreADC::TriggerMode::CPUTrigger);
+ adc->setTriggerMode(ch, TriggerMode::CPUTrigger);
 
  // Trigger Mode: StartingThreshold-NSamples-ClosingThreshold
  // uint16_t startingThreshold=2300;
  // uint16_t closingThreshold=2100;
  // adc->setStartingThreshold(ch, startingThreshold);
  // adc->setClosingThreshold(ch, closingThreshold);
- //adc->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+ //adc->setTriggerMode(ch, TriggerMode::StartThreshold_NSamples_CloseThreshold);
 
  //---------------------------------------------
  // Waveform record length
@@ -172,16 +172,17 @@
  */
 
 #include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Constants.hh"
+#include "GROWTH_FY2015_ADCModules/Constants.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
 #include "GROWTH_FY2015_ADCModules/Debug.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 #include "GROWTH_FY2015_ADCModules/ConsumerManagerEventFIFO.hh"
 #include "GROWTH_FY2015_ADCModules/EventDecoder.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelModule.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelManager.hh"
+#include "GROWTH_FY2015_ADCModules/ChannelModule.hh"
+#include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
 #include "yaml-cpp/yaml.h"
+
+using GROWTH_FY2015_ADC_Type::TriggerMode;
 
 enum class SpaceFibreADCException {
 	InvalidChannelNumber, OpenDeviceFailed, CloseDeviceFailed,
@@ -232,8 +233,8 @@ public:
 				nReceivedEvents_latch = parent->nReceivedEvents;
 				delta = nReceivedEvents_latch - nReceivedEvents_previous;
 				nReceivedEvents_previous = nReceivedEvents_latch;
-				cout << "GROWTH_FY2015_ADC received " << dec << parent->nReceivedEvents << " events (delta=" << dec << delta
-						<< ")." << endl;
+				cout << "GROWTH_FY2015_ADC received " << dec << parent->nReceivedEvents << " events (delta=" << dec
+						<< delta << ")." << endl;
 				cout << "GROWTH_FY2015_ADC_Type::EventDecoder available Event instances = " << dec
 						<< this->eventDecoder->getNAllocatedEventInstances() << endl;
 			}
@@ -358,21 +359,21 @@ private:
 	std::vector<uint8_t> gpsDataFIFOData;
 
 public:
-  /** Returns FPGA Type as string.
-   */
-  uint32_t  getFPGAType(){
-    uint32_t fpgaType = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
-    return fpgaType;
-  }
+	/** Returns FPGA Type as string.
+	 */
+	uint32_t getFPGAType() {
+		uint32_t fpgaType = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
+		return fpgaType;
+	}
 
 public:
-  /** Returns FPGA Version as string.
-   */
-  uint32_t getFPGAVersion(){
-    using namespace std;
-    uint32_t fpgaVersion = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
-    return fpgaVersion;
-  }
+	/** Returns FPGA Version as string.
+	 */
+	uint32_t getFPGAVersion() {
+		using namespace std;
+		uint32_t fpgaVersion = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
+		return fpgaVersion;
+	}
 
 public:
 	/** Returns a GPS Register value.
@@ -553,7 +554,7 @@ public:
 //=============================================
 public:
 	/** Set trigger mode of the specified channel.
-	 * SpaceFibreADC::TriggerMode;<br>
+	 * TriggerMode;<br>
 	 * StartTh->N_samples = StartThreshold_NSamples_AutoClose<br>
 	 * Common Gate In = CommonGateIn<br>
 	 * StartTh->N_samples->ClosingTh = StartThreshold_NSamples_CloseThreshold<br>
@@ -561,9 +562,9 @@ public:
 	 * Trigger Bus (OR) = TriggerBusSelectedOR<br>
 	 * Trigger Bus (AND) = TriggerBusSelectedAND<br>
 	 * @param chNumber channel number
-	 * @param triggerMode trigger mode (see SpaceFibreADC::TriggerMode)
+	 * @param triggerMode trigger mode (see TriggerMode)
 	 */
-	void setTriggerMode(size_t chNumber, SpaceFibreADC::TriggerMode triggerMode) throw (SpaceFibreADCException) {
+	void setTriggerMode(size_t chNumber, TriggerMode triggerMode) throw (SpaceFibreADCException) {
 		if (chNumber < SpaceFibreADC::NumberOfChannels) {
 			channelModules[chNumber]->setTriggerMode(triggerMode);
 		} else {
@@ -875,6 +876,9 @@ public:
 	std::string DetectorID;
 	size_t PreTriggerSamples = 4;
 	size_t PostTriggerSamples = 1000;
+	std::vector<enum TriggerMode> TriggerModes { TriggerMode::StartThreshold_NSamples_CloseThreshold,
+			TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold,
+			TriggerMode::StartThreshold_NSamples_CloseThreshold };
 	size_t SamplesInEventPacket = 1000;
 	size_t DownSamplingFactorForSavedWaveform = 1;
 	std::vector<bool> ChannelEnable;
@@ -939,6 +943,13 @@ public:
 		this->DetectorID = yaml_root["DetectorID"].as<std::string>();
 		this->PreTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
 		this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
+		{
+			// Convert integer-type trigger mode to TriggerMode enum type
+			const std::vector<size_t> triggerModeInt = yaml_root["TriggerModes"].as<std::vector<size_t>>();
+			for (size_t i = 0; i < triggerModeInt.size(); i++) {
+				this->TriggerModes[i] = static_cast<enum TriggerMode>(triggerModeInt.at(i));
+			}
+		}
 		this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
 		this->DownSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
 		this->ChannelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
@@ -951,15 +962,25 @@ public:
 		cout << "#---------------------------------------------" << endl;
 		cout << "# Configuration" << endl;
 		cout << "#---------------------------------------------" << endl;
-		cout << "DetectorID: " << this->DetectorID << endl;
-		cout << "PreTriggerSamples: " << this->PreTriggerSamples << endl;
-		cout << "PostTriggerSamples: " << this->PostTriggerSamples << endl;
-		cout << "SamplesInEventPacket: " << this->SamplesInEventPacket << endl;
+		cout << "DetectorID                        : " << this->DetectorID << endl;
+		cout << "PreTriggerSamples                 : " << this->PreTriggerSamples << endl;
+		cout << "PostTriggerSamples                : " << this->PostTriggerSamples << endl;
+		{
+			cout << "TriggerModes                      : [";
+			std::vector<size_t> triggerModeInt { };
+			for (const auto mode : this->TriggerModes) {
+				triggerModeInt.push_back(static_cast<size_t>(mode));
+			}
+			cout << CxxUtilities::String::join(triggerModeInt, ", ") << "]" << endl;
+		}
+		cout << "SamplesInEventPacket              : " << this->SamplesInEventPacket << endl;
 		cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
-		cout << "ChannelEnable: [" << CxxUtilities::String::join(this->ChannelEnable, ", ") << "]" << endl;
-		cout << "TriggerThresholds: [" << CxxUtilities::String::join(this->TriggerThresholds, ", ") << "]" << endl;
-		cout << "TriggerCloseThresholds: [" << CxxUtilities::String::join(this->TriggerCloseThresholds, ", ") << "]"
+		cout << "ChannelEnable                     : [" << CxxUtilities::String::join(this->ChannelEnable, ", ") << "]"
 				<< endl;
+		cout << "TriggerThresholds                 : [" << CxxUtilities::String::join(this->TriggerThresholds, ", ")
+				<< "]" << endl;
+		cout << "TriggerCloseThresholds            : ["
+				<< CxxUtilities::String::join(this->TriggerCloseThresholds, ", ") << "]" << endl;
 		cout << endl;
 
 		cout << "//---------------------------------------------" << endl;
@@ -975,7 +996,8 @@ public:
 				this->setDepthOfDelay(ch, PreTriggerSamples);
 
 				//trigger mode
-				this->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+				const auto triggerMode = this->TriggerModes.at(ch);
+				this->setTriggerMode(ch, triggerMode);
 
 				//threshold
 				this->setStartingThreshold(ch, TriggerThresholds[ch]);
