@@ -20,31 +20,29 @@
 //
 // > gpio -g mode 2 out
 // > gpio -g write 2 0
-// 
-#include "ADCDAC.hh"
+//
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
+#include "ADCDAC.hh"
 
 int main(int argc, char* argv[]) {
+  if (argc < 3) {
+    printf("Provide channel (0 or 1) and DAC value (0-4095).\n");
+    exit(-1);
+  }
 
-	if (argc < 3) {
-		printf("Provide channel (0 or 1) and DAC value (0-4095).\n");
-		exit(-1);
-	}
+  size_t channel    = atoi(argv[1]);
+  uint16_t dacValue = atoi(argv[2]);
 
-	size_t channel = atoi(argv[1]);
-	uint16_t dacValue = atoi(argv[2]);
+  printf("Setting DAC Ch=%lu Value=%d\n", channel, dacValue);
+  int status = ADCDAC::setDAC(channel, dacValue);
 
-	printf("Setting DAC Ch=%lu Value=%d\n", channel, dacValue);
-	int status = ADCDAC::setDAC(channel, dacValue);
-
-	printf("Result = %d\n", status);
-	if (status == ADCDAC::Successful) {
-		printf("Successfully set.\n");
-	} else {
-		printf("Error = %d\n", status);
-	}
-
+  printf("Result = %d\n", status);
+  if (status == ADCDAC::Successful) {
+    printf("Successfully set.\n");
+  } else {
+    printf("Error = %d\n", status);
+  }
 }

@@ -8,19 +8,18 @@
 #include "GROWTH_FY2015_ADC.hh"
 
 int main(int argc, char* argv[]) {
-	using namespace std;
-	std::string deviceName="/dev/null";
-	auto adcBoard = new GROWTH_FY2015_ADC(deviceName);
-	
-	if (argc < 2) {
-		cerr << "Provide configuration file." << endl;
-		adcBoard->dumpMustExistKeywords();
-		::exit(-1);
-	}
+  using namespace std;
+  std::string deviceName = "/dev/null";
+  auto adcBoard          = new GROWTH_FY2015_ADC(deviceName);
 
-    std::string inputFileName(argv[1]);
-    adcBoard->loadConfigurationFile(inputFileName);
+  if (argc < 2) {
+    cerr << "Provide configuration file." << endl;
+    adcBoard->dumpMustExistKeywords();
+    ::exit(-1);
+  }
 
-	return 0;
+  std::string inputFileName(argv[1]);
+  adcBoard->loadConfigurationFile(inputFileName);
+
+  return 0;
 }
-

@@ -20,6 +20,12 @@ set(CMAKE_INSTALL_PREFIX $ENV{HOME}/work/install CACHE PATH "install prefix")
 set(CMAKE_BUILD_TYPE Release CACHE STRING "build type")
 
 #=============================================
+# Source file list
+#=============================================
+file(GLOB_RECURSE HEADER_FILES src/*/*.hh)
+file(GLOB_RECURSE SOURCE_FILES src/*/*.cc)
+
+#=============================================
 # Include path
 #=============================================
 include_directories(
@@ -71,3 +77,13 @@ endif (__APPLE__)
 # Installs
 #=============================================
 install_targets(/bin growth_daq)
+
+#=============================================
+# Custom target
+#=============================================
+add_custom_target(
+        clangformat
+        COMMAND clang-format
+        -i
+        ${SOURCE_FILES} ${HEADER_FILES}
+)

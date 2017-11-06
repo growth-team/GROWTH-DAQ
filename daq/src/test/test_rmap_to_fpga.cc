@@ -5,9 +5,9 @@
  *      Author: yuasa
  */
 
-#include "SpaceWireRMAPLibrary/SpaceWire.hh"
-#include "SpaceWireRMAPLibrary/RMAP.hh"
 #include "SpaceWireIFOverUART.hh"
+#include "SpaceWireRMAPLibrary/RMAP.hh"
+#include "SpaceWireRMAPLibrary/SpaceWire.hh"
 
 /*
  constant BA                                  : std_logic_vector(15 downto 0) := InitialAddress;  --Base Address
@@ -35,65 +35,65 @@
  */
 
 void dump(uint8_t* buffer) {
-	using namespace std;
-	for (size_t i = 0; i < 2; i++) {
-		cout << "0x" << hex << right << setw(2) << setfill('0') << (uint32_t) buffer[i] << " ";
-	}
-	cout << dec << endl;
+  using namespace std;
+  for (size_t i = 0; i < 2; i++) {
+    cout << "0x" << hex << right << setw(2) << setfill('0') << (uint32_t)buffer[i] << " ";
+  }
+  cout << dec << endl;
 }
 
 int main(int argc, char* argv[]) {
-	using namespace std;
-	if (argc < 2) {
-		cerr << "Provide serial port device name (e.g. /dev/tty.usb-abcd" << endl;
-		exit(-1);
-	}
-	//initialize
-	std::string deviceName(argv[1]);
-	SpaceWireIFOverUART* spwif = new SpaceWireIFOverUART(deviceName);
-	spwif->open();
+  using namespace std;
+  if (argc < 2) {
+    cerr << "Provide serial port device name (e.g. /dev/tty.usb-abcd" << endl;
+    exit(-1);
+  }
+  // initialize
+  std::string deviceName(argv[1]);
+  SpaceWireIFOverUART* spwif = new SpaceWireIFOverUART(deviceName);
+  spwif->open();
 
-	RMAPEngine* rmapEngine = new RMAPEngine(spwif);
-	rmapEngine->start();
+  RMAPEngine* rmapEngine = new RMAPEngine(spwif);
+  rmapEngine->start();
 
-	CxxUtilities::Condition c;
-	c.wait(1000);
+  CxxUtilities::Condition c;
+  c.wait(1000);
 
-	RMAPTargetNode target;
-	target.setTargetLogicalAddress(0xFE);
-	target.setInitiatorLogicalAddress(0xFE);
-	target.setDefaultKey(0x00);
-	target.setReplyAddress( { });
+  RMAPTargetNode target;
+  target.setTargetLogicalAddress(0xFE);
+  target.setInitiatorLogicalAddress(0xFE);
+  target.setDefaultKey(0x00);
+  target.setReplyAddress({});
 
-	RMAPInitiator* rmapInitiator = new RMAPInitiator(rmapEngine);
-	uint8_t buffer[2];
-	try {
-		rmapInitiator->read(&target, 0x00001112, 2, buffer);
-		cout << "Read done" << endl;
-		dump(buffer);
-		rmapInitiator->read(&target, 0x00001030, 2, buffer);
-		cout << "Read done" << endl;
-		dump(buffer);
-		rmapInitiator->read(&target, 0x00001006, 2, buffer);
-		cout << "Read done" << endl;
-		dump(buffer);
-		//write
-		uint16_t threshold = 540;
-		buffer[1] = threshold % 0x100;
-		buffer[0] = threshold / 0x100;
-		rmapInitiator->write(&target, 0x00001006, buffer, 2);
-		cout << "Write done" << endl;
-		rmapInitiator->read(&target, 0x00001006, 2, buffer);
-		cout << "Read done" << endl;
-		dump(buffer);
+  RMAPInitiator* rmapInitiator = new RMAPInitiator(rmapEngine);
+  uint8_t buffer[2];
+  try {
+    rmapInitiator->read(&target, 0x00001112, 2, buffer);
+    cout << "Read done" << endl;
+    dump(buffer);
+    rmapInitiator->read(&target, 0x00001030, 2, buffer);
+    cout << "Read done" << endl;
+    dump(buffer);
+    rmapInitiator->read(&target, 0x00001006, 2, buffer);
+    cout << "Read done" << endl;
+    dump(buffer);
+    // write
+    uint16_t threshold = 540;
+    buffer[1]          = threshold % 0x100;
+    buffer[0]          = threshold / 0x100;
+    rmapInitiator->write(&target, 0x00001006, buffer, 2);
+    cout << "Write done" << endl;
+    rmapInitiator->read(&target, 0x00001006, 2, buffer);
+    cout << "Read done" << endl;
+    dump(buffer);
 
-	} catch (RMAPInitiatorException& e) {
-		cout << "Exception in RMAPInitiator::read(): " << e.toString() << endl;
-		exit(-1);
-	}
-	//finalize
-	rmapEngine->stop();
-	spwif->close();
-	delete rmapEngine;
-	delete spwif;
+  } catch (RMAPInitiatorException& e) {
+    cout << "Exception in RMAPInitiator::read(): " << e.toString() << endl;
+    exit(-1);
+  }
+  // finalize
+  rmapEngine->stop();
+  spwif->close();
+  delete rmapEngine;
+  delete spwif;
 }
