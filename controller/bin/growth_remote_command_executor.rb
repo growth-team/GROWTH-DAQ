@@ -19,7 +19,8 @@ class RemoteCommandExecutor
   UPLOAD_COMMAND = "rsync -auv "
   UPLOAD_DESTINATION = "galileo:/work-galileo/home/growth-data/upload"
   #UPLOAD_DESTINATION = "thdr:growth-data/upload"
-
+  UPLOAD_DIRECTORY="/media/pi/GROWTH-DATA/data"
+  
   def initialize()
     @logger = GROWTH.logger(ARGV, "growth_remote_command_executor")
     @growth_config = GROWTH::Config.new(logger: @logger)
@@ -148,7 +149,8 @@ class RemoteCommandExecutor
       to_yyyymmddhhmmss = to_yyyymm * 1e8 + to_datetime.day * 1e6 + to_datetime.hour * 1e4 + to_datetime.minute * 1e2 + to_datetime.second
 
       # Process YYYYMM directories
-      Dir.glob("#{@growth_config.daq_run_dir}/20[0-9]*/").sort().each(){|dir|
+      #Dir.glob("#{@growth_config.daq_run_dir}/20[0-9]*/").sort().each(){|dir|
+      Dir.glob("#{UPLOAD_DIRECTORY}/#{@growth_config.detector_id}/20[0-9]*/").sort().each(){|dir|
         yyyymm = dir.split("/")[-1].to_i
         if(from_yyyymm<=yyyymm and yyyymm<=to_yyyymm)then
           @logger.info "Processing #{dir}"
