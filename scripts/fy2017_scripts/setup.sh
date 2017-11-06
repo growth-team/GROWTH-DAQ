@@ -15,7 +15,7 @@ cd ${HOMEDIR}/git/GROWTH-DAQ/daq/configurationFile
 cp configuration_growth-fy2017_triggerMode.yaml configuration_${detectorID}.yaml
 sed -i -e "s/growth-fy2017/${detectorID}/g" configuration_${detectorID}.yaml
 rm ${HOMEDIR}/bootcount.text
-ls $HOME/work/growth/data/ | grep -v -E "${detectorID}" | xargs rm -rf
+ls ${HOMEDIR}/work/growth/data/ | grep -v -E "${detectorID}" | xargs rm -rf
 rm -rf /var/log/growth/*
 
 echo "Modify crontab"
