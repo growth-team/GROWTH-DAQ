@@ -39,3 +39,15 @@ E.g.
 $ growth_daq /dev/tty.usbserial--FT0K8WCSA configuration.yaml 100
 $ growth_daq /dev/ttyUSB1 configuration.yaml 100
 ```
+
+- growth_fy2016_fpga_20171104_2445_4ch_50Msps_with_triggerMode4_q128.mcs.zip
+    - All 4 channels are enabled and operated at ADC clock 50MHz.
+    - FT2232H Bank A: Pulse event measurement.
+    - FT2232H Bank B: GPS serial output (through connection from daughter card).
+    - Use Bank A (1) serial device when running `growth_daq`.
+      ```
+      $ growth_daq /dev/tty.usbserial--FT0K8WCSA configuration.yaml 100
+      or
+      $ growth_daq /dev/ttyUSB1 configuration.yaml 100
+      ```
+    
