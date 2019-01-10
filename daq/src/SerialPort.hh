@@ -242,7 +242,7 @@ private:
 public:
 	void setTimeout(double timeoutDurationInMilliSec) {
 		this->timeoutDurationInMilliSec = timeoutDurationInMilliSec;
-		timeoutDurationObject = boost::posix_time::millisec(timeoutDurationInMilliSec);
+		timeoutDurationObject = boost::posix_time::millisec(static_cast<uint32_t>(timeoutDurationInMilliSec));
 	}
 };
 
