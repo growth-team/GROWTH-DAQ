@@ -35,6 +35,9 @@ include_directories(
   include/XMLUtilities/include
   include/CxxUtilities/includes
   ${ROOT_INCLUDE_DIRS}
+  /usr/local/opt/boost@1.60/include
+  /usr/local/include
+  include
 )
 
 #=============================================
@@ -42,7 +45,13 @@ include_directories(
 #=============================================
 link_directories(
   ${ROOT_LIBRARY_DIR}
+  /usr/local/opt/boost@1.60/lib
+  lib
+  /usr/local/lib
 )
+
+add_subdirectory(external/libzmq)
+add_subdirectory(external/cppzmq)
 
 #=============================================
 # Executable definitions
@@ -60,7 +69,7 @@ add_executable(growth_daq
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
-  zmq
+  zmq-static
   xerces-c
   boost_system
   boost_thread-mt
