@@ -50,9 +50,6 @@ link_directories(
   /usr/local/lib
 )
 
-add_subdirectory(external/libzmq)
-add_subdirectory(external/cppzmq)
-
 #=============================================
 # Executable definitions
 #=============================================
@@ -69,7 +66,7 @@ add_executable(growth_daq
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
-  zmq-static
+  ${CMAKE_SOURCE_DIR}/lib/libzmq.a
   xerces-c
   boost_system
   boost_thread-mt
