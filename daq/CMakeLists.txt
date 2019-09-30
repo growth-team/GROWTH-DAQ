@@ -22,8 +22,8 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "build type")
 #=============================================
 # Source file list
 #=============================================
-file(GLOB_RECURSE HEADER_FILES src/*/*.hh)
-file(GLOB_RECURSE SOURCE_FILES src/*/*.cc)
+file(GLOB_RECURSE HEADER_FILES src/*.hh)
+file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 
 #=============================================
 # Include path

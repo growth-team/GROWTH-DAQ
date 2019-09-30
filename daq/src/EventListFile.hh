@@ -1,10 +1,3 @@
-/*
- * EventListFile.hh
- *
- *  Created on: Sep 29, 2015
- *      Author: yuasa
- */
-
 #ifndef EVENTLISTFILE_HH_
 #define EVENTLISTFILE_HH_
 
@@ -14,30 +7,16 @@
 /** Represents an event list file.
  */
 class EventListFile {
-protected:
-	std::string fileName;
+ public:
+  EventListFile(std::string fileName) : fileName_(std::move(fileName)) {}
+  virtual ~EventListFile() = default;
+  virtual void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) = 0;
+  virtual size_t getEntries() = 0;
+  virtual void close() = 0;
+  virtual void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) = 0;
 
-public:
-	EventListFile(std::string fileName) :
-			fileName(fileName) {
-	}
-
-public:
-	virtual ~EventListFile() {
-
-	}
-
-public:
-	virtual void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) =0;
-
-public:
-	virtual size_t getEntries() =0;
-
-public:
-	virtual void close() =0;
-
-public:
-	virtual void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) =0;
+ protected:
+  std::string fileName{};
 };
 
 #endif /* EVENTLISTFILE_HH_ */
