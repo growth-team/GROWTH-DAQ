@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-mkdir -p $HOME/work/install
-pushd $HOME/work/install
-git clone git://git.drogon.net/wiringPi
-pushd wiringPi
+set -o errexit
+
+mkdir -p "${HOME}"/work/install
+pushd "${HOME}"/work/install
+  git clone https://github.com/WiringPi/wiringpi
+pushd wiringpi
 ./build
 
 #check build

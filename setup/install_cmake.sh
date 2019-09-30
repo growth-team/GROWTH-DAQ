@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -o errexit
+
 install -d $HOME/work/install/cmake
 
 pushd $HOME/work/install/cmake

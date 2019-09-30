@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
-pip install numpy scipy ipython
-pip install pyzmq
+set -o errexit
+
+pip install numpy scipy ipython pyzmq

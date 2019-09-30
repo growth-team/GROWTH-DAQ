@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -o errexit
+
 apt-get install -y software-properties-common
 apt-get update
 sudo apt-get install -y automake
