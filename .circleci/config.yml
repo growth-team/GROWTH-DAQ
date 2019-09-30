@@ -1,0 +1,9 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: zouzias/boost:1.67.0
+
+    steps:
+      - checkout
+      - run: mkdir build && cd build && cmake .. && make
