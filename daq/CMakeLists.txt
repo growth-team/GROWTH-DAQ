@@ -13,6 +13,8 @@ if(USE_ROOT)
     add_definitions(-DUSE_ROOT)
 endif(USE_ROOT)
 
+find_package(Boost)
+
 #=============================================
 # Initial definition of cmake variables
 #=============================================
@@ -35,9 +37,7 @@ include_directories(
   include/XMLUtilities/include
   include/CxxUtilities/includes
   ${ROOT_INCLUDE_DIRS}
-  /usr/local/opt/boost@1.60/include
-  /usr/local/include
-  include
+  ${Boost_INCLUDE_DIRS}
 )
 
 #=============================================
@@ -45,10 +45,14 @@ include_directories(
 #=============================================
 link_directories(
   ${ROOT_LIBRARY_DIR}
-  /usr/local/opt/boost@1.60/lib
-  lib
+  ${Boost_LIBRARIES}
   /usr/local/lib
 )
+
+#=============================================
+# Build external libraries
+#=============================================
+add_subdirectory(external)
 
 #=============================================
 # Executable definitions
@@ -66,10 +70,10 @@ add_executable(growth_daq
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
-  ${CMAKE_SOURCE_DIR}/lib/libzmq.a
+  zmq
   xerces-c
   boost_system
-  boost_thread-mt
+  boost_thread
   ${ROOT_LIBRARIES}
 )
 if (__APPLE__)

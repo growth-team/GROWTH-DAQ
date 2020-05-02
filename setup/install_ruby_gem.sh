@@ -2,10 +2,4 @@
 
 set -e
 
-gem install pi_piper
-gem install git
-gem install rbczmq
-gem install pry
-gem install god
-gem install serialport
-gem install m2x
+gem install pi_piper git rbczmq pry god serialport m2x

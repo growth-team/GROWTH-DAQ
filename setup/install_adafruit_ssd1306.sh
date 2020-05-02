@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+set -o errexit
 source ./setenv.sh
 
 sudo apt-get install -y build-essential python-dev python-pip
