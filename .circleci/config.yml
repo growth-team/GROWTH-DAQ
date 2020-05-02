@@ -7,8 +7,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "Run cmake"
-          command: "cmake -H. -Bbuild"
+          name: "PWD"
+          command: "pwd"
+      - run:
+          name: "List files"
+          command: "ls"
       - run:
           name: "Run build"
-          command: "cmake --build build"
+          command: "mkdir build && cd build && cmake ../daq && make"
