@@ -36,6 +36,7 @@ include_directories(
   include/SpaceWireRMAPLibrary/includes/SpaceWireRMAPLibrary
   include/XMLUtilities/include
   include/CxxUtilities/includes
+  external/cppzmq
   ${ROOT_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
 )
@@ -50,11 +51,6 @@ link_directories(
 )
 
 #=============================================
-# Build external libraries
-#=============================================
-add_subdirectory(external)
-
-#=============================================
 # Executable definitions
 #=============================================
 #---------------------------------------------
@@ -67,21 +63,19 @@ add_executable(growth_daq
 #---------------------------------------------
 # Linked libraries
 #---------------------------------------------
+if(APPLE)
+  set(BOOST_LINK_LIBS boost_thread-mt boost_system-mt pthread)
+else()
+  set(BOOST_LINK_LIBS boost_thread boost_system)
+endif()
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
   zmq
   xerces-c
-  boost_system
-  boost_thread
+  ${BOOST_LINK_LIBS}
   ${ROOT_LIBRARIES}
 )
-if (__APPLE__)
-else(__APPLE__)
-  target_link_libraries(growth_daq
-    pthread
-  )
-endif (__APPLE__)
 
 #=============================================
 # Installs
