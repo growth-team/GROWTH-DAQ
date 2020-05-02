@@ -1,8 +1,8 @@
 FROM ubuntu:18.04
 
 RUN apt update
-RUN apt install -y build-essential nano curl
-RUN apt install -y   automake \
+RUN apt install -y \
+  build-essential nano curl \
   binutils \
   cmake \
   dpkg-dev \

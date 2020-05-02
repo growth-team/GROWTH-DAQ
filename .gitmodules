@@ -16,9 +16,3 @@
 [submodule "daq/external/cppzmq"]
 	path = daq/external/cppzmq
 	url = https://github.com/zeromq/cppzmq
-[submodule "daq/external/libzmq"]
-	path = daq/external/libzmq
-	url = https://github.com/zeromq/libzmq
-[submodule "daq/external/boost"]
-	path = daq/external/boost
-	url = https://github.com/boostorg/boost
