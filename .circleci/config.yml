@@ -6,4 +6,9 @@ jobs:
 
     steps:
       - checkout
-      - run: mkdir build && cd build && cmake .. && make
+      - run:
+          name: "Run cmake"
+          command: "cmake -H. -Bbuild"
+      - run:
+          name: "Run build"
+          command: "cmake --build build"
