@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+set -o nounset
+set -o errexit
+
+source ./setenv.sh
+
 install -d ${git_dir}
 install -d ${log_dir}
 

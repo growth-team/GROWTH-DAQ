@@ -1,18 +1,11 @@
-#!/usr/bin/env bash
+FROM ubuntu:18.04
 
-set -o errexit
-
-sudo apt-get install -y software-properties-common
-sudo apt-get update
-sudo apt-get install -y \
-  automake \
+RUN apt update
+RUN apt install -y \
+  build-essential nano curl \
   binutils \
-  build-essential \
-  chromium \
   cmake \
-  curl \
   dpkg-dev \
-  fswebcam \
   git \
   i2c-tools \
   imagemagick \
@@ -32,19 +25,14 @@ sudo apt-get install -y \
   libxpm-dev \
   libyaml-cpp-dev \
   libzmq3-dev \
-  make \
   python-dev \
   python-smbus \
   python-zmq \
-  rails \
   ruby \
   ruby-dev \
   ruby-ffi \
-  subversion \
-  supervisor \
   swig \
   texinfo \
   wget \
   wicd-curses \
-  zlib1g-dev \
-  zsh
+  zlib1g-dev

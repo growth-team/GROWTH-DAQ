@@ -2,8 +2,21 @@ version: 2
 jobs:
   build:
     docker:
-      - image: zouzias/boost:1.67.0
+      - image: growthteam/daq-ci-ubuntu
 
     steps:
       - checkout
-      - run: mkdir build && cd build && cmake .. && make
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote
+      - run:
+          name: "PWD"
+          command: "pwd"
+      - run:
+          name: "List files"
+          command: "ls"
+      - run:
+          name: "Run build"
+          command: "mkdir build && cd build && cmake ../daq && make"

@@ -16,7 +16,7 @@ class EventListFile {
   virtual void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) = 0;
 
  protected:
-  std::string fileName{};
+  std::string fileName_{};
 };
 
 #endif /* EVENTLISTFILE_HH_ */

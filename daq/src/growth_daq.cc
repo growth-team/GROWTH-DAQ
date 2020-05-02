@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
   const double exposureInSec = atoi(argv[3]);
 
   int dummyArgc     = 0;
-  char* dummyArgv[] = {(char*)""};
+  const char* dummyArgv[] = {""};
 #ifdef DRAW_CANVAS
   app = new TApplication("app", &dummyArgc, dummyArgv);
 #endif

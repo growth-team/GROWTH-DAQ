@@ -7,7 +7,7 @@ extern "C" {
 
 #include "CxxUtilities/FitsUtility.hh"
 #include "EventListFile.hh"
-#include "GROWTH_FY2015_ADC.hh"
+#include "adcboard.hh"
 
 class EventListFileFITS : public EventListFile {
 
@@ -59,38 +59,38 @@ class EventListFileFITS : public EventListFile {
   // event list HDU
   //---------------------------------------------
   static const size_t nColumns_Event = 11;
-  char* ttypes[nColumns_Event]       = {
+  const char* ttypes[nColumns_Event]       = {
       //
-      (char*)"boardIndexAndChannel",  // B
-      (char*)"timeTag",               // K
-      (char*)"triggerCount",          // U
-      (char*)"phaMax",                // U
-      (char*)"phaMaxTime",            // U
-      (char*)"phaMin",                // U
-      (char*)"phaFirst",              // U
-      (char*)"phaLast",               // U
-      (char*)"maxDerivative",         // U
-      (char*)"baseline",              // U
-      (char*)"waveform"               // B
+      "boardIndexAndChannel",  // B
+      "timeTag",               // K
+      "triggerCount",          // U
+      "phaMax",                // U
+      "phaMaxTime",            // U
+      "phaMin",                // U
+      "phaFirst",              // U
+      "phaLast",               // U
+      "maxDerivative",         // U
+      "baseline",              // U
+      "waveform"               // B
   };
   const size_t MaxTFORM        = 1024;
-  char* tforms[nColumns_Event] = {
+  const char* tforms[nColumns_Event] = {
       //
-      (char*)"B" /*uint8_t*/,                      // boardIndexAndChannel
-      (char*)"K" /*uint64_t*/,                     // timeTag
-      (char*)"U" /*uint16_t*/,                     // triggerCount
-      (char*)"U" /*uint16_t*/,                     // phaMax
-      (char*)"U" /*uint16_t*/,                     // phaMaxTime
-      (char*)"U" /*uint16_t*/,                     // phaMin
-      (char*)"U" /*uint16_t*/,                     // phaFirst
-      (char*)"U" /*uint16_t*/,                     // phaLast
-      (char*)"U" /*uint16_t*/,                     // maxDerivative
-      (char*)"U" /*uint16_t*/,                     // baseline
+      "B" /*uint8_t*/,                      // boardIndexAndChannel
+      "K" /*uint64_t*/,                     // timeTag
+      "U" /*uint16_t*/,                     // triggerCount
+      "U" /*uint16_t*/,                     // phaMax
+      "U" /*uint16_t*/,                     // phaMaxTime
+      "U" /*uint16_t*/,                     // phaMin
+      "U" /*uint16_t*/,                     // phaFirst
+      "U" /*uint16_t*/,                     // phaLast
+      "U" /*uint16_t*/,                     // maxDerivative
+      "U" /*uint16_t*/,                     // baseline
       new char[MaxTFORM] /* to be filled later */  //
   };
-  char* tunits[nColumns_Event] = {
+  const char* tunits[nColumns_Event] = {
       //
-      (char*)"", (char*)"", (char*)"", (char*)"", (char*)"", (char*)""  //
+      "", "", "", "", "", ""  //
   };
   enum columnIndices {
     Column_boardIndexAndChannel = 1,
@@ -110,23 +110,23 @@ class EventListFileFITS : public EventListFile {
   // GPS Time Register HDU
   //---------------------------------------------
   static const size_t nColumns_GPS = 3;
-  char* ttypes_GPS[nColumns_GPS]   = {
+  const char* ttypes_GPS[nColumns_GPS]   = {
       //
-      (char*)"fpgaTimeTag",  //
-      (char*)"unixTime",     //
-      (char*)"gpsTime"       //
+      "fpgaTimeTag",  //
+      "unixTime",     //
+      "gpsTime"       //
   };
-  char* tforms_GPS[nColumns_GPS] = {
+  const char* tforms_GPS[nColumns_GPS] = {
       //
-      (char*)"K",   //
-      (char*)"V",   //
-      (char*)"14A"  //
+      "K",   //
+      "V",   //
+      "14A"  //
   };
-  char* tunits_GPS[nColumns_GPS] = {
+  const char* tunits_GPS[nColumns_GPS] = {
       //
-      (char*)"",  //
-      (char*)"",  //
-      (char*)""   //
+      "",  //
+      "",  //
+      ""   //
   };
   enum columnIndices_GPS {
     Column_fpgaTimeTag = 1,  //

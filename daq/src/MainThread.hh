@@ -17,7 +17,7 @@ TApplication* app;
 
 #include <cstdlib>
 #include "EventListFileFITS.hh"
-#include "GROWTH_FY2015_ADC.hh"
+#include "adcboard.hh"
 
 //#define DRAW_CANVAS 0
 

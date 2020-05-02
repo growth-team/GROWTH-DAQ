@@ -5,8 +5,6 @@
 #include "EventListFile.hh"
 #include "TCanvas.h"
 #include "TFile.h"
-#include "TGraph.h"
-#include "TH1D.h"
 #include "TTree.h"
 
 class EventListFileROOT : public EventListFile {
@@ -14,7 +12,7 @@ class EventListFileROOT : public EventListFile {
   EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "");
   ~EventListFileROOT();
   void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events);
-  size_t getEntries();
+  size_t getEntries() const;
   void fillGPSTime(uint8_t* gpsTimeRegisterBuffer);
   void close();
 
@@ -24,12 +22,12 @@ class EventListFileROOT : public EventListFile {
   void writeHeader();
 
  private:
-  std::unique_ptr<TTree> eventTree;
-  std::unique_ptr<TFile> outputFile;
-  std::string detectorID{};
-  uint32_t unixTime{};
-  GROWTH_FY2015_ADC_Type::Event eventEntry{};
-  std::string configurationYAMLFile{};
+  std::unique_ptr<TTree> eventTree_;
+  std::unique_ptr<TFile> outputFile_;
+  std::string detectorID_{};
+  uint32_t unixTime_{};
+  GROWTH_FY2015_ADC_Type::Event eventEntry_{};
+  std::string configurationYAMLFile_{};
 };
 
 #endif /* EVENTLISTFILEROOT_HH_ */
