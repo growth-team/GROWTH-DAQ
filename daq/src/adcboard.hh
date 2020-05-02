@@ -171,7 +171,7 @@
 class ChannelManager;
 class ChannelModule;
 class ConsumerManagerEventFIFO;
-class EventDecorder;
+class EventDecoder;
 class RMAPHandlerUART;
 
 using GROWTH_FY2015_ADC_Type::TriggerMode;
@@ -274,12 +274,6 @@ class GROWTH_FY2015_ADC {
    */
   void reset();
 
-  /** Returns RMAPHandler instance which is used in this instance.
-   * @return an instance of RMAPHandler used in this instance
-   */
-  RMAPHandler* getRMAPHandler();
-
-
   /** Closes the device.
    */
   void closeDevice();
@@ -316,7 +310,7 @@ class GROWTH_FY2015_ADC {
    * @param chNumber channel number
    * @param triggerMode trigger mode (see TriggerMode)
    */
-  void setTriggerMode(size_t chNumber, TriggerMode triggerMode) throw(SpaceFibreADCException);
+  void setTriggerMode(size_t chNumber, TriggerMode triggerMode);
 
   /** Sets the number of ADC samples recorded for a single trigger.
    * This method sets the same number to all the channels.
@@ -343,38 +337,38 @@ class GROWTH_FY2015_ADC {
   /** Sets Leading Trigger Threshold.
    * @param threshold an adc value for leading trigger threshold
    */
-  void setStartingThreshold(size_t chNumber, uint32_t threshold) throw(SpaceFibreADCException);
+  void setStartingThreshold(size_t chNumber, uint32_t threshold);
   /** Sets Trailing Trigger Threshold.
    * @param threshold an adc value for trailing trigger threshold
    */
-  void setClosingThreshold(size_t chNumber, uint32_t threshold) throw(SpaceFibreADCException); 
+  void setClosingThreshold(size_t chNumber, uint32_t threshold);
     /** Sets TriggerBusMask which is used in TriggerMode==TriggerBus.
    * @param enabledChannels array of enabled trigger bus channels.
    */
-  void setTriggerBusMask(size_t chNumber, std::vector<size_t> enabledChannels) throw(SpaceFibreADCException);
+  void setTriggerBusMask(size_t chNumber, std::vector<size_t> enabledChannels);
   /** Sets depth of delay per trigger. When triggered,
    * a waveform will be recorded starting from N steps
    * before of the trigger timing.
    * @param depthOfDelay number of samples retarded
    */
-  void setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay) throw(SpaceFibreADCException);
+  void setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay);
 
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
-  uint32_t getLivetime(size_t chNumber) throw(SpaceFibreADCException);
+  uint32_t getLivetime(size_t chNumber);
   /** Get current ADC value.
    * @return temporal ADC value
    */
-  uint32_t getCurrentADCValue(size_t chNumber) throw(SpaceFibreADCException);
+  uint32_t getCurrentADCValue(size_t chNumber);
 
   /** Turn on ADC.
    */
-  void turnOnADCPower(size_t chNumber) throw(SpaceFibreADCException);
+  void turnOnADCPower(size_t chNumber);
 
   /** Turn off ADC.
    */
-  void turnOffADCPower(size_t chNumber) throw(SpaceFibreADCException);
+  void turnOffADCPower(size_t chNumber);
 
   /** Starts data acquisition. Configuration of registers of
    * individual channels should be completed before invoking this method.
@@ -420,7 +414,7 @@ class GROWTH_FY2015_ADC {
    * PresetMode::NonStop (Forever)
    * @param presetMode preset mode value (see also enum class SpaceFibreADC::PresetMode )
    */
-  void setPresetMode(SpaceFibreADC::PresetMode presetMode);
+  void setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetMode);
 
   /** Sets Livetime preset value.
    * @param livetimeIn10msUnit live time to be set (in a unit of 10ms)
@@ -443,13 +437,13 @@ class GROWTH_FY2015_ADC {
    * - ADCClockFrequency::ADCClock50MHz <br>
    * @param adcClockFrequency enum class ADCClockFrequency
    */
-  void setAdcClock(SpaceFibreADC::ADCClockFrequency adcClockFrequency);
+  void setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency);
 
   /** Gets HK data including the real time and the live time which are
    * counted in the FPGA, and acquisition status (started or stopped).
    * @retrun HK information contained in a SpaceFibreADC::HouseKeepingData instance
    */
-  SpaceFibreADC::HouseKeepingData getHouseKeepingData();
+  GROWTH_FY2015_ADC_Type::HouseKeepingData getHouseKeepingData();
 
   /** Returns EventDecoder instance.
    * @return EventDecoder instance

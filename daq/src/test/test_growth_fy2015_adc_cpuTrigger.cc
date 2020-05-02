@@ -18,13 +18,13 @@ static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
 
 class MainThread : public CxxUtilities::StoppableThread {
  public:
-  std::string deviceName;
+  std::string deviceName_;
   size_t nEventsMax;
   TApplication* app;
 
  public:
   MainThread(std::string deviceName, size_t nEventsMax, TApplication* app) {
-    this->deviceName = deviceName;
+    this->deviceName_ = deviceName;
     this->nEventsMax = nEventsMax;
     this->app        = app;
   }
@@ -32,7 +32,7 @@ class MainThread : public CxxUtilities::StoppableThread {
  public:
   void run() {
     using namespace std;
-    auto adcBoard                           = new GROWTH_FY2015_ADC(deviceName);
+    auto adcBoard                           = new GROWTH_FY2015_ADC(deviceName_);
     const size_t nChannels                  = 4;
     const size_t NumberOfSamples            = 1000;
     const size_t NumberOfSamplesEventPacket = 2;

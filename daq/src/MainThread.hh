@@ -6,75 +6,53 @@
 #include "TFile.h"
 #include "TH1D.h"
 #endif
-#ifdef DRAW_CANVAS
-#include "TApplication.h"
-#include "TCanvas.h"
-#include "TFile.h"
-#include "TH1D.h"
-#include "TROOT.h"
-TApplication* app;
-#endif
 
 #include <cstdlib>
 #include "EventListFileFITS.hh"
 #include "adcboard.hh"
 
+#include <chrono>
+#include <thread>
+
 //#define DRAW_CANVAS 0
 
 enum class DAQStatus {
-  Paused  = 0,  //
+  Paused = 0,  //
   Running = 1
 };
 
 class MainThread : public CxxUtilities::StoppableThread {
  public:
-  std::string deviceName;
-  std::string configurationFile;
-  double exposureInSec;
-
- public:
-  MainThread(std::string deviceName, std::string configurationFile, double exposureInSec) {
-    this->deviceName        = deviceName;
-    this->exposureInSec     = exposureInSec;
-    this->configurationFile = configurationFile;
-    this->switchOutputFile  = false;
-    setDAQStatus(DAQStatus::Paused);
-  }
+  MainThread(std::string deviceName, std::string configurationFile, double exposureInSec)
+      : deviceName_(deviceName),
+        exposureInSec_(exposureInSec),
+        configurationFile_(configurationFile),
+        switchOutputFile_(false) {}
 
  public:
   void run() {
     using namespace std;
     setDAQStatus(DAQStatus::Running);
-    switchOutputFile = false;
-    adcBoard         = new GROWTH_FY2015_ADC(deviceName);
+    adcBoard_.reset(new GROWTH_FY2015_ADC(deviceName_));
 
-    fpgaType    = adcBoard->getFPGAType();
-    fpgaVersion = adcBoard->getFPGAVersion();
+    fpgaType_ = adcBoard_->getFPGAType();
+    fpgaVersion_ = adcBoard_->getFPGAVersion();
     setWaitDurationBetweenEventRead();
-
-#ifdef DRAW_CANVAS
-    //---------------------------------------------
-    // Run ROOT event loop
-    //---------------------------------------------
-    canvas = new TCanvas("c", "c", 500, 500);
-    canvas->Draw();
-    canvas->SetLogy();
-#endif
 
     //---------------------------------------------
     // Load configuration file
     //---------------------------------------------
-    if (!CxxUtilities::File::exists(configurationFile)) {
-      cerr << "Error: YAML configuration file " << configurationFile << " not found." << endl;
+    if (!CxxUtilities::File::exists(configurationFile_)) {
+      cerr << "Error: YAML configuration file " << configurationFile_ << " not found." << endl;
       ::exit(-1);
     }
-    adcBoard->loadConfigurationFile(configurationFile);
+    adcBoard_->loadConfigurationFile(configurationFile_);
 
     cout << "//---------------------------------------------" << endl  //
          << "// Start acquisition" << endl                             //
          << "//---------------------------------------------" << endl;
     try {
-      adcBoard->startAcquisition();
+      adcBoard_->startAcquisition();
       cout << "Acquisition started." << endl;
     } catch (...) {
       cerr << "Failed to start acquisition." << endl;
@@ -90,71 +68,61 @@ class MainThread : public CxxUtilities::StoppableThread {
     // Send CPU Trigger
     //---------------------------------------------
     cout << "Sending CPU Trigger" << endl;
-    adcBoard->sendCPUTrigger();
+    adcBoard_->sendCPUTrigger();
 
     //---------------------------------------------
     // Read raw ADC values
     //---------------------------------------------
     for (size_t i = 0; i < 4; i++) {
       cout << "Ch." << i << " ADC ";
-      for (size_t o = 0; o < 5; o++) { cout << (uint32_t)adcBoard->getCurrentADCValue(i) << " " << endl; }
+      for (size_t o = 0; o < 5; o++) {
+        cout << adcBoard_->getCurrentADCValue(i) << " " << endl;
+      }
     }
 
     //---------------------------------------------
     // Read GPS Register
     //---------------------------------------------
     cout << "Reading GPS Register" << endl;
-    cout << adcBoard->getGPSRegister() << endl;
+    cout << adcBoard_->getGPSRegister() << endl;
     readAnsSaveGPSRegister();
 
     //---------------------------------------------
     // Log start time
     //---------------------------------------------
-    startUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+    startUnixTime_ = CxxUtilities::Time::getUNIXTimeAsUInt32();
 
     //---------------------------------------------
     // Read events
     //---------------------------------------------
-#ifdef DRAW_CANVAS
-    hist = new TH1D("h", "Histogram", 1024, 0, 1024);
-    hist->GetXaxis()->SetRangeUser(480, 1024);
-    hist->GetXaxis()->SetTitle("ADC Channel");
-    hist->GetYaxis()->SetTitle("Counts");
-    hist->Draw();
-    canvas->Update();
-    canvasUpdateCounter = 0;
-#endif
-
-    uint32_t elapsedTime   = 0;
+    uint32_t elapsedTime = 0;
     size_t nReceivedEvents = 0;
-    stopped                = false;
+    stopped = false;
     while (!stopped) {
       nReceivedEvents = readAndThenSaveEvents();
-      if (nReceivedEvents == 0) { c.wait(eventReadWaitDuration); }
+      if (nReceivedEvents == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(eventReadWaitDuration));
+      }
       // Get current UNIX time
       uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
       // Read GPS register if necessary
-      if (currentUnixTime - unixTimeOfLastGPSRegisterRead > GPSRegisterReadWaitInSec) { readAnsSaveGPSRegister(); }
+      if (currentUnixTime - unixTimeOfLastGPSRegisterRead > GPSRegisterReadWaitInSec) {
+        readAnsSaveGPSRegister();
+      }
       // Update elapsed time
-      elapsedTime = currentUnixTime - startUnixTime;
+      elapsedTime = currentUnixTime - startUnixTime_;
       // Check whether specified exposure has been completed
-      if (exposureInSec > 0 && elapsedTime >= exposureInSec) { break; }
+      if (exposureInSec_ > 0 && elapsedTime >= exposureInSec_) {
+        break;
+      }
     }
-
-#ifdef DRAW_CANVAS
-    cout << "Saving histogram" << endl;
-    TFile* file = new TFile("histogram.root", "recreate");
-    file->cd();
-    hist->Write();
-    file->Close();
-#endif
 
     //---------------------------------------------
     // Finalize observation run
     //---------------------------------------------
 
     // Stop acquisition first
-    adcBoard->stopAcquisition();
+    adcBoard_->stopAcquisition();
 
     // Completely read the EventFIFO
     readAndThenSaveEvents();
@@ -166,34 +134,32 @@ class MainThread : public CxxUtilities::StoppableThread {
     closeOutputEventListFile();
 
     // FIanlize the board
-    adcBoard->closeDevice();
+    adcBoard_->closeDevice();
     cout << "Waiting child threads to be finalized..." << endl;
-    c.wait(1000);
-    cout << "Deleting ADCBoard instance." << endl;
-    delete adcBoard;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     setDAQStatus(DAQStatus::Paused);
   }
 
  public:
-  DAQStatus getDAQStatus() const { return daqStatus; }
+  DAQStatus getDAQStatus() const { return daqStatus_; }
 
  public:
-  const size_t getNEvents() const { return nEvents; }
+  size_t getNEvents() const { return nEvents_; }
 
  public:
-  const size_t getNEventsOfCurrentOutputFile() const { return nEventsOfCurrentOutputFile; }
+  size_t getNEventsOfCurrentOutputFile() const { return nEventsOfCurrentOutputFile_; }
 
  public:
-  const size_t getElapsedTime() const {
+  size_t getElapsedTime() const {
     uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
-    return currentUnixTime - startUnixTime;
+    return currentUnixTime - startUnixTime_;
   }
 
  public:
   const size_t getElapsedTimeOfCurrentOutputFile() const {
-    if (daqStatus == DAQStatus::Running) {
+    if (daqStatus_ == DAQStatus::Running) {
       uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
-      return currentUnixTime - startUnixTimeOfCurrentOutputFile;
+      return currentUnixTime - startUnixTimeOfCurrentOutputFile_;
     } else {
       return 0;
     }
@@ -201,8 +167,8 @@ class MainThread : public CxxUtilities::StoppableThread {
 
  public:
   const std::string getOutputFileName() const {
-    if (outputFileName != "") {
-      return outputFileName;
+    if (outputFileName_ != "") {
+      return outputFileName_;
     } else {
       return "None";
     }
@@ -214,36 +180,17 @@ class MainThread : public CxxUtilities::StoppableThread {
    * MessageServer class when the class is commanded to split output files.
    * A new file is created when the next event(s) is(are) read from the board.
    */
-  void startNewOutputFile() { switchOutputFile = true; }
-
- private:
-  void debug_readStatus(int debugChannel = 3) {
-    using namespace std;
-    //---------------------------------------------
-    // Read status
-    //---------------------------------------------
-    ChannelModule* channelModule = adcBoard->getChannelRegister(debugChannel);
-    printf("Debugging Ch.%d\n", debugChannel);
-    printf("ADC          = %d\n", channelModule->getCurrentADCValue());
-    printf("Livetime     = %d\n", channelModule->getLivetime());
-    cout << channelModule->getStatus() << endl;
-    size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(  //
-        ConsumerManagerEventFIFO::AddressOf_EventFIFO_DataCount_Register);
-    printf("EventFIFO Count = %zu\n", eventFIFODataCount);
-    printf("TriggerCount = %zu\n", channelModule->getTriggerCount());
-    printf("ADC          = %d\n", channelModule->getCurrentADCValue());
-  }
+  void startNewOutputFile() { switchOutputFile_ = true; }
 
  private:
   void setDAQStatus(DAQStatus status) {
-    daqStatusMutex.lock();
-    daqStatus = status;
-    daqStatusMutex.unlock();
+    std::lock_guard<std::mutex> guard(daqStatusMutex);
+    daqStatus_ = status;
   }
 
  private:
   void readAnsSaveGPSRegister() {
-    eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
+    eventListFile_->fillGPSTime(adcBoard_->getGPSRegisterUInt8());
     unixTimeOfLastGPSRegisterRead = CxxUtilities::Time::getUNIXTimeAsUInt32();
   }
 
@@ -256,36 +203,38 @@ class MainThread : public CxxUtilities::StoppableThread {
   void setWaitDurationBetweenEventRead() {
     const char* envPointer = std::getenv("GROWTH_DAQ_WAIT_DURATION");
     if (envPointer != NULL) {
-      uint32_t waitDurationInMillisec = atoi(envPointer);
-      if (waitDurationInMillisec != 0) { eventReadWaitDuration = waitDurationInMillisec; }
+      const uint32_t waitDurationInMillisec = atoi(envPointer);
+      if (waitDurationInMillisec != 0) {
+        eventReadWaitDuration = waitDurationInMillisec;
+      }
     }
     eventReadWaitDuration = DefaultEventReadWaitDurationInMillisec;
   }
 
  private:
   void openOutputEventListFile() {
-    startUnixTimeOfCurrentOutputFile = CxxUtilities::Time::getUNIXTimeAsUInt32();
-    nEventsOfCurrentOutputFile       = 0;
+    startUnixTimeOfCurrentOutputFile_ = CxxUtilities::Time::getUNIXTimeAsUInt32();
+    nEventsOfCurrentOutputFile_ = 0;
 #ifdef USE_ROOT
-    outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
-    eventListFile  = new EventListFileROOT(outputFileName, adcBoard->DetectorID, configurationFile);
+    outputFileName_ = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
+    eventListFile_ = new EventListFileROOT(outputFileName_, adcBoard_->DetectorID, configurationFile_);
 #else
-    outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
-    eventListFile  = new EventListFileFITS(outputFileName, adcBoard->DetectorID, configurationFile,  //
-                                          adcBoard->getNSamplesInEventListFile(), exposureInSec,    //
-                                          fpgaType, fpgaVersion);
+    outputFileName_ = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
+    eventListFile_ = new EventListFileFITS(outputFileName_, adcBoard_->DetectorID, configurationFile_,  //
+                                           adcBoard_->getNSamplesInEventListFile(), exposureInSec_,     //
+                                           fpgaType_, fpgaVersion_);
 #endif
-    std::cout << "Output file name: " << outputFileName << std::endl;
+    std::cout << "Output file name: " << outputFileName_ << std::endl;
   }
 
  private:
   void closeOutputEventListFile() {
-    if (eventListFile != nullptr) {
-      eventListFile->close();
-      delete eventListFile;
-      eventListFile                    = nullptr;
-      outputFileName                   = "";
-      startUnixTimeOfCurrentOutputFile = 0;
+    if (eventListFile_ != nullptr) {
+      eventListFile_->close();
+      delete eventListFile_;
+      eventListFile_ = nullptr;
+      outputFileName_ = "";
+      startUnixTimeOfCurrentOutputFile_ = 0;
     }
   }
 
@@ -294,72 +243,52 @@ class MainThread : public CxxUtilities::StoppableThread {
     using namespace std;
 
     // Start recording to a new file is ordered.
-    if (switchOutputFile) {
+    if (switchOutputFile_) {
       closeOutputEventListFile();
       openOutputEventListFile();
-      switchOutputFile = false;
+      switchOutputFile_ = false;
     }
 
-    std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
+    std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard_->getEvent();
     cout << "Received " << events.size() << " events" << endl;
-    eventListFile->fillEvents(events);
+    eventListFile_->fillEvents(events);
 
-#ifdef DRAW_CANVAS
-    cout << "Filling to histogram" << endl;
-    for (auto event : events) { hist->Fill(event->phaMax); }
-#endif
-
-    size_t nReceivedEvents = events.size();
-    nEvents += nReceivedEvents;
-    nEventsOfCurrentOutputFile += nReceivedEvents;
-    cout << events.size() << " events (" << nEvents << ")" << endl;
-    adcBoard->freeEvents(events);
-
-#ifdef DRAW_CANVAS
-    canvasUpdateCounter++;
-    if (canvasUpdateCounter == canvasUpdateCounterMax) {
-      cout << "Update canvas." << endl;
-      canvasUpdateCounter = 0;
-      hist->Draw();
-      canvas->Update();
-    }
-#endif
+    const size_t nReceivedEvents = events.size();
+    nEvents_ += nReceivedEvents;
+    nEventsOfCurrentOutputFile_ += nReceivedEvents;
+    cout << events.size() << " events (" << nEvents_ << ")" << endl;
+    adcBoard_->freeEvents(events);
 
     return nReceivedEvents;
   }
 
  private:
-  static const uint32_t DefaultEventReadWaitDurationInMillisec = 50;
-  uint32_t eventReadWaitDuration                               = DefaultEventReadWaitDurationInMillisec;
-  static const size_t GPSRegisterReadWaitInSec                 = 30;  // 30s
-  uint32_t unixTimeOfLastGPSRegisterRead                       = 0;
+  std::string deviceName_;
+  std::string configurationFile_;
+  double exposureInSec_{};
 
- private:
-  GROWTH_FY2015_ADC* adcBoard;
-  CxxUtilities::Condition c;
-  uint32_t fpgaType;
-  uint32_t fpgaVersion;
-  size_t nEvents                    = 0;
-  size_t nEventsOfCurrentOutputFile = 0;
-#ifdef DRAW_CANVAS
-  TCanvas* canvas;
-  TH1D* hist;
-  size_t canvasUpdateCounter;
-  const size_t canvasUpdateCounterMax = 10;
-#endif
+  static constexpr uint32_t DefaultEventReadWaitDurationInMillisec = 50;
+  uint32_t eventReadWaitDuration = DefaultEventReadWaitDurationInMillisec;
+  static constexpr size_t GPSRegisterReadWaitInSec = 30;  // 30s
+  uint32_t unixTimeOfLastGPSRegisterRead = 0;
+
+  std::unique_ptr<GROWTH_FY2015_ADC> adcBoard_;
+  uint32_t fpgaType_{};
+  uint32_t fpgaVersion_{};
+  size_t nEvents_ = 0;
+  size_t nEventsOfCurrentOutputFile_ = 0;
 #ifdef USE_ROOT
-  EventListFileROOT* eventListFile = nullptr;
+  EventListFileROOT* eventListFile_ = nullptr;
 #else
-  EventListFileFITS* eventListFile = nullptr;
+  EventListFileFITS* eventListFile_ = nullptr;
 #endif
 
- private:
-  uint32_t startUnixTime;
-  uint32_t startUnixTimeOfCurrentOutputFile;
-  std::string outputFileName;
-  bool switchOutputFile;
-  DAQStatus daqStatus;
-  CxxUtilities::Mutex daqStatusMutex;
+  uint32_t startUnixTime_{};
+  uint32_t startUnixTimeOfCurrentOutputFile_{};
+  std::string outputFileName_{};
+  bool switchOutputFile_{};
+  DAQStatus daqStatus_ = DAQStatus::Paused;
+  std::mutex daqStatusMutex;
 };
 
 #endif /* SRC_MAINTHREAD_HH_ */

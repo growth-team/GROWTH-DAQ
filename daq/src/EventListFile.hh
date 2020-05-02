@@ -11,9 +11,10 @@ class EventListFile {
   EventListFile(std::string fileName) : fileName_(std::move(fileName)) {}
   virtual ~EventListFile() = default;
   virtual void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) = 0;
-  virtual size_t getEntries() = 0;
+  virtual void fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) = 0;
+  virtual size_t getEntries() const = 0;
   virtual void close() = 0;
-  virtual void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) = 0;
+
 
  protected:
   std::string fileName_{};

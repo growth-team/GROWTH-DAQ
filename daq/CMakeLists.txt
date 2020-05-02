@@ -61,6 +61,10 @@ link_directories(
 #---------------------------------------------
 add_executable(growth_daq
   src/growth_daq.cc
+  src/EventListFileFITS.cc
+  src/MessageServer.cc
+  src/SerialPort.cc
+  src/adcboard.cc
 )
 
 #---------------------------------------------

@@ -11,10 +11,10 @@ class EventListFileROOT : public EventListFile {
  public:
   EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "");
   ~EventListFileROOT();
-  void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events);
-  size_t getEntries() const;
-  void fillGPSTime(uint8_t* gpsTimeRegisterBuffer);
-  void close();
+  void fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) override;
+  void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) override;
+  size_t getEntries() const override;
+  void close() override;
 
  private:
   void createOutputRootFile();

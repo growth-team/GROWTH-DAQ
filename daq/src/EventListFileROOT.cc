@@ -12,7 +12,7 @@ EventListFileROOT::~EventListFileROOT() {
   delete[] eventEntry_.waveform;
 }
 
-void EventListFileROOT::fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
+void EventListFileROOT::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
   unixTime_ = CxxUtilities::Time::getUNIXTimeAsUInt32();
   for (auto& event : events) {
     copyEventData(event, &eventEntry_);
@@ -22,7 +22,10 @@ void EventListFileROOT::fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& 
 
 size_t EventListFileROOT::getEntries() const { return eventTree_->GetEntries(); }
 
-void EventListFileROOT::fillGPSTime(uint8_t* gpsTimeRegisterBuffer) {}
+void EventListFileROOT::fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) {
+	// "GPS time vs local clock" table is not implemented in the ROOT file format.
+
+}
 
 void EventListFileROOT::close() {
   if (outputFile_ != NULL) {
@@ -32,7 +35,7 @@ void EventListFileROOT::close() {
 }
 
 void EventListFileROOT::createOutputRootFile() {
-  outputFile_.reset(new TFile(fileName.c_str(), "recreate"));
+  outputFile_.reset(new TFile(fileName_.c_str(), "recreate"));
   eventTree_.reset(new TTree("eventTree", "eventTree"));
 
   // - C : a character string terminated by the 0 character

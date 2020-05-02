@@ -7,7 +7,6 @@
 #include "MessageServer.hh"
 
 int main(int argc, char* argv[]) {
-  
   // Process arguments
   if (argc < 4) {
     using namespace std;
@@ -21,31 +20,22 @@ int main(int argc, char* argv[]) {
   const std::string configurationFile(argv[2]);
   const double exposureInSec = atoi(argv[3]);
 
-  int dummyArgc     = 0;
+  int dummyArgc = 0;
   const char* dummyArgv[] = {""};
-#ifdef DRAW_CANVAS
-  app = new TApplication("app", &dummyArgc, dummyArgv);
-#endif
 
   // Instantiate
-  std::unique_prt<MainThread> mainThread(new MainThread(deviceName, configurationFile, exposureInSec));
+  std::shared_ptr<MainThread> mainThread(new MainThread(deviceName, configurationFile, exposureInSec));
   std::unique_ptr<MessageServer> messageServer(new MessageServer(mainThread));
 
-#ifdef DRAW_CANVAS
-  mainThread->start();
-  CxxUtilities::Condition c{};
-  c.wait(3000);
-  app->Run();
-  c.wait(3000);
-#else
   // Run
-  if (exposureInSec > 0.0) { mainThread->start(); }
+  if (exposureInSec > 0.0) {
+    mainThread->start();
+  }
   if (exposureInSec <= 0.0) {
     messageServer->start();
     messageServer->join();
   }
   mainThread->join();
-#endif
 
   return 0;
 }

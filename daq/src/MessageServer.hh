@@ -43,7 +43,7 @@ class MessageServer : public CxxUtilities::StoppableThread {
   picojson::object processStartNewOutputFileCommand();
 
   zmq::context_t context{};
-  zmq::socket_t socket{};
+  zmq::socket_t socket;
   zmq::message_t replyMessage{};
   std::shared_ptr<MainThread> mainThread{};
 };

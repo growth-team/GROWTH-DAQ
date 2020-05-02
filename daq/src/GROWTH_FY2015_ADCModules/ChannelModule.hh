@@ -78,7 +78,7 @@ class ChannelModule {
   void setRegister(uint32_t address, uint16_t data) { rmapHandler->setRegister(address, data); }
 
  public:
-  uint16_t getRegister(uint32_t address) { return rmapHandler->getRegister(address); }
+  uint16_t getRegister(uint32_t address) const { return rmapHandler->getRegister(address); }
 
  public:
   /** Sets trigger mode.
@@ -97,7 +97,7 @@ class ChannelModule {
     if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting TriggerMode..."; }
     this->setRegister(AddressOf_TriggerModeRegister, triggerModeInteger);
     if (Debug::channelmodule()) {
-      uint16_t triggerModeRead = this->getRegister(AddressOf_TriggerModeRegister);
+      const uint16_t triggerModeRead = this->getRegister(AddressOf_TriggerModeRegister);
       cout << "done(" << hex << setw(4) << triggerModeRead << dec << ")" << endl;
     }
   }
@@ -123,10 +123,10 @@ class ChannelModule {
     if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting TriggerBusMask..."; }
     std::bitset<SpaceFibreADC::NumberOfChannels> maskBitPatter;
     for (size_t i = 0; i < enabledChannels.size(); i++) { maskBitPatter[enabledChannels[i]] = 1; }
-    uint16_t mask = maskBitPatter.to_ulong();
+    const uint16_t mask = maskBitPatter.to_ulong();
     this->setRegister(AddressOf_TriggerBusMaskRegister, mask);
     if (Debug::channelmodule()) {
-      uint16_t maskRead = this->getRegister(AddressOf_TriggerBusMaskRegister);
+      const uint16_t maskRead = this->getRegister(AddressOf_TriggerBusMaskRegister);
       cout << "done(" << hex << setw(4) << maskRead << dec << ")" << endl;
     }
   }
@@ -149,7 +149,7 @@ class ChannelModule {
     if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting NumberOfSamples..."; }
     this->setRegister(AddressOf_NumberOfSamplesRegister, nSamples);
     if (Debug::channelmodule()) {
-      uint16_t nSamplesRead = this->getRegister(AddressOf_NumberOfSamplesRegister);
+      const uint16_t nSamplesRead = this->getRegister(AddressOf_NumberOfSamplesRegister);
       cout << "done(" << hex << setw(4) << nSamplesRead << dec << ")" << endl;
     }
   }
@@ -163,7 +163,7 @@ class ChannelModule {
     if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting LeadingTriggerThreshold..."; }
     this->setRegister(AddressOf_ThresholdStartingRegister, threshold);
     if (Debug::channelmodule()) {
-      uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdStartingRegister);
+      const uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdStartingRegister);
       cout << "done(" << hex << setw(4) << thresholdRead << dec << ")" << endl;
     }
   }
@@ -177,7 +177,7 @@ class ChannelModule {
     if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting TrailingTriggerThreshold..."; }
     this->setRegister(AddressOf_ThresholdClosingRegister, threshold);
     if (Debug::channelmodule()) {
-      uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdClosingRegister);
+      const uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdClosingRegister);
       cout << "done(" << hex << setw(4) << thresholdRead << dec << ")" << endl;
     }
   }
@@ -221,10 +221,10 @@ class ChannelModule {
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
-  uint32_t getLivetime() {
-    uint16_t livetimeL = this->getRegister(AddressOf_LivetimeRegisterL);
-    uint16_t livetimeH = this->getRegister(AddressOf_LivetimeRegisterH);
-    uint32_t livetime  = (((uint32_t)livetimeH) << 16) + livetimeL;
+  uint32_t getLivetime() const {
+    const uint32_t livetimeL = this->getRegister(AddressOf_LivetimeRegisterL);
+    const uint32_t livetimeH = this->getRegister(AddressOf_LivetimeRegisterH);
+    const uint32_t livetime  = (((uint32_t)livetimeH) << 16) + livetimeL;
     return livetime;
   }
 
@@ -232,11 +232,10 @@ class ChannelModule {
   /** Get current ADC value.
    * @return temporal ADC value
    */
-  uint32_t getCurrentADCValue() {
+  uint32_t getCurrentADCValue() const {
     using namespace std;
     if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") current ADC value:0x"; }
-    std::vector<uint8_t> readData(2);
-    uint16_t adcvalue = this->getRegister(AddressOf_CurrentAdcDataRegister);
+    const uint16_t adcvalue = this->getRegister(AddressOf_CurrentAdcDataRegister);
     if (Debug::channelmodule()) { cout << hex << setw(4) << setfill('0') << adcvalue << dec << endl; }
     return adcvalue;
   }
@@ -245,7 +244,7 @@ class ChannelModule {
   /** Reads Status Register. Result will be returned as string.
    * @return stringified status
    */
-  std::string getStatus() {
+  std::string getStatus() const {
     using namespace std;
     uint16_t statusRegister = rmapHandler->getRegister(AddressOf_Status1Register);
     std::stringstream ss;
@@ -283,9 +282,9 @@ class ChannelModule {
   /** Reads TriggerCountRegister.
    * @return trigger count
    */
-  size_t getTriggerCount() {
-    size_t low  = rmapHandler->getRegister(AddressOf_TriggerCountRegisterL);
-    size_t high = rmapHandler->getRegister(AddressOf_TriggerCountRegisterH);
+  size_t getTriggerCount() const {
+    const size_t low  = rmapHandler->getRegister(AddressOf_TriggerCountRegisterL);
+    const size_t high = rmapHandler->getRegister(AddressOf_TriggerCountRegisterH);
     return (high << 16) + low;
   }
 };
