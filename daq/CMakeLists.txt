@@ -64,7 +64,7 @@ add_executable(growth_daq
 # Linked libraries
 #---------------------------------------------
 if(APPLE)
-  set(BOOST_LINK_LIBS boost_thread-mt boost_system-mt pthread)
+  set(BOOST_LINK_LIBS boost_thread-mt boost_system-mt)
 else()
   set(BOOST_LINK_LIBS boost_thread boost_system)
 endif()
@@ -75,6 +75,7 @@ target_link_libraries(growth_daq
   xerces-c
   ${BOOST_LINK_LIBS}
   ${ROOT_LIBRARIES}
+  pthread
 )
 
 #=============================================
