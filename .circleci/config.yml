@@ -1,0 +1,9 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: growthteam/daq-ci-ubuntu
+
+    steps:
+      - checkout
+      - run: mkdir build && cd build && cmake .. && make
