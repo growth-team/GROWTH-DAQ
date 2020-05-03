@@ -8,8 +8,8 @@
 #ifndef DATARECORDER_HH_
 #define DATARECORDER_HH_
 
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/RMAPHandler.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 
 #include <TGClient.h>
 #include "TApplication.h"

@@ -15,7 +15,7 @@ EventListFileFITS::EventListFileFITS(std::string fileName, std::string detectorI
 EventListFileFITS::~EventListFileFITS() { close(); }
 
 void EventListFileFITS::createOutputFITSFile() {
-	std::lock_guard<std::mutex> guard(fitsAccessMutex_);
+  std::lock_guard<std::mutex> guard(fitsAccessMutex_);
   using namespace std;
 
   rowIndex = 0;
@@ -60,7 +60,7 @@ void EventListFileFITS::createOutputFITSFile() {
                   const_cast<char**>(tforms_GPS), const_cast<char**>(tunits_GPS), "GPS", &fitsStatus);
   this->reportErrorThenQuitIfError(fitsStatus, __func__);
 
-  fits_movnam_hdu(outputFile, tbltype, (char*)"EVENTS", 0, &fitsStatus);
+  fits_movnam_hdu(outputFile, tbltype, const_cast<char*>("EVENTS"), 0, &fitsStatus);
   this->reportErrorThenQuitIfError(fitsStatus, __func__);
 
   outputFileIsOpen = true;
@@ -148,7 +148,7 @@ void EventListFileFITS::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Eve
   std::lock_guard<std::mutex> guard(fitsAccessMutex_);
   for (auto& event : events) {
     rowIndex++;
-    { // clang-format off
+    {  // clang-format off
       fits_write_col(outputFile, TBYTE, Column_boardIndexAndChannel, rowIndex, firstElement, 1, &event->ch, &fitsStatus);
       fits_write_col(outputFile, TLONGLONG, Column_timeTag, rowIndex, firstElement, 1, &event->timeTag, &fitsStatus);
       fits_write_col(outputFile, TUSHORT, Column_triggerCount, rowIndex, firstElement, 1, &event->triggerCount, &fitsStatus);
@@ -162,7 +162,7 @@ void EventListFileFITS::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Eve
       if (nSamples != 0) {
         fits_write_col(outputFile, TUSHORT, Column_waveform, rowIndex, firstElement, nSamples, event->waveform, &fitsStatus);
       }
-    } // clang-format on
+    }  // clang-format on
     expandIfNecessary();
   }
 }
@@ -188,7 +188,7 @@ void EventListFileFITS::expandIfNecessary() {
 
 void EventListFileFITS::close() {
   if (outputFileIsOpen) {
-	  std::lock_guard<std::mutex> guard(fitsAccessMutex_);
+    std::lock_guard<std::mutex> guard(fitsAccessMutex_);
     outputFileIsOpen = false;
     using namespace std;
     int fitsStatus = 0;
@@ -220,8 +220,8 @@ void EventListFileFITS::close() {
 
     /* Update NAXIS2 */
     if (rowIndex == 0) {
-      fits_update_key(outputFile, TULONG, (char*)"NAXIS2", (void*)&rowIndex, (char*)"number of rows in table",
-                      &fitsStatus);
+      fits_update_key(outputFile, TULONG, const_cast<char*>("NAXIS2"), reinterpret_cast<void*>(&rowIndex),
+                      const_cast<char*>("number of rows in table"), &fitsStatus);
       this->reportErrorThenQuitIfError(fitsStatus, __func__);
       cout << "This HDU has 0 row." << endl;
     }

@@ -15,6 +15,8 @@ endif(USE_ROOT)
 
 find_package(Boost)
 
+set(CMAKE_CXXFLAGS "-fcolor-diagnostics")
+
 #=============================================
 # Initial definition of cmake variables
 #=============================================

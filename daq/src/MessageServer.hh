@@ -12,7 +12,6 @@
 #include <string>
 #include <zmq.hpp>
 
-// picojson
 #include "picojson.h"
 
 class MainThread;
@@ -42,10 +41,10 @@ class MessageServer : public CxxUtilities::StoppableThread {
   picojson::object processGetStatusCommand();
   picojson::object processStartNewOutputFileCommand();
 
-  zmq::context_t context{};
-  zmq::socket_t socket;
-  zmq::message_t replyMessage{};
-  std::shared_ptr<MainThread> mainThread{};
+  zmq::context_t context_{};
+  zmq::socket_t socket_;
+  zmq::message_t replyMessage_{};
+  std::shared_ptr<MainThread> mainThread_{};
 };
 
 #endif /* SRC_MESSAGESERVER_HH_ */

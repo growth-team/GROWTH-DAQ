@@ -8,14 +8,15 @@
 #ifndef CHANNELMODULE_HH_
 #define CHANNELMODULE_HH_
 
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/RMAPHandler.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
+#include "GROWTH_FY2015_ADCModules/Debug.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 
 /** A class which represents a ChannelModule on VHDL logic.
  */
 class ChannelModule {
  public:
-  static const uint32_t InitialAddressOf_ChModule_0  = 0x01011000;
+  static const uint32_t InitialAddressOf_ChModule_0 = 0x01011000;
   static const uint32_t AddressOffsetBetweenChannels = 0x100;
 
  public:
@@ -48,30 +49,30 @@ class ChannelModule {
    * @param[in] chNumber this instance's channel number
    */
   ChannelModule(RMAPHandler* rmapHandler, RMAPTargetNode* adcRMAPTargetNode, int chNumber) {
-    this->rmapHandler                   = rmapHandler;
-    this->adcRMAPTargetNode             = adcRMAPTargetNode;
-    this->chNumber                      = chNumber;
-    uint32_t BA                         = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
-    AddressOf_TriggerModeRegister       = BA + 0x0002;
-    AddressOf_NumberOfSamplesRegister   = BA + 0x0004;
+    this->rmapHandler = rmapHandler;
+    this->adcRMAPTargetNode = adcRMAPTargetNode;
+    this->chNumber = chNumber;
+    uint32_t BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
+    AddressOf_TriggerModeRegister = BA + 0x0002;
+    AddressOf_NumberOfSamplesRegister = BA + 0x0004;
     AddressOf_ThresholdStartingRegister = BA + 0x0006;
-    AddressOf_ThresholdClosingRegister  = BA + 0x0008;
-    AddressOf_AdcPowerDownModeRegister  = BA + 0x000a;
-    AddressOf_DepthOfDelayRegister      = BA + 0x000c;
-    AddressOf_LivetimeRegisterL         = BA + 0x000e;
-    AddressOf_LivetimeRegisterH         = BA + 0x0010;
-    AddressOf_CurrentAdcDataRegister    = BA + 0x0012;
-    AddressOf_CPUTriggerRegister        = BA + 0x0014;
-    AddressOf_TriggerCountRegisterL     = BA + 0x0016;
-    AddressOf_TriggerCountRegisterH     = BA + 0x0018;
+    AddressOf_ThresholdClosingRegister = BA + 0x0008;
+    AddressOf_AdcPowerDownModeRegister = BA + 0x000a;
+    AddressOf_DepthOfDelayRegister = BA + 0x000c;
+    AddressOf_LivetimeRegisterL = BA + 0x000e;
+    AddressOf_LivetimeRegisterH = BA + 0x0010;
+    AddressOf_CurrentAdcDataRegister = BA + 0x0012;
+    AddressOf_CPUTriggerRegister = BA + 0x0014;
+    AddressOf_TriggerCountRegisterL = BA + 0x0016;
+    AddressOf_TriggerCountRegisterH = BA + 0x0018;
     /*
      AddressOf_DigitalFilterTrigger_ThresholdDeltaRegister = BA + 0x0018;
      AddressOf_DigitalFilterTrigger_WidthRegister = BA + 0x001a;
      AddressOf_DigitalFilterTrigger_HitPattern_FilterCoefficientSelectorRegister = BA + 0x0020;
      */
     AddressOf_TriggerBusMaskRegister = BA + 0x0024;
-    AddressOf_Status1Register        = BA + 0x0030;
-    AddressOf_TriggerCountRegisterL  = AddressOf_TriggerCountRegisterH;
+    AddressOf_Status1Register = BA + 0x0030;
+    AddressOf_TriggerCountRegisterL = AddressOf_TriggerCountRegisterH;
   }
 
  public:
@@ -94,7 +95,9 @@ class ChannelModule {
   void setTriggerMode(GROWTH_FY2015_ADC_Type::TriggerMode triggerMode) {
     uint16_t triggerModeInteger = static_cast<uint16_t>(triggerMode);
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting TriggerMode..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") setting TriggerMode...";
+    }
     this->setRegister(AddressOf_TriggerModeRegister, triggerModeInteger);
     if (Debug::channelmodule()) {
       const uint16_t triggerModeRead = this->getRegister(AddressOf_TriggerModeRegister);
@@ -108,9 +111,13 @@ class ChannelModule {
    */
   int getTriggerMode() {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") getting TriggerMode..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") getting TriggerMode...";
+    }
     uint16_t triggerModeInteger = this->getRegister(AddressOf_TriggerModeRegister);
-    if (Debug::channelmodule()) { cout << "done(" << hex << setw(4) << triggerModeInteger << dec << ")" << endl; }
+    if (Debug::channelmodule()) {
+      cout << "done(" << hex << setw(4) << triggerModeInteger << dec << ")" << endl;
+    }
     return triggerModeInteger;
   }
 
@@ -120,9 +127,13 @@ class ChannelModule {
    */
   void setTriggerBusMask(std::vector<size_t> enabledChannels) {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting TriggerBusMask..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") setting TriggerBusMask...";
+    }
     std::bitset<SpaceFibreADC::NumberOfChannels> maskBitPatter;
-    for (size_t i = 0; i < enabledChannels.size(); i++) { maskBitPatter[enabledChannels[i]] = 1; }
+    for (size_t i = 0; i < enabledChannels.size(); i++) {
+      maskBitPatter[enabledChannels[i]] = 1;
+    }
     const uint16_t mask = maskBitPatter.to_ulong();
     this->setRegister(AddressOf_TriggerBusMaskRegister, mask);
     if (Debug::channelmodule()) {
@@ -134,9 +145,13 @@ class ChannelModule {
  public:
   void sendCPUTrigger() {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") sending CPU trigger..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") sending CPU trigger...";
+    }
     this->setRegister(AddressOf_CPUTriggerRegister, 0xFFFF);
-    if (Debug::channelmodule()) { cout << "done" << endl; }
+    if (Debug::channelmodule()) {
+      cout << "done" << endl;
+    }
   }
 
  public:
@@ -146,7 +161,9 @@ class ChannelModule {
    */
   void setNumberOfSamples(uint16_t nSamples) {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting NumberOfSamples..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") setting NumberOfSamples...";
+    }
     this->setRegister(AddressOf_NumberOfSamplesRegister, nSamples);
     if (Debug::channelmodule()) {
       const uint16_t nSamplesRead = this->getRegister(AddressOf_NumberOfSamplesRegister);
@@ -160,7 +177,9 @@ class ChannelModule {
    */
   void setStartingThreshold(uint16_t threshold) {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting LeadingTriggerThreshold..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") setting LeadingTriggerThreshold...";
+    }
     this->setRegister(AddressOf_ThresholdStartingRegister, threshold);
     if (Debug::channelmodule()) {
       const uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdStartingRegister);
@@ -174,7 +193,9 @@ class ChannelModule {
    */
   void setClosingThreshold(uint16_t threshold) {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting TrailingTriggerThreshold..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") setting TrailingTriggerThreshold...";
+    }
     this->setRegister(AddressOf_ThresholdClosingRegister, threshold);
     if (Debug::channelmodule()) {
       const uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdClosingRegister);
@@ -201,7 +222,9 @@ class ChannelModule {
     } else {
       this->setRegister(AddressOf_AdcPowerDownModeRegister, 0xFFFF);
     }
-    if (Debug::channelmodule()) { cout << "done" << endl; }
+    if (Debug::channelmodule()) {
+      cout << "done" << endl;
+    }
   }
 
  public:
@@ -212,9 +235,13 @@ class ChannelModule {
    */
   void setDepthOfDelay(uint16_t depthOfDelay) {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") setting Depth Of Delay..."; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") setting Depth Of Delay...";
+    }
     this->setRegister(AddressOf_DepthOfDelayRegister, depthOfDelay);
-    if (Debug::channelmodule()) { cout << "done" << endl; }
+    if (Debug::channelmodule()) {
+      cout << "done" << endl;
+    }
   }
 
  public:
@@ -224,7 +251,7 @@ class ChannelModule {
   uint32_t getLivetime() const {
     const uint32_t livetimeL = this->getRegister(AddressOf_LivetimeRegisterL);
     const uint32_t livetimeH = this->getRegister(AddressOf_LivetimeRegisterH);
-    const uint32_t livetime  = (((uint32_t)livetimeH) << 16) + livetimeL;
+    const uint32_t livetime = (livetimeH << 16) + livetimeL;
     return livetime;
   }
 
@@ -234,9 +261,13 @@ class ChannelModule {
    */
   uint32_t getCurrentADCValue() const {
     using namespace std;
-    if (Debug::channelmodule()) { cout << "channelmodule(" << chNumber << ") current ADC value:0x"; }
+    if (Debug::channelmodule()) {
+      cout << "channelmodule(" << chNumber << ") current ADC value:0x";
+    }
     const uint16_t adcvalue = this->getRegister(AddressOf_CurrentAdcDataRegister);
-    if (Debug::channelmodule()) { cout << hex << setw(4) << setfill('0') << adcvalue << dec << endl; }
+    if (Debug::channelmodule()) {
+      cout << hex << setw(4) << setfill('0') << adcvalue << dec << endl;
+    }
     return adcvalue;
   }
 
@@ -283,7 +314,7 @@ class ChannelModule {
    * @return trigger count
    */
   size_t getTriggerCount() const {
-    const size_t low  = rmapHandler->getRegister(AddressOf_TriggerCountRegisterL);
+    const size_t low = rmapHandler->getRegister(AddressOf_TriggerCountRegisterL);
     const size_t high = rmapHandler->getRegister(AddressOf_TriggerCountRegisterH);
     return (high << 16) + low;
   }

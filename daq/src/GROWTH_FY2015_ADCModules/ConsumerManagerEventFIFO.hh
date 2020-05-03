@@ -9,7 +9,7 @@
 #define CONSUMERMANAGEREVENTFIFO_HH_
 
 #include "CxxUtilities/CxxUtilities.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
 
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.
@@ -51,19 +51,19 @@ class ConsumerManagerEventFIFO {
 
  public:
   // Addresses of Consumer Manager Module
-  static const uint32_t InitialAddressOf_ConsumerMgr                        = 0x01010000;
-  static const uint32_t ConsumerMgrBA                                       = InitialAddressOf_ConsumerMgr;
-  static const uint32_t AddressOf_EventOutputDisableRegister                = ConsumerMgrBA + 0x0100;
-  static const uint32_t AddressOf_GateSize_FastGate_Register                = ConsumerMgrBA + 0x010e;
-  static const uint32_t AddressOf_GateSize_SlowGate_Register                = ConsumerMgrBA + 0x0110;
-  static const uint32_t AddressOf_NumberOf_BaselineSample_Register          = ConsumerMgrBA + 0x0112;
-  static const uint32_t AddressOf_ConsumerMgr_ResetRegister                 = ConsumerMgrBA + 0x0114;
-  static const uint32_t AddressOf_EventPacket_NumberOfWaveform_Register     = ConsumerMgrBA + 0x0116;
+  static const uint32_t InitialAddressOf_ConsumerMgr = 0x01010000;
+  static const uint32_t ConsumerMgrBA = InitialAddressOf_ConsumerMgr;
+  static const uint32_t AddressOf_EventOutputDisableRegister = ConsumerMgrBA + 0x0100;
+  static const uint32_t AddressOf_GateSize_FastGate_Register = ConsumerMgrBA + 0x010e;
+  static const uint32_t AddressOf_GateSize_SlowGate_Register = ConsumerMgrBA + 0x0110;
+  static const uint32_t AddressOf_NumberOf_BaselineSample_Register = ConsumerMgrBA + 0x0112;
+  static const uint32_t AddressOf_ConsumerMgr_ResetRegister = ConsumerMgrBA + 0x0114;
+  static const uint32_t AddressOf_EventPacket_NumberOfWaveform_Register = ConsumerMgrBA + 0x0116;
   static const uint32_t AddressOf_EventPacket_WaveformDownSampling_Register = ConsumerMgrBA + 0xFFFF;
 
   // Addresses of EventFIFO
-  static const uint32_t InitialAddressOf_EventFIFO             = 0x10000000;
-  static const uint32_t FinalAddressOf_EventFIFO               = 0x1000FFFF;
+  static const uint32_t InitialAddressOf_EventFIFO = 0x10000000;
+  static const uint32_t FinalAddressOf_EventFIFO = 0x1000FFFF;
   static const uint32_t AddressOf_EventFIFO_DataCount_Register = 0x20000000;
 
  private:
@@ -83,7 +83,7 @@ class ConsumerManagerEventFIFO {
    * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
    */
   ConsumerManagerEventFIFO(RMAPHandler* rmapHandler, RMAPTargetNode* adcRMAPTargetNode) {
-    this->rmapHandler       = rmapHandler;
+    this->rmapHandler = rmapHandler;
     this->adcRMAPTargetNode = adcRMAPTargetNode;
 
     dumpThread = new ConsumerManagerEventFIFODumpThread(this);
@@ -101,9 +101,13 @@ class ConsumerManagerEventFIFO {
    */
   void reset() {
     using namespace std;
-    if (Debug::consumermanager()) { cout << "ConsumerManager::reset()..."; }
+    if (Debug::consumermanager()) {
+      cout << "ConsumerManager::reset()...";
+    }
     rmapHandler->setRegister(AddressOf_ConsumerMgr_ResetRegister, 0x0001);
-    if (Debug::consumermanager()) { cout << "done" << endl; }
+    if (Debug::consumermanager()) {
+      cout << "done" << endl;
+    }
   }
 
  private:
@@ -211,9 +215,11 @@ class ConsumerManagerEventFIFO {
 
  private:
   size_t readEventFIFO(uint8_t* buffer, size_t length) throw(RMAPInitiatorException) {
-    size_t dataCountInBytes = readEventFIFODataCount() * 2;
-    size_t readSize         = std::min(dataCountInBytes, length);
-    if (readSize != 0) { rmapHandler->read(adcRMAPTargetNode, InitialAddressOf_EventFIFO, (uint32_t)readSize, buffer); }
+    const size_t dataCountInBytes = readEventFIFODataCount() * 2;
+    const size_t readSize = std::min(dataCountInBytes, length);
+    if (readSize != 0) {
+      rmapHandler->read(adcRMAPTargetNode, InitialAddressOf_EventFIFO, readSize, buffer);
+    }
     return readSize;
   }
 
@@ -244,7 +250,9 @@ class ConsumerManagerEventFIFO {
    */
   void enableEventDataOutput() {
     using namespace std;
-    if (Debug::consumermanager()) { cout << "Enabling event data output..."; }
+    if (Debug::consumermanager()) {
+      cout << "Enabling event data output...";
+    }
     rmapHandler->setRegister(AddressOf_EventOutputDisableRegister, 0x0000);
     if (Debug::consumermanager()) {
       uint16_t eventOutputDisableRegister = rmapHandler->getRegister(AddressOf_EventOutputDisableRegister);
@@ -262,7 +270,9 @@ class ConsumerManagerEventFIFO {
    */
   void disableEventDataOutput() {
     using namespace std;
-    if (Debug::consumermanager()) { cout << "Disabling event data output..."; }
+    if (Debug::consumermanager()) {
+      cout << "Disabling event data output...";
+    }
     rmapHandler->setRegister(AddressOf_EventOutputDisableRegister, 0x0001);
     if (Debug::consumermanager()) {
       uint16_t eventOutputDisableRegister = rmapHandler->getRegister(AddressOf_EventOutputDisableRegister);

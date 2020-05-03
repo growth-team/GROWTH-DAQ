@@ -8,10 +8,10 @@
 #ifndef SPACEFIBREADC_CONSTANTS_HH_
 #define SPACEFIBREADC_CONSTANTS_HH_
 
-#include <stddef.h>
+#include <cstddef>
 #include <cstdint>
 
-namespace SpaceFibreADC {
+namespace GROWTH_FY2015_ADCModules {
 static const size_t NumberOfChannels  = 4;
 static const size_t MaxWaveformLength = 1024;
 }  // namespace SpaceFibreADC

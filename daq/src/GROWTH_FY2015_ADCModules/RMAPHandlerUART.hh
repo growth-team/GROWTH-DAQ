@@ -18,17 +18,19 @@ class RMAPHandlerUART : public RMAPHandler {
  public:
   RMAPHandlerUART(std::string deviceName, std::vector<RMAPTargetNode*> rmapTargetNodes) : RMAPHandler() {
     using namespace std;
-    this->deviceName      = deviceName;
+    this->deviceName = deviceName;
     this->timeOutDuration = 2000.0;
-    this->maxNTrials      = 10;
-    this->useDraftECRC    = false;
-    this->spwif           = NULL;
-    this->rmapEngine      = NULL;
-    this->rmapInitiator   = NULL;
+    this->maxNTrials = 10;
+    this->useDraftECRC = false;
+    this->spwif = NULL;
+    this->rmapEngine = NULL;
+    this->rmapInitiator = NULL;
     this->setTimeOutDuration(DefaultTimeOut);
 
     // add RMAPTargetNodes to DB
-    for (auto& rmapTargetNode : rmapTargetNodes) { rmapTargetDB.addRMAPTargetNode(rmapTargetNode); }
+    for (auto& rmapTargetNode : rmapTargetNodes) {
+      rmapTargetDB.addRMAPTargetNode(rmapTargetNode);
+    }
 
     adcRMAPTargetNode = rmapTargetDB.getRMAPTargetNode("ADCBox");
     if (adcRMAPTargetNode == NULL) {
@@ -43,7 +45,9 @@ class RMAPHandlerUART : public RMAPHandler {
  public:
   bool connectoToSpaceWireToGigabitEther() {
     using namespace std;
-    if (spwif != NULL) { delete spwif; }
+    if (spwif != NULL) {
+      delete spwif;
+    }
 
     // connect to UART-USB-SpaceWire interface
     spwif = new SpaceWireIFOverUART(this->deviceName);
@@ -95,8 +99,8 @@ class RMAPHandlerUART : public RMAPHandler {
     delete rmapInitiator;
     delete spwif;
 
-    spwif         = NULL;
-    rmapEngine    = NULL;
+    spwif = NULL;
+    rmapEngine = NULL;
     rmapInitiator = NULL;
     cout << "RMAPHandler::disconnectSpWGbE(): Completed" << endl;
   }
@@ -106,7 +110,9 @@ class RMAPHandlerUART : public RMAPHandler {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     read(targetNode, memoryAddress, length, buffer);
   }
 
@@ -125,7 +131,9 @@ class RMAPHandlerUART : public RMAPHandler {
  public:
   void read(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint32_t length, uint8_t* buffer) {
     using namespace std;
-    if (rmapInitiator == NULL) { return; }
+    if (rmapInitiator == NULL) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         rmapInitiator->read(rmapTargetNode, memoryAddress, length, buffer, timeOutDuration);
@@ -152,7 +160,9 @@ class RMAPHandlerUART : public RMAPHandler {
  public:
   void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* buffer) {
     using namespace std;
-    if (rmapInitiator == NULL) { return; }
+    if (rmapInitiator == NULL) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         rmapInitiator->read(rmapTargetNode, memoryObjectID, buffer, timeOutDuration);
@@ -180,7 +190,9 @@ class RMAPHandlerUART : public RMAPHandler {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     write(targetNode, memoryAddress, data, length);
   }
 
@@ -189,25 +201,29 @@ class RMAPHandlerUART : public RMAPHandler {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     write(targetNode, memoryObjectID, data);
   }
 
  public:
   void write(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint8_t* data, uint32_t length) {
     using namespace std;
-    if (rmapInitiator == NULL) { return; }
+    if (rmapInitiator == NULL) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         if (length != 0) {
           rmapInitiator->write(rmapTargetNode, memoryAddress, data, length, timeOutDuration);
         } else {
-          rmapInitiator->write(rmapTargetNode, memoryAddress, (uint8_t*)NULL, (uint32_t)0, timeOutDuration);
+          rmapInitiator->write(rmapTargetNode, memoryAddress, nullptr, 0, timeOutDuration);
         }
         break;
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::write() 1: RMAPInitiatorException::" << e.toString() << endl;
-        std::cerr << "Time out; trying again..." << std::endl;
+        cerr << "Time out; trying again..." << endl;
         spwif->cancelReceive();
         if (i == maxNTrials - 1) {
           if (e.getStatus() == RMAPInitiatorException::Timeout) {
@@ -224,17 +240,15 @@ class RMAPHandlerUART : public RMAPHandler {
  public:
   void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* data) {
     using namespace std;
-    if (rmapInitiator == NULL) { return; }
+    if (rmapInitiator == NULL) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
-        if (1) {
-          rmapInitiator->write(rmapTargetNode, memoryObjectID, data, timeOutDuration);
-        } else {
-          rmapInitiator->write(rmapTargetNode, memoryObjectID, (uint8_t*)NULL, timeOutDuration);
-        }
+        rmapInitiator->write(rmapTargetNode, memoryObjectID, data, timeOutDuration);
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::write() 2: RMAPInitiatorException::" << e.toString() << endl;
-        std::cerr << "Time out; trying again..." << std::endl;
+        cerr << "Time out; trying again..." << endl;
         spwif->cancelReceive();
         if (i == maxNTrials - 1) {
           if (e.getStatus() == RMAPInitiatorException::Timeout) {
@@ -253,7 +267,9 @@ class RMAPHandlerUART : public RMAPHandler {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     return targetNode;
   }
 
@@ -267,7 +283,7 @@ class RMAPHandlerUART : public RMAPHandler {
   uint16_t getRegister(uint32_t address) {
     uint8_t readData[2];
     this->read(adcRMAPTargetNode, address, 2, readData);
-    return (uint16_t)(readData[0] * 0x100 + readData[1]);
+    return (static_cast<uint16_t>(readData[0]) << 16) + readData[1];
   }
 };
 

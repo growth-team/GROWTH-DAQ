@@ -1,10 +1,3 @@
-/*
- * Types.hh
- *
- *  Created on: Oct 27, 2014
- *      Author: yuasa
- */
-
 #ifndef GROWTH_FY2015_ADC_TYPES_HH_
 #define GROWTH_FY2015_ADC_TYPES_HH_
 
@@ -12,25 +5,25 @@
 
 namespace GROWTH_FY2015_ADC_Type {
 enum class TriggerMode : uint32_t {
-  StartThreshold_NSamples_AutoClose      = 1,  //
-  CommonGateIn                           = 2,  //
+  StartThreshold_NSamples_AutoClose = 1,       //
+  CommonGateIn = 2,                            //
   StartThreshold_NSamples_CloseThreshold = 3,  //
-  DeltaAboveDelayedADC_NumberOfSamples   = 4,  //
-  CPUTrigger                             = 5,  //
-  TriggerBusSelectedOR                   = 8,  //
-  TriggerBusSelectedAND                  = 9
+  DeltaAboveDelayedADC_NumberOfSamples = 4,    //
+  CPUTrigger = 5,                              //
+  TriggerBusSelectedOR = 8,                    //
+  TriggerBusSelectedAND = 9
 };
 
 enum class PresetMode : uint32_t {
-  NonStop        = 0,  //
-  Livetime       = 1,  //
+  NonStop = 0,         //
+  Livetime = 1,        //
   NumberOfEvents = 2,  //
 };
 
 struct HouseKeepingData {
   uint32_t realtime;
-  uint32_t livetime[SpaceFibreADC::NumberOfChannels];
-  bool acquisitionStarted[SpaceFibreADC::NumberOfChannels];
+  uint32_t livetime[GROWTH_FY2015_ADCModules::NumberOfChannels];
+  bool acquisitionStarted[GROWTH_FY2015_ADCModules::NumberOfChannels];
 };
 
 struct Event {

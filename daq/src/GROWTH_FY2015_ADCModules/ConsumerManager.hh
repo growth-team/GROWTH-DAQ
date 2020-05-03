@@ -8,7 +8,7 @@
 #ifndef CONSUMERMANAGER_HH_
 #define CONSUMERMANAGER_HH_
 
-#include "../GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
 
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.

@@ -36,21 +36,23 @@ class RMAPHandler {
   RMAPHandler(std::string ipAddress, uint32_t tcpPortNumber = 10030,
               std::vector<RMAPTargetNode*> rmapTargetNodes = {}) {
     using namespace std;
-    this->ipAddress       = ipAddress;
-    this->tcpPortNumber   = tcpPortNumber;
+    this->ipAddress = ipAddress;
+    this->tcpPortNumber = tcpPortNumber;
     this->timeOutDuration = 1000.0;
-    this->maxNTrials      = 10;
-    this->useDraftECRC    = false;
-    this->spwif           = NULL;
-    this->rmapEngine      = NULL;
-    this->rmapInitiator   = NULL;
+    this->maxNTrials = 10;
+    this->useDraftECRC = false;
+    this->spwif = NULL;
+    this->rmapEngine = NULL;
+    this->rmapInitiator = NULL;
     this->setTimeOutDuration(DefaultTimeOut);
 
     // add RMAPTargetNodes to DB
-    for (auto& rmapTargetNode : rmapTargetNodes) { rmapTargetDB.addRMAPTargetNode(rmapTargetNode); }
+    for (auto& rmapTargetNode : rmapTargetNodes) {
+      rmapTargetDB.addRMAPTargetNode(rmapTargetNode);
+    }
 
     adcRMAPTargetNode = rmapTargetDB.getRMAPTargetNode("ADCBox");
-    if (adcRMAPTargetNode == NULL) {
+    if (adcRMAPTargetNode == nullptr) {
       cerr << "RMAPHandler::RMAPHandler(): ADCBox RMAP Target Node not found" << endl;
       exit(-1);
     }
@@ -63,12 +65,14 @@ class RMAPHandler {
   virtual ~RMAPHandler() {}
 
  public:
-  bool isConnectedToSpWGbE() { return _isConnectedToSpWGbE; }
+  bool isConnectedToSpWGbE() const { return _isConnectedToSpWGbE; }
 
  public:
   virtual bool connectoToSpaceWireToGigabitEther() {
     using namespace std;
-    if (spwif != NULL) { delete spwif; }
+    if (spwif != NULL) {
+      delete spwif;
+    }
 
     // connect to SpaceWire-to-GigabitEther
     spwif = new SpaceWireIFOverTCP(ipAddress, tcpPortNumber);
@@ -115,20 +119,20 @@ class RMAPHandler {
     delete rmapInitiator;
     delete spwif;
 
-    spwif         = NULL;
-    rmapEngine    = NULL;
+    spwif = NULL;
+    rmapEngine = NULL;
     rmapInitiator = NULL;
     cout << "RMAPHandler::disconnectSpWGbE(): Completed" << endl;
   }
 
  public:
-  std::string getIPAddress() { return ipAddress; }
+  std::string getIPAddress() const { return ipAddress; }
 
  public:
-  uint32_t getIPPortNumber() { return tcpPortNumber; }
+  uint32_t getIPPortNumber() const { return tcpPortNumber; }
 
  public:
-  RMAPInitiator* getRMAPInitiator() { return rmapInitiator; }
+  RMAPInitiator* getRMAPInitiator() const { return rmapInitiator; }
 
  public:
   void setDraftECRC(bool useECRC = true) {
@@ -147,7 +151,9 @@ class RMAPHandler {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     read(targetNode, memoryAddress, length, buffer);
   }
 
@@ -164,10 +170,12 @@ class RMAPHandler {
   }
 
  public:
-  virtual uint32_t read32BitRegister(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress) {
+  virtual uint32_t read32BitRegister(const RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress) const {
     uint8_t buffer[4];
     using namespace std;
-    if (rmapInitiator == NULL) { return 0x00; }
+    if (rmapInitiator == nullptr) {
+      return 0x00;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         // Lower 16 bits
@@ -180,7 +188,7 @@ class RMAPHandler {
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::read(): RMAPInitiatorException::" << e.toString() << endl;
         cerr << "Read timed out (address="
-             << "0x" << hex << right << setw(8) << setfill('0') << (uint32_t)memoryAddress << " length=" << dec << 2
+             << "0x" << hex << right << setw(8) << setfill('0') << memoryAddress << " length=" << dec << 2
              << "); trying again..." << endl;
         if (i == maxNTrials - 1) {
           if (e.getStatus() == RMAPInitiatorException::Timeout) {
@@ -198,7 +206,9 @@ class RMAPHandler {
  public:
   virtual void read(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint32_t length, uint8_t* buffer) {
     using namespace std;
-    if (rmapInitiator == NULL) { return; }
+    if (rmapInitiator == nullptr) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         rmapInitiator->read(rmapTargetNode, memoryAddress, length, buffer, timeOutDuration);
@@ -206,8 +216,8 @@ class RMAPHandler {
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::read(): RMAPInitiatorException::" << e.toString() << endl;
         cerr << "Read timed out (address="
-             << "0x" << hex << right << setw(8) << setfill('0') << (uint32_t)memoryAddress << " length=" << dec
-             << length << "); trying again..." << endl;
+             << "0x" << hex << right << setw(8) << setfill('0') << memoryAddress << " length=" << dec << length
+             << "); trying again..." << endl;
         if (i == maxNTrials - 1) {
           if (e.getStatus() == RMAPInitiatorException::Timeout) {
             throw RMAPHandlerException(RMAPHandlerException::TimeOut);
@@ -223,7 +233,9 @@ class RMAPHandler {
  public:
   virtual void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* buffer) {
     using namespace std;
-    if (rmapInitiator == NULL) { return; }
+    if (rmapInitiator == nullptr) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         rmapInitiator->read(rmapTargetNode, memoryObjectID, buffer, timeOutDuration);
@@ -247,32 +259,28 @@ class RMAPHandler {
   }
 
  public:
-  virtual void write(std::string rmapTargetNodeID, uint32_t memoryAddress, uint8_t* data, uint32_t length) {
+  virtual void write(std::string rmapTargetNodeID, uint32_t memoryAddress, const uint8_t* data, size_t length) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     write(targetNode, memoryAddress, data, length);
   }
 
  public:
-  virtual void write(std::string rmapTargetNodeID, std::string memoryObjectID, uint8_t* data) {
-    RMAPTargetNode* targetNode;
-    try {
-      targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
-    write(targetNode, memoryObjectID, data);
-  }
-
- public:
-  virtual void write(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint8_t* data, uint32_t length) {
-    if (rmapInitiator == NULL) { return; }
+  virtual void write(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, const uint8_t* data, size_t length) {
+    if (rmapInitiator == nullptr) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         if (length != 0) {
-          rmapInitiator->write(rmapTargetNode, memoryAddress, data, length, timeOutDuration);
+          // TODO: Remove const_cast when SpaceWireRMAPLibrary is updated to accept const uint8_t*.
+          rmapInitiator->write(rmapTargetNode, memoryAddress, const_cast<uint8_t*>(data), length, timeOutDuration);
         } else {
-          rmapInitiator->write(rmapTargetNode, memoryAddress, (uint8_t*)NULL, (uint32_t)0, timeOutDuration);
+          rmapInitiator->write(rmapTargetNode, memoryAddress, nullptr, 0, timeOutDuration);
         }
         break;
       } catch (RMAPInitiatorException& e) {
@@ -290,15 +298,14 @@ class RMAPHandler {
   }
 
  public:
-  virtual void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* data) {
-    if (rmapInitiator == NULL) { return; }
+  virtual void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, const uint8_t* data) {
+    if (rmapInitiator == nullptr) {
+      return;
+    }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
-        if (1) {
-          rmapInitiator->write(rmapTargetNode, memoryObjectID, data, timeOutDuration);
-        } else {
-          rmapInitiator->write(rmapTargetNode, memoryObjectID, (uint8_t*)NULL, timeOutDuration);
-        }
+        // TODO: Remove const_cast when SpaceWireRMAPLibrary is updated to accept const uint8_t*.
+        rmapInitiator->write(rmapTargetNode, memoryObjectID, const_cast<uint8_t*>(data), timeOutDuration);
       } catch (RMAPInitiatorException& e) {
         std::cerr << "Time out; trying again..." << std::endl;
         if (i == maxNTrials - 1) {
@@ -318,13 +325,15 @@ class RMAPHandler {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) { throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget); }
+    } catch (...) {
+      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
+    }
     return targetNode;
   }
 
  public:
   virtual void setRegister(uint32_t address, uint16_t data) {
-    uint8_t writeData[2] = {static_cast<uint8_t>(data / 0x100), static_cast<uint8_t>(data % 0x100)};
+    const uint8_t writeData[2] = {static_cast<uint8_t>(data / 0x100), static_cast<uint8_t>(data % 0x100)};
     this->write(adcRMAPTargetNode, address, writeData, 2);
   }
 
@@ -332,7 +341,7 @@ class RMAPHandler {
   virtual uint16_t getRegister(uint32_t address) {
     uint8_t readData[2];
     this->read(adcRMAPTargetNode, address, 2, readData);
-    return (uint16_t)(readData[0] * 0x100 + readData[1]);
+    return (static_cast<uint16_t>(readData[0]) << 16) + readData[1];
   }
 
   /*

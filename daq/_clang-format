@@ -2,3 +2,5 @@ BasedOnStyle: Google
 AlignTrailingComments: true
 AlwaysBreakTemplateDeclarations: true
 ColumnLimit: 120
+DerivePointerBinding: false
+PointerBindsToType: true
