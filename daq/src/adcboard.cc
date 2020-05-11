@@ -12,37 +12,29 @@
 
 #include "yaml-cpp/yaml.h"
 
-GROWTH_FY2015_ADCDumpThread::GROWTH_FY2015_ADCDumpThread(GROWTH_FY2015_ADC* parent) {
-  this->parent       = parent;
-  this->eventDecoder = parent->getEventDecoder();
-}
-
-void GROWTH_FY2015_ADCDumpThread::run() {
+void GROWTH_FY2015_ADC::dumpThread() {
   CxxUtilities::Condition c;
-  using namespace std;
   size_t nReceivedEvents_previous = 0;
-  size_t delta                    = 0;
+  size_t delta = 0;
   size_t nReceivedEvents_latch;
-  while (!this->stopped) {
-    c.wait(WaitDurationInMilliSec);
-    nReceivedEvents_latch    = parent->nReceivedEvents;
-    delta                    = nReceivedEvents_latch - nReceivedEvents_previous;
+  while (!stopDumpThread_) {
+    c.wait(1000);  // ms
+    nReceivedEvents_latch = nReceivedEvents;
+    delta = nReceivedEvents_latch - nReceivedEvents_previous;
     nReceivedEvents_previous = nReceivedEvents_latch;
-    cout << "GROWTH_FY2015_ADC received " << dec << parent->nReceivedEvents << " events (delta=" << dec << delta << ")."
-         << endl;
-    cout << "GROWTH_FY2015_ADC_Type::EventDecoder available Event instances = " << dec
-         << this->eventDecoder->getNAllocatedEventInstances() << endl;
+    printf("Received %zu events (delta=%zu). Available Event instances=%zu\n", nReceivedEvents_latch, delta,
+           eventDecoder->getNAllocatedEventInstances());
   }
 }
 
-GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName) {
+GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName) : eventDecoder(new EventDecoder) {
   using namespace std;
 
   cout << "#---------------------------------------------" << endl;
   cout << "# GROWTH_FY2015_ADC Constructor" << endl;
   cout << "#---------------------------------------------" << endl;
   // construct RMAPTargetNode instance
-  adcRMAPTargetNode = new RMAPTargetNode;
+  std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode(new RMAPTargetNode);
   adcRMAPTargetNode->setID("ADCBox");
   adcRMAPTargetNode->setDefaultKey(0x00);
   adcRMAPTargetNode->setReplyAddress({});
@@ -50,7 +42,7 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName) {
   adcRMAPTargetNode->setTargetLogicalAddress(0xFE);
   adcRMAPTargetNode->setInitiatorLogicalAddress(0xFE);
 
-  rmapHandler    = new RMAPHandlerUART(deviceName, {adcRMAPTargetNode});
+  rmapHandler.reset(new RMAPHandlerUART(deviceName, {adcRMAPTargetNode}));
   bool connected = rmapHandler->connectoToSpaceWireToGigabitEther();
   if (!connected) {
     cerr << "SpaceWire interface could not be opened." << endl;
@@ -60,59 +52,24 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName) {
   }
 
   //
-  rmapIniaitorForGPSRegisterAccess = new RMAPInitiator(rmapHandler->getRMAPEngine());
+  rmapIniaitorForGPSRegisterAccess.reset(new RMAPInitiator(rmapHandler->getRMAPEngine()));
 
-  // create an instance of ChannelManager
-  this->channelManager = new ChannelManager(rmapHandler, adcRMAPTargetNode);
-
-  // create an instance of ConsumerManager
-  this->consumerManager = new ConsumerManagerEventFIFO(rmapHandler, adcRMAPTargetNode);
+  channelManager.reset(new ChannelManager(rmapHandler));
+  consumerManager.reset(new ConsumerManagerEventFIFO(rmapHandler));
 
   // create instances of ADCChannelRegister
-  for (size_t i = 0; i < SpaceFibreADC::NumberOfChannels; i++) {
-    this->channelModules[i] = new ChannelModule(rmapHandler, adcRMAPTargetNode, i);
+  for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
+    channelModules.emplace_back(rmapHandler, i);
   }
-
-  // event decoder
-  this->eventDecoder = new EventDecoder();
-
-  // dump thread
-  /*
-   this->dumpThread = new GROWTH_FY2015_ADCDumpThread(this);
-   this->dumpThread->start();
-   */
-  cout << "Constructor completes." << endl;
 }
 
 GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
-  using namespace std;
-  cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deconstructing GROWTH_FY2015_ADC instance." << endl;
-  /*
-   cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Stopping dump thread." << endl;
-   if (this->dumpThread != NULL && this->dumpThread->isInRunMethod()) {
-   this->dumpThread->stop();
-   delete this->dumpThread;
-   }*/
-
-  cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting RMAP Handler." << endl;
   delete rmapIniaitorForGPSRegisterAccess;
-  delete rmapHandler;
-
-  cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting internal modules." << endl;
-  delete this->channelManager;
-  delete this->consumerManager;
-  for (size_t i = 0; i < SpaceFibreADC::NumberOfChannels; i++) { delete this->channelModules[i]; }
-  delete eventDecoder;
-
-  cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting GPS Data FIFO read buffer." << endl;
-  if (gpsDataFIFOReadBuffer != NULL) { delete gpsDataFIFOReadBuffer; }
-
-  cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Completed." << endl;
+  delete gpsDataFIFOReadBuffer;
 }
 
 uint32_t GROWTH_FY2015_ADC::getFPGAType() {
-  uint32_t fpgaType = rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
-  return fpgaType;
+  return rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
 }
 
 uint32_t GROWTH_FY2015_ADC::getFPGAVersion() {
@@ -124,7 +81,9 @@ uint32_t GROWTH_FY2015_ADC::getFPGAVersion() {
 std::string GROWTH_FY2015_ADC::getGPSRegister() {
   rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
   std::stringstream ss;
-  for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) { ss << gpsTimeRegister[i]; }
+  for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
+    ss << gpsTimeRegister[i];
+  }
   return ss.str();
 }
 
@@ -140,55 +99,37 @@ void GROWTH_FY2015_ADC::clearGPSDataFIFO() {
 }
 
 std::vector<uint8_t> GROWTH_FY2015_ADC::readGPSDataFIFO() {
-  if (gpsDataFIFOData.size() != GPSDataFIFODepthInBytes) { gpsDataFIFOData.resize(GPSDataFIFODepthInBytes); }
-  if (gpsDataFIFOReadBuffer == NULL) { gpsDataFIFOReadBuffer = new uint8_t[GPSDataFIFODepthInBytes]; }
+  if (gpsDataFIFOData.size() != GPSDataFIFODepthInBytes) {
+    gpsDataFIFOData.resize(GPSDataFIFODepthInBytes);
+  }
+  if (gpsDataFIFOReadBuffer == NULL) {
+    gpsDataFIFOReadBuffer = new uint8_t[GPSDataFIFODepthInBytes];
+  }
   rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, GPSDataFIFODepthInBytes,
                     gpsDataFIFOReadBuffer);
   memcpy(&(gpsDataFIFOData[0]), gpsDataFIFOReadBuffer, GPSDataFIFODepthInBytes);
   return gpsDataFIFOData;
 }
 
-ChannelModule* GROWTH_FY2015_ADC::getChannelRegister(int chNumber) {
-  using namespace std;
-  if (Debug::adcbox()) { cout << "GROWTH_FY2015_ADC::getChannelRegister(" << chNumber << ")" << endl; }
-  return channelModules[chNumber];
-}
-
-ChannelManager* GROWTH_FY2015_ADC::getChannelManager() {
-  using namespace std;
-  if (Debug::adcbox()) { cout << "GROWTH_FY2015_ADC::getChannelManager()" << endl; }
-  return channelManager;
-}
-
-ConsumerManagerEventFIFO* GROWTH_FY2015_ADC::getConsumerManager() {
-  using namespace std;
-  if (Debug::adcbox()) { cout << "GROWTH_FY2015_ADC::getConsumerManager()" << endl; }
-  return consumerManager;
-}
-
 void GROWTH_FY2015_ADC::reset() {
   using namespace std;
-  if (Debug::adcbox()) { cout << "GROWTH_FY2015_ADC::reset()"; }
+  if (Debug::adcbox()) {
+    cout << "GROWTH_FY2015_ADC::reset()";
+  }
   this->channelManager->reset();
   this->consumerManager->reset();
-  if (Debug::adcbox()) { cout << "done" << endl; }
+  if (Debug::adcbox()) {
+    cout << "done" << endl;
+  }
 }
 
 void GROWTH_FY2015_ADC::closeDevice() {
   using namespace std;
   try {
-    cout << "#stopping event data output" << endl;
-    consumerManager->disableEventDataOutput();
-    // cout << "#stopping dump thread" << endl;
-    // consumerManager->stopDumpThread();
-    // if (this->dumpThread != NULL) {
-    //	this->dumpThread->stop();
-    //}
-    cout << "#closing sockets" << endl;
-    consumerManager->closeSocket();
-    cout << "#disconnecting SpaceWire-to-GigabitEther" << endl;
     rmapHandler->disconnectSpWGbE();
-  } catch (...) { throw SpaceFibreADCException::CloseDeviceFailed; }
+  } catch (...) {
+    throw SpaceFibreADCException::CloseDeviceFailed;
+  }
 }
 
 std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
@@ -205,11 +146,13 @@ std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
 void GROWTH_FY2015_ADC::freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventDecoder->freeEvent(event); }
 
 void GROWTH_FY2015_ADC::freeEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
-  for (auto event : events) { eventDecoder->freeEvent(event); }
+  for (auto event : events) {
+    eventDecoder->freeEvent(event);
+  }
 }
 
 void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, TriggerMode triggerMode) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setTriggerMode(triggerMode);
   } else {
     using namespace std;
@@ -219,7 +162,9 @@ void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, TriggerMode triggerMode)
 }
 
 void GROWTH_FY2015_ADC::setNumberOfSamples(uint16_t nSamples) {
-  for (size_t i = 0; i < SpaceFibreADC::NumberOfChannels; i++) { channelModules[i]->setNumberOfSamples(nSamples); }
+  for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
+    channelModules[i]->setNumberOfSamples(nSamples);
+  }
   setNumberOfSamplesInEventPacket(nSamples);
 }
 
@@ -228,7 +173,7 @@ void GROWTH_FY2015_ADC::setNumberOfSamplesInEventPacket(uint16_t nSamples) {
 }
 
 void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, uint32_t threshold) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setStartingThreshold(threshold);
   } else {
     using namespace std;
@@ -238,7 +183,7 @@ void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, uint32_t threshold
 }
 
 void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, uint32_t threshold) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setClosingThreshold(threshold);
   } else {
     using namespace std;
@@ -247,18 +192,8 @@ void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, uint32_t threshold)
   }
 }
 
-void GROWTH_FY2015_ADC::setTriggerBusMask(size_t chNumber, std::vector<size_t> enabledChannels) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
-    channelModules[chNumber]->setTriggerBusMask(enabledChannels);
-  } else {
-    using namespace std;
-    cerr << "Error in setTriggerBusMask(): invalid channel number " << chNumber << endl;
-    throw SpaceFibreADCException::InvalidChannelNumber;
-  }
-}
-
 void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setDepthOfDelay(depthOfDelay);
   } else {
     using namespace std;
@@ -268,7 +203,7 @@ void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay) 
 }
 
 uint32_t GROWTH_FY2015_ADC::getLivetime(size_t chNumber) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     return channelModules[chNumber]->getLivetime();
   } else {
     using namespace std;
@@ -278,7 +213,7 @@ uint32_t GROWTH_FY2015_ADC::getLivetime(size_t chNumber) {
 }
 
 uint32_t GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     return channelModules[chNumber]->getCurrentADCValue();
   } else {
     using namespace std;
@@ -288,7 +223,7 @@ uint32_t GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) {
 }
 
 void GROWTH_FY2015_ADC::turnOnADCPower(size_t chNumber) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->turnADCPower(true);
   } else {
     using namespace std;
@@ -298,7 +233,7 @@ void GROWTH_FY2015_ADC::turnOnADCPower(size_t chNumber) {
 }
 
 void GROWTH_FY2015_ADC::turnOffADCPower(size_t chNumber) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->turnADCPower(false);
   } else {
     using namespace std;
@@ -328,7 +263,7 @@ bool GROWTH_FY2015_ADC::isAcquisitionCompleted(size_t chNumber) {
 void GROWTH_FY2015_ADC::stopAcquisition() { channelManager->stopAcquisition(); }
 
 void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
-  if (chNumber < SpaceFibreADC::NumberOfChannels) {
+  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->sendCPUTrigger();
   } else {
     using namespace std;
@@ -339,7 +274,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
 
 void GROWTH_FY2015_ADC::sendCPUTrigger() {
   using namespace std;
-  for (size_t chNumber = 0; chNumber < SpaceFibreADC::NumberOfChannels; chNumber++) {
+  for (size_t chNumber = 0; chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels; chNumber++) {
     if (this->ChannelEnable[chNumber] == true) {  // if enabled
       cout << "CPU Trigger to Channel " << chNumber << endl;
       channelModules[chNumber]->sendCPUTrigger();
@@ -347,7 +282,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger() {
   }
 }
 
-void GROWTH_FY2015_ADC::setPresetMode(SpaceFibreADC::PresetMode presetMode) {
+void GROWTH_FY2015_ADC::setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetMode) {
   channelManager->setPresetMode(presetMode);
 }
 
@@ -359,16 +294,16 @@ void GROWTH_FY2015_ADC::setPresetnEvents(uint32_t nEvents) { channelManager->set
 
 double GROWTH_FY2015_ADC::getRealtime() { return channelManager->getRealtime(); }
 
-void GROWTH_FY2015_ADC::setAdcClock(SpaceFibreADC::ADCClockFrequency adcClockFrequency) {
+void GROWTH_FY2015_ADC::setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency) {
   channelManager->setAdcClock(adcClockFrequency);
 }
 
-SpaceFibreADC::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() {
-  SpaceFibreADC::HouseKeepingData hkData;
+GROWTH_FY2015_ADC_Type::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() {
+  GROWTH_FY2015_ADC_Type::HouseKeepingData hkData;
   // realtime
   hkData.realtime = channelManager->getRealtime();
 
-  for (size_t i = 0; i < SpaceFibreADC::NumberOfChannels; i++) {
+  for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
     // livetime
     hkData.livetime[i] = channelModules[i]->getLivetime();
     // acquisition status
@@ -377,8 +312,6 @@ SpaceFibreADC::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() {
 
   return hkData;
 }
-
-EventDecoder* GROWTH_FY2015_ADC::getEventDecoder() { return eventDecoder; }
 
 size_t GROWTH_FY2015_ADC::getNSamplesInEventListFile() {
   return (this->SamplesInEventPacket) / this->DownSamplingFactorForSavedWaveform;
@@ -401,10 +334,9 @@ void GROWTH_FY2015_ADC::dumpMustExistKeywords() {
       << "TriggerCloseThresholds: [800, 800, 800, 800]" << endl;
 }
 
-public:
 void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
   using namespace std;
-  YAML::Node yaml_root                       = YAML::LoadFile(inputFileName);
+  YAML::Node yaml_root = YAML::LoadFile(inputFileName);
   std::vector<std::string> mustExistKeywords = {"DetectorID",
                                                 "PreTriggerSamples",
                                                 "PostTriggerSamples",
@@ -428,8 +360,8 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
   //---------------------------------------------
   // load parameter values from the file
   //---------------------------------------------
-  this->DetectorID         = yaml_root["DetectorID"].as<std::string>();
-  this->PreTriggerSamples  = yaml_root["PreTriggerSamples"].as<size_t>();
+  this->DetectorID = yaml_root["DetectorID"].as<std::string>();
+  this->PreTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
   this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
   {
     // Convert integer-type trigger mode to TriggerMode enum type
@@ -438,11 +370,11 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
       this->TriggerModes[i] = static_cast<enum TriggerMode>(triggerModeInt.at(i));
     }
   }
-  this->SamplesInEventPacket               = yaml_root["SamplesInEventPacket"].as<size_t>();
+  this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
   this->DownSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
-  this->ChannelEnable                      = yaml_root["ChannelEnable"].as<std::vector<bool>>();
-  this->TriggerThresholds                  = yaml_root["TriggerThresholds"].as<std::vector<uint16_t>>();
-  this->TriggerCloseThresholds             = yaml_root["TriggerCloseThresholds"].as<std::vector<uint16_t>>();
+  this->ChannelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
+  this->TriggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<uint16_t>>();
+  this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<uint16_t>>();
 
   //---------------------------------------------
   // dump setting
@@ -456,7 +388,9 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
   {
     cout << "TriggerModes                      : [";
     std::vector<size_t> triggerModeInt{};
-    for (const auto mode : this->TriggerModes) { triggerModeInt.push_back(static_cast<size_t>(mode)); }
+    for (const auto mode : this->TriggerModes) {
+      triggerModeInt.push_back(static_cast<size_t>(mode));
+    }
     cout << CxxUtilities::String::join(triggerModeInt, ", ") << "]" << endl;
   }
   cout << "SamplesInEventPacket              : " << this->SamplesInEventPacket << endl;
@@ -489,12 +423,12 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
       this->setClosingThreshold(ch, TriggerCloseThresholds[ch]);
 
       // adc clock 50MHz
-      this->setAdcClock(SpaceFibreADC::ADCClockFrequency::ADCClock50MHz);
+      this->setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency::ADCClock50MHz);
 
       // turn on ADC
       this->turnOnADCPower(ch);
     }
-    cout << "Device configurtion done." << endl;
+    cout << "Device configuration done." << endl;
   } catch (...) {
     cerr << "Device configuration failed." << endl;
     ::exit(-1);

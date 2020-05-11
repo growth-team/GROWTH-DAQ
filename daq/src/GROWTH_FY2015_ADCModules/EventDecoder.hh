@@ -10,9 +10,10 @@
 
 #include <queue>
 #include <stack>
+
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 
-/** Decodes event data received from the SpaceFibre ADC Board.
+/** Decodes event data received from the GROWTH ADC Board.
  * Decoded event instances will be stored in a queue.
  */
 class EventDecoder {
@@ -62,8 +63,8 @@ class EventDecoder {
   /** Constructor.
    */
   EventDecoder() {
-    state             = EventDecoderState::state_flag_FFF0;
-    rawEvent.waveform = new uint16_t[SpaceFibreADC::MaxWaveformLength];
+    state = EventDecoderState::state_flag_FFF0;
+    rawEvent.waveform = new uint16_t[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
     prepareEventInstances();
   }
 
@@ -95,7 +96,9 @@ class EventDecoder {
     }
 
     // resize if necessary
-    if (size_half > readDataUint16Array.size()) { readDataUint16Array.resize(size_half); }
+    if (size_half > readDataUint16Array.size()) {
+      readDataUint16Array.resize(size_half);
+    }
 
     // fill data
     for (size_t i = 0; i < size_half; i++) {
@@ -116,52 +119,52 @@ class EventDecoder {
           }
           break;
         case EventDecoderState::state_ch_realtimeH:
-          rawEvent.ch    = (readDataUint16Array[i] & 0xFF00) >> 8;
+          rawEvent.ch = (readDataUint16Array[i] & 0xFF00) >> 8;
           rawEvent.timeH = readDataUint16Array[i] & 0xFF;
-          state          = EventDecoderState::state_realtimeM;
+          state = EventDecoderState::state_realtimeM;
           break;
         case EventDecoderState::state_realtimeM:
           rawEvent.timeM = readDataUint16Array[i];
-          state          = EventDecoderState::state_realtimeL;
+          state = EventDecoderState::state_realtimeL;
           break;
         case EventDecoderState::state_realtimeL:
           rawEvent.timeL = readDataUint16Array[i];
-          state          = EventDecoderState::state_reserved;
+          state = EventDecoderState::state_reserved;
           break;
         case EventDecoderState::state_reserved:
           state = EventDecoderState::state_triggerCount;
           break;
         case EventDecoderState::state_triggerCount:
           rawEvent.triggerCount = readDataUint16Array[i];
-          state                 = EventDecoderState::state_phaMax;
+          state = EventDecoderState::state_phaMax;
           break;
         case EventDecoderState::state_phaMax:
           rawEvent.phaMax = readDataUint16Array[i];
-          state           = EventDecoderState::state_phaMaxTime;
+          state = EventDecoderState::state_phaMaxTime;
           break;
         case EventDecoderState::state_phaMaxTime:
           rawEvent.phaMaxTime = readDataUint16Array[i];
-          state               = EventDecoderState::state_phaMin;
+          state = EventDecoderState::state_phaMin;
           break;
         case EventDecoderState::state_phaMin:
           rawEvent.phaMin = readDataUint16Array[i];
-          state           = EventDecoderState::state_phaFirst;
+          state = EventDecoderState::state_phaFirst;
           break;
         case EventDecoderState::state_phaFirst:
           rawEvent.phaFirst = readDataUint16Array[i];
-          state             = EventDecoderState::state_phaLast;
+          state = EventDecoderState::state_phaLast;
           break;
         case EventDecoderState::state_phaLast:
           rawEvent.phaLast = readDataUint16Array[i];
-          state            = EventDecoderState::state_maxDerivative;
+          state = EventDecoderState::state_maxDerivative;
           break;
         case EventDecoderState::state_maxDerivative:
           rawEvent.maxDerivative = readDataUint16Array[i];
-          state                  = EventDecoderState::state_baseline;
+          state = EventDecoderState::state_baseline;
           break;
         case EventDecoderState::state_baseline:
           rawEvent.baseline = readDataUint16Array[i];
-          state             = EventDecoderState::state_pha_list;
+          state = EventDecoderState::state_pha_list;
           break;
         case EventDecoderState::state_pha_list:
           if (readDataUint16Array[i] == 0xFFFF) {
@@ -171,7 +174,7 @@ class EventDecoder {
             state = EventDecoderState::state_flag_FFF0;
             break;
           } else {
-            if (SpaceFibreADC::MaxWaveformLength <= waveformLength) {
+            if (GROWTH_FY2015_ADC_Type::MaxWaveformLength <= waveformLength) {
               cerr << "EventDecoder::decodeEvent(): waveform too long. something is wrong with data transfer. Return "
                       "to the idle state."
                    << endl;
@@ -193,7 +196,7 @@ class EventDecoder {
   void prepareEventInstances() {
     for (size_t i = 0; i < InitialEventInstanceNumber; i++) {
       GROWTH_FY2015_ADC_Type::Event* event = new GROWTH_FY2015_ADC_Type::Event;
-      event->waveform                      = new uint16_t[SpaceFibreADC::MaxWaveformLength];
+      event->waveform = new uint16_t[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
       eventInstanceResavoir.push(event);
     }
   }
@@ -208,27 +211,29 @@ class EventDecoder {
         using namespace std;
         cerr << "EventDecoder::pushEventToQueue() new Event instance was created." << endl;
       }
-      event->waveform = new uint16_t[SpaceFibreADC::MaxWaveformLength];
+      event->waveform = new uint16_t[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
     } else {
       // reuse already created instance
       event = eventInstanceResavoir.top();
       eventInstanceResavoir.pop();
     }
-    event->ch      = rawEvent.ch;
+    event->ch = rawEvent.ch;
     event->timeTag = (static_cast<uint64_t>(rawEvent.timeH) << 32) + (static_cast<uint64_t>(rawEvent.timeM) << 16) +
                      (rawEvent.timeL);
-    event->phaMax        = rawEvent.phaMax;
-    event->phaMaxTime    = rawEvent.phaMaxTime;
-    event->phaMin        = rawEvent.phaMin;
-    event->phaFirst      = rawEvent.phaFirst;
-    event->phaLast       = rawEvent.phaLast;
+    event->phaMax = rawEvent.phaMax;
+    event->phaMaxTime = rawEvent.phaMaxTime;
+    event->phaMin = rawEvent.phaMin;
+    event->phaFirst = rawEvent.phaFirst;
+    event->phaLast = rawEvent.phaLast;
     event->maxDerivative = rawEvent.maxDerivative;
-    event->baseline      = rawEvent.baseline;
-    event->nSamples      = waveformLength;
-    event->triggerCount  = rawEvent.triggerCount;
+    event->baseline = rawEvent.baseline;
+    event->nSamples = waveformLength;
+    event->triggerCount = rawEvent.triggerCount;
 
     // copy waveform
-    for (size_t i = 0; i < waveformLength; i++) { event->waveform[i] = rawEvent.waveform[i]; }
+    for (size_t i = 0; i < waveformLength; i++) {
+      event->waveform[i] = rawEvent.waveform[i];
+    }
 
     eventQueue.push_back(event);
   }

@@ -162,17 +162,19 @@
  * @endcode
  */
 
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "yaml-cpp/yaml.h"
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 class ChannelManager;
 class ChannelModule;
 class ConsumerManagerEventFIFO;
 class EventDecoder;
 class RMAPHandlerUART;
+class RMAPInitiator;
 
 using GROWTH_FY2015_ADC_Type::TriggerMode;
 
@@ -189,59 +191,15 @@ enum class SpaceFibreADCException {
  * a user can change individual registers in each module.
  */
 class GROWTH_FY2015_ADC {
- public:
-  static constexpr uint32_t AddressOfGPSTimeRegister          = 0x20000002;
-  static constexpr size_t LengthOfGPSTimeRegister             = 20;
-  static constexpr uint32_t AddressOfGPSDataFIFOResetRegister = 0x20001000;
-  static constexpr uint32_t InitialAddressOfGPSDataFIFO       = 0x20001002;
-  static constexpr uint32_t FinalAddressOfGPSDataFIFO         = 0x20001FFF;
-
-  static constexpr uint32_t AddressOfFPGATypeRegister_L    = 0x30000000;
-  static constexpr uint32_t AddressOfFPGATypeRegister_H    = 0x30000002;
-  static constexpr uint32_t AddressOfFPGAVersionRegister_L = 0x30000004;
-  static constexpr uint32_t AddressOfFPGAVersionRegister_H = 0x30000006;
-
-  // Clock Frequency
-  static constexpr double ClockFrequency = 100;  // MHz
-  // Clock Interval
-  static constexpr double ClockInterval = 10e-9;  // s
-  // FPGA TimeTag
-  static constexpr uint32_t TimeTagResolutionInNanoSec = 10;  // ns
-  // PHA Min/Max
-  static constexpr uint16_t PHAMinimum = 0;
-  static constexpr uint16_t PHAMaximum = 1023;
-
-  size_t nReceivedEvents = 0;
-
- public:
-  class GROWTH_FY2015_ADCDumpThread : public CxxUtilities::StoppableThread {
-   public:
-    GROWTH_FY2015_ADCDumpThread(GROWTH_FY2015_ADC* parent);
-    void run();
-    static constexpr double WaitDurationInMilliSec = 1000.0;
-   private:
-    GROWTH_FY2015_ADC* parent{};
-    EventDecoder* eventDecoder{};
-  };
-
   /** Constructor.
    * @param deviceName UART-USB device name (e.g. /dev/tty.usb-aaa-bbb)
    */
   GROWTH_FY2015_ADC(std::string deviceName);
   ~GROWTH_FY2015_ADC();
 
-  /** Returns FPGA Type as string.
-   */
   uint32_t getFPGAType();
-
-  /** Returns FPGA Version as string.
-   */
   uint32_t getFPGAVersion();
-
-  /** Returns a GPS Register value.
-   */
   std::string getGPSRegister();
-
   uint8_t* getGPSRegisterUInt8();
 
   /** Clears the GPS Data FIFO.
@@ -253,22 +211,6 @@ class GROWTH_FY2015_ADC {
    *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
    */
   std::vector<uint8_t> readGPSDataFIFO();
-
-  /** Returns a corresponding pointer ChannelModule.
-   * @param chNumber Channel number that should be returned.
-   * @return a pointer to an instance of ChannelModule.
-   */
-  ChannelModule* getChannelRegister(int chNumber);
-
-  /** Returns a pointer to ChannelManager.
-   * @return a pointer to ChannelManager.
-   */
-  ChannelManager* getChannelManager();
-
-  /** Returns a pointer to ConsumerManager.
-   * @return a pointer to ConsumerManager.
-   */
-  ConsumerManagerEventFIFO* getConsumerManager();
 
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
@@ -287,7 +229,7 @@ class GROWTH_FY2015_ADC {
    * reused to represent another event data.
    * @return a vector containing pointers to decoded event data
    */
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> getEvent() ;
+  std::vector<GROWTH_FY2015_ADC_Type::Event*> getEvent();
 
   /** Frees an event instance so that buffer area can be reused in the following commands.
    * @param[in] event event instance to be freed
@@ -338,14 +280,12 @@ class GROWTH_FY2015_ADC {
    * @param threshold an adc value for leading trigger threshold
    */
   void setStartingThreshold(size_t chNumber, uint32_t threshold);
+
   /** Sets Trailing Trigger Threshold.
    * @param threshold an adc value for trailing trigger threshold
    */
   void setClosingThreshold(size_t chNumber, uint32_t threshold);
-    /** Sets TriggerBusMask which is used in TriggerMode==TriggerBus.
-   * @param enabledChannels array of enabled trigger bus channels.
-   */
-  void setTriggerBusMask(size_t chNumber, std::vector<size_t> enabledChannels);
+
   /** Sets depth of delay per trigger. When triggered,
    * a waveform will be recorded starting from N steps
    * before of the trigger timing.
@@ -445,10 +385,6 @@ class GROWTH_FY2015_ADC {
    */
   GROWTH_FY2015_ADC_Type::HouseKeepingData getHouseKeepingData();
 
-  /** Returns EventDecoder instance.
-   * @return EventDecoder instance
-   */
-  EventDecoder* getEventDecoder();
   size_t getNSamplesInEventListFile();
   void dumpMustExistKeywords();
   void loadConfigurationFile(std::string inputFileName);
@@ -456,12 +392,12 @@ class GROWTH_FY2015_ADC {
  public:
   const size_t nChannels = 4;
   std::string DetectorID{};
-  size_t PreTriggerSamples  = 4;
+  size_t PreTriggerSamples = 4;
   size_t PostTriggerSamples = 1000;
   std::vector<enum TriggerMode> TriggerModes{
       TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold,
       TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold};
-  size_t SamplesInEventPacket               = 1000;
+  size_t SamplesInEventPacket = 1000;
   size_t DownSamplingFactorForSavedWaveform = 1;
   std::vector<bool> ChannelEnable{};
   std::vector<uint16_t> TriggerThresholds{};
@@ -471,15 +407,51 @@ class GROWTH_FY2015_ADC {
   template <typename T, typename Y>
   std::map<T, Y> parseYAMLMap(YAML::Node node) {
     std::map<T, Y> outputMap;
-    for (auto e : node) { outputMap.insert({e.first.as<T>(), e.second.as<Y>()}); }
+    for (auto e : node) {
+      outputMap.insert({e.first.as<T>(), e.second.as<Y>()});
+    }
     return outputMap;
   }
 
+  void dumpThread();
+
+  // clang-format off
+  static constexpr uint32_t AddressOfGPSTimeRegister          = 0x20000002;
+  static constexpr size_t   LengthOfGPSTimeRegister           = 20;
+  static constexpr uint32_t AddressOfGPSDataFIFOResetRegister = 0x20001000;
+  static constexpr uint32_t InitialAddressOfGPSDataFIFO       = 0x20001002;
+  static constexpr uint32_t FinalAddressOfGPSDataFIFO         = 0x20001FFF;
+
+  static constexpr uint32_t AddressOfFPGATypeRegister_L    = 0x30000000;
+  static constexpr uint32_t AddressOfFPGATypeRegister_H    = 0x30000002;
+  static constexpr uint32_t AddressOfFPGAVersionRegister_L = 0x30000004;
+  static constexpr uint32_t AddressOfFPGAVersionRegister_H = 0x30000006;
+  // clang-format on
+
+  // Clock Frequency
+  static constexpr double ClockFrequency = 100;  // MHz
+  // Clock Interval
+  static constexpr double ClockInterval = 10e-9;  // s
+  // FPGA TimeTag
+  static constexpr uint32_t TimeTagResolutionInNanoSec = 10;  // ns
+  // PHA Min/Max
+  static constexpr uint16_t PHAMinimum = 0;
+  static constexpr uint16_t PHAMaximum = 1023;
+
+  std::unique_ptr<RMAPHandlerUART> rmapHandler;
+  std::unique_ptr<RMAPInitiator> rmapIniaitorForGPSRegisterAccess;
+  std::unique_ptr<EventDecoder> eventDecoder;
+  std::unique_ptr<ChannelManager> channelManager;
+  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager;
+  std::vector<std::unique_ptr<ChannelModule>> channelModules;
+
+  size_t nReceivedEvents = 0;
   uint8_t gpsTimeRegister[LengthOfGPSTimeRegister + 1];
   const size_t GPSDataFIFODepthInBytes = 1024;
-  uint8_t* gpsDataFIFOReadBuffer       = NULL;
+  uint8_t* gpsDataFIFOReadBuffer = NULL;
   std::vector<uint8_t> gpsDataFIFOData{};
   std::vector<GROWTH_FY2015_ADC_Type::Event*> events{};
+  bool stopDumpThread_ = false;
 };
 
 #endif /* ADCBOARD_HH_ */

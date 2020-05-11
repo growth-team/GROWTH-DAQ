@@ -22,8 +22,8 @@ enum class PresetMode : uint32_t {
 
 struct HouseKeepingData {
   uint32_t realtime;
-  uint32_t livetime[GROWTH_FY2015_ADCModules::NumberOfChannels];
-  bool acquisitionStarted[GROWTH_FY2015_ADCModules::NumberOfChannels];
+  uint32_t livetime[GROWTH_FY2015_ADC_Type::NumberOfChannels];
+  bool acquisitionStarted[GROWTH_FY2015_ADC_Type::NumberOfChannels];
 };
 
 struct Event {
@@ -44,4 +44,4 @@ struct Event {
 enum class ADCClockFrequency : uint16_t { ADCClock200MHz = 20000, ADCClock100MHz = 10000, ADCClock50MHz = 5000 };
 }  // namespace GROWTH_FY2015_ADC_Type
 
-#endif /* GROWTH_FY2015_ADC_TYPES_HH_ */
+#endif

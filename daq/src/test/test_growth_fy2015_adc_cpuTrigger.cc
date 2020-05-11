@@ -26,21 +26,21 @@ class MainThread : public CxxUtilities::StoppableThread {
   MainThread(std::string deviceName, size_t nEventsMax, TApplication* app) {
     this->deviceName_ = deviceName;
     this->nEventsMax = nEventsMax;
-    this->app        = app;
+    this->app = app;
   }
 
  public:
   void run() {
     using namespace std;
-    auto adcBoard                           = new GROWTH_FY2015_ADC(deviceName_);
-    const size_t nChannels                  = 4;
-    const size_t NumberOfSamples            = 1000;
+    auto adcBoard = new GROWTH_FY2015_ADC(deviceName_);
+    const size_t nChannels = 4;
+    const size_t NumberOfSamples = 1000;
     const size_t NumberOfSamplesEventPacket = 2;
-    const size_t PreTriggerSamples          = 4;
-    const size_t TriggerThresholds[1][4]    = {{900, 530, 900, 900}};
+    const size_t PreTriggerSamples = 4;
+    const size_t TriggerThresholds[1][4] = {{900, 530, 900, 900}};
 
     std::vector<size_t> enabledChannels = {0, 1, 2, 3};
-    uint16_t ChannelEnableMask          = 0x0F;  // enable all 4 channels
+    uint16_t ChannelEnableMask = 0x0F;  // enable all 4 channels
 
 #ifdef DRAW_CANVAS
     //---------------------------------------------
@@ -64,14 +64,14 @@ class MainThread : public CxxUtilities::StoppableThread {
         adcBoard->setDepthOfDelay(ch, PreTriggerSamples);
 
         // trigger mode
-        adcBoard->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+        adcBoard->setTriggerMode(ch, GROWTH_FY2015_ADC_Type::TriggerMode::StartThreshold_NSamples_CloseThreshold);
 
         // threshold
         adcBoard->setStartingThreshold(ch, TriggerThresholds[0][ch]);
         adcBoard->setClosingThreshold(ch, TriggerThresholds[0][ch]);
 
         // adc clock 50MHz
-        adcBoard->setAdcClock(SpaceFibreADC::ADCClockFrequency::ADCClock50MHz);
+        adcBoard->setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency::ADCClock50MHz);
 
         // turn on ADC
         adcBoard->turnOnADCPower(ch);
@@ -128,7 +128,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     // Read events
     //---------------------------------------------
     size_t nEvents = 0;
-    TH1D* hist     = new TH1D("h", "Histogram", 1024, 0, 1024);
+    TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
     CxxUtilities::Condition c;
 
 #ifdef DRAW_CANVAS
@@ -140,7 +140,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     //	RootEventLoop eventloop(app);
     //	eventloop.start();
 
-    size_t canvasUpdateCounter          = 0;
+    size_t canvasUpdateCounter = 0;
     const size_t canvasUpdateCounterMax = 10;
 #endif
 

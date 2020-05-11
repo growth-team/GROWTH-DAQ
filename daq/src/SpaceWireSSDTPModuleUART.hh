@@ -1,35 +1,5 @@
-/*
- ============================================================================
- SpaceWire/RMAP Library is provided under the MIT License.
- ============================================================================
-
- Copyright (c) 2006-2013 Takayuki Yuasa and The Open-source SpaceWire Project
-
- Permission is hereby granted, free of charge, to any person obtaining a
- copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
-
- The above copyright notice and this permission notice shall be included
- in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #ifndef SPACEWIRESSDTPMODULEUART_HH_
 #define SPACEWIRESSDTPMODULEUART_HH_
-
-#include "CxxUtilities/CommonHeader.hh"
-#include "CxxUtilities/Exception.hh"
 
 #include "SpaceWireRMAPLibrary/SpaceWireIF.hh"
 #include "SpaceWireRMAPLibrary/SpaceWireSSDTPModule.hh"
@@ -44,24 +14,13 @@
 class SpaceWireSSDTPModuleUART {
  public:
   /** Constructor. */
-  SpaceWireSSDTPModuleUART(SerialPort* serialPort) {
-    serialPort_ = serialPort;
-    sendBuffer_ = new uint8_t[SpaceWireSSDTPModule::BufferSize];
-    receiveBuffer_ = new uint8_t[SpaceWireSSDTPModule::BufferSize];
-    internalTimecode_ = 0x00;
-    latestSendSize_ = 0;
-    timecodeaction = NULL;
-    closed_ = false;
-  }
+  SpaceWireSSDTPModuleUART(SerialPort* serialPort)
+      : serialPort_(serialPort),
+        sendBuffer_(SpaceWireSSDTPModule::BufferSize, 0),
+        receiveBuffer_(SpaceWireSSDTPModule::BufferSize, 0) {}
 
- public:
-  /** Destructor. */
-  ~SpaceWireSSDTPModuleUART() {
-    delete[] sendBuffer_;
-    delete[] receiveBuffer_;
-  }
+  ~SpaceWireSSDTPModuleUART() = default;
 
- public:
   /** Sends a SpaceWire packet via the SpaceWire interface.
    * This is a blocking method.
    * @param[in] data packet content.
@@ -105,12 +64,12 @@ class SpaceWireSSDTPModuleUART {
       cout << "SSDTP::send():" << endl;
       cout << "Header: ";
       for (size_t i = 0; i < 12; i++) {
-        cout << hex << right << setw(2) << setfill('0') << (uint32_t)sheader_[i] << " ";
+        cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(sheader_[i]) << " ";
       }
       cout << endl;
       cout << "Data: " << dec << length << " bytes" << endl;
       for (size_t i = 0; i < length; i++) {
-        cout << hex << right << setw(2) << setfill('0') << (uint32_t)data->at(i) << " ";
+        cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(data->at(i)) << " ";
       }
       cout << endl << dec;
 #endif
@@ -152,12 +111,12 @@ class SpaceWireSSDTPModuleUART {
       cout << "SSDTP::send():" << endl;
       cout << "Header: ";
       for (size_t i = 0; i < 12; i++) {
-        cout << hex << right << setw(2) << setfill('0') << (uint32_t)sheader_[i] << " ";
+        cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(sheader_[i]) << " ";
       }
       cout << endl;
       cout << "Data: " << dec << length << " bytes" << endl;
       for (size_t i = 0; i < length; i++) {
-        cout << hex << right << setw(2) << setfill('0') << (uint32_t)data[i] << " ";
+        cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(data[i]) << " ";
       }
       cout << endl << dec;
 #endif
@@ -278,7 +237,7 @@ class SpaceWireSSDTPModuleUART {
         cout << "SSDTP::receive(): header part received" << endl;
         cout << "Header: ";
         for (size_t i = 0; i < 12; i++) {
-          cout << hex << right << setw(2) << setfill('0') << (uint32_t)rheader_[i] << " ";
+          cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(rheader_[i]) << " ";
         }
         cout << endl;
 #endif
@@ -296,13 +255,14 @@ class SpaceWireSSDTPModuleUART {
                  << endl;
             cerr << "Something is wrong with SSDTP over Serial Port data communication." << endl;
             cerr << "Trying to receive remaining data from receive buffer." << endl;
-            size_t result = serialPort_->receive(receiveBuffer_, BufferSize);
+            size_t result = serialPort_->receive(receiveBuffer_.data(), BufferSize);
             cerr << result << " bytes received." << endl;
             cout << "Data: ";
             for (size_t i = 0; i < result; i++) {
-              cout << hex << right << setw(2) << setfill('0') << (uint32_t) * (receiveBuffer_ + i) << " ";
+              cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(receiveBuffer_.at(i)) << " ";
             }
             cout << endl;
+            // TODO: refactor this with a proper error handling code
             exit(-1);
           }
 
@@ -318,7 +278,7 @@ class SpaceWireSSDTPModuleUART {
                    << " bytes." << endl;
               cout << "Current header:" << endl;
               for (size_t i = 0; i < 12; i++) {
-                cout << hex << right << setw(2) << setfill('0') << (uint32_t)rheader_[i] << " ";
+                cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(rheader_[i]) << " ";
               }
               cout << dec << endl;
               // return with no data
@@ -332,7 +292,7 @@ class SpaceWireSSDTPModuleUART {
               cout << "Data: ";
               for (size_t i = 0; i < result; i++) {
                 cout << hex << right << setw(2) << setfill('0')
-                     << (uint32_t) * (data_pointer + size + received_size + i) << " ";
+                     << static_cast<uint32_t>(*(data_pointer + size + received_size + i)) << " ";
               }
               cout << endl;
 #endif
@@ -341,8 +301,8 @@ class SpaceWireSSDTPModuleUART {
                 goto _loop_receiveDataPart;
               }
               cout << "SSDTPModule::receive() exception when receiving data" << endl;
-              cout << "rheader[0]=0x" << setw(2) << setfill('0') << hex << (uint32_t)rheader_[0] << endl;
-              cout << "rheader[1]=0x" << setw(2) << setfill('0') << hex << (uint32_t)rheader_[1] << endl;
+              cout << "rheader[0]=0x" << setw(2) << setfill('0') << hex << static_cast<uint32_t>(rheader_[0]) << endl;
+              cout << "rheader[1]=0x" << setw(2) << setfill('0') << hex << static_cast<uint32_t>(rheader_[1]) << endl;
               cout << "size=" << dec << size << endl;
               cout << "flagment_size=" << dec << flagment_size << endl;
               cout << "received_size=" << dec << received_size << endl;
@@ -374,15 +334,15 @@ class SpaceWireSSDTPModuleUART {
               break;
           }
         } else {
-          cout << "SSDTP fatal error with flag value of 0x" << hex << (uint32_t)rheader_[0] << dec << endl;
+          cout << "SSDTP fatal error with flag value of 0x" << hex << static_cast<uint32_t>(rheader_[0]) << dec << endl;
           cout << "Previous data: (" << dec << receivedDataPrevious_.size() << " bytes)" << endl;
           for (size_t i = 0; i < receivedDataPrevious_.size(); i++) {
-            cout << hex << right << setw(2) << setfill('0') << (uint32_t)receivedDataPrevious_[i] << " ";
+            cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(receivedDataPrevious_[i]) << " ";
           }
           cout << dec << endl;
           cout << "Current header:" << endl;
           for (size_t i = 0; i < 12; i++) {
-            cout << hex << right << setw(2) << setfill('0') << (uint32_t)rheader_[i] << " ";
+            cout << hex << right << setw(2) << setfill('0') << static_cast<uint32_t>(rheader_[i]) << " ";
           }
           cout << dec << endl;
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::TCPSocketError);
@@ -390,7 +350,7 @@ class SpaceWireSSDTPModuleUART {
       }
       data->resize(size);
       if (size != 0) {
-        memcpy(&(data->at(0)), receiveBuffer_, size);
+        memcpy(data->data(), receiveBuffer_.data(), size);
       } else {
         goto receive_header;
       }
@@ -432,7 +392,7 @@ class SpaceWireSSDTPModuleUART {
     sendBuffer_[12] = timecode;
     sendBuffer_[13] = 0;
     try {
-      serialPort_->send(sendBuffer_, 14);
+      serialPort_->send(sendBuffer_.data(), 14);
     } catch (SerialPortException& e) {
       if (e.getStatus() == SerialPortException::Timeout) {
         throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
@@ -458,7 +418,7 @@ class SpaceWireSSDTPModuleUART {
   /** Registers an action instance which will be invoked when a TimeCode is received.
    * @param[in] SpaceWireIFActionTimecodeScynchronizedAction an action instance.
    */
-  void setTimeCodeAction(SpaceWireIFActionTimecodeScynchronizedAction* action) { timecodeaction = action; }
+  void setTimeCodeAction(SpaceWireIFActionTimecodeScynchronizedAction* action) { timecodeaction_ = action; }
 
  public:
   /** Sets link frequency.
@@ -476,12 +436,8 @@ class SpaceWireSSDTPModuleUART {
    * @param[in] timecode a received TimeCode value.
    */
   void gotTimeCode(uint8_t timecode) {
-    using namespace std;
-    if (timecodeaction != nullptr) {
-      timecodeaction->doAction(timecode);
-    } else {
-      /*	cout << "SSDTPModule::gotTimeCode(): Got TimeCode : " << hex << setw(2) << setfill('0')
-       << (uint32_t) timecode << dec << endl;*/
+    if (timecodeaction_) {
+      timecodeaction_->doAction(timecode);
     }
   }
 
@@ -510,7 +466,7 @@ class SpaceWireSSDTPModuleUART {
     sendBuffer_[12] = txdivcount;
     sendBuffer_[13] = 0;
     try {
-      serialPort_->send(sendBuffer_, 14);
+      serialPort_->send(sendBuffer_.data(), 14);
     } catch (SerialPortException& e) {
       if (e.getStatus() == SerialPortException::Timeout) {
         throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
@@ -551,14 +507,14 @@ class SpaceWireSSDTPModuleUART {
 
  private:
   std::shared_ptr<SerialPort> serialPort_;
-  uint8_t* sendBuffer_;
-  uint8_t* receiveBuffer_;
+  std::vector<uint8_t> sendBuffer_;
+  std::vector<uint8_t> receiveBuffer_;
   std::stringstream ss;
   uint8_t internalTimecode_{};
   uint32_t latestSendSize_{};
   std::mutex sendMutex_;
   std::mutex receiveMutex_;
-  SpaceWireIFActionTimecodeScynchronizedAction* timecodeaction{};
+  SpaceWireIFActionTimecodeScynchronizedAction* timecodeaction_{};
   bool closed_ = false;
   bool receiveCanceled_ = false;
 

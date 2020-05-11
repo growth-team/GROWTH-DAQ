@@ -1,114 +1,71 @@
-/*
- * SemaphoreRegister.hh
- *
- *  Created on: Dec 14, 2013
- *      Author: yuasa
- */
-
 #ifndef SEMAPHOREREGISTER_HH_
 #define SEMAPHOREREGISTER_HH_
 
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/RMAPHandler.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 
-/** An internal class which represents a semaphore in
- * the VHDL logic.
- */
+#include <chrono>
+#include <memory>
+#include <thread>
+
+/// An internal class which represents a semaphore in the VHDL logic.
 class SemaphoreRegister {
- private:
-  RMAPHandler* rmaphandler;
-  RMAPTargetNode* adcboxRMAPNode;
-  uint32_t address;
-
  public:
   /** Constructor.
-   * @param rmaphandler instance of RMAPHandler which is used for this class to communicate SpaceWire ADC Box
+   * @param rmaphandler instance of RMAPHandler which is used for this class to communicate the ADC board
    * @param address an address of which semaphore this instance should handle
    */
-  SemaphoreRegister(RMAPHandler* handler, RMAPTargetNode* adcboxRMAPNode, uint32_t address) {
-    using namespace std;
-    this->rmaphandler    = handler;
-    this->address        = address;
-    this->adcboxRMAPNode = adcboxRMAPNode;
-    if (Debug::semaphore()) {
-      std::vector<uint8_t> data;
-      data.push_back(0);
-      data.push_back(0);
-      rmaphandler->read(adcboxRMAPNode, address, 2, &data[0]);
-      cout << "Semaphore::Semaphore(): semaphore (0x" << setw(8) << setfill('0') << hex << address
-           << ") was created, and value is " << data[1] * 0x100 + data[0] << endl
-           << dec;
-    }
-    /* 20131214 comment out
-     request();
-     release();
-     */
-  }
-
- private:
-  CxxUtilities::Condition condition;
-
- private:
-  uint16_t semaphoreValue;
+  SemaphoreRegister(std::shared_ptr<RMAPHandler> handler, uint32_t address)
+      : rmaphandler_(handler), address_(address) {}
 
  public:
-  /** Requests the semaphore. This method will wait for
-   * infinitely until it successfully gets the semaphore.
-   */
+  /// Requests the semaphore.
+  /// This method will wait for indefinitely until it successfully gets the semaphore.
   void request() {
-    using namespace std;
-    if (Debug::semaphore()) {
-      cout << "Semaphore::request(): request semaphore(0x" << hex << setw(8) << setfill('0') << address << ")..."
-           << endl;
+    while (true) {
+      rmaphandler_->setRegister(address_, 0xFFFF);
+      semaphoreValue = rmaphandler_->getRegister(address_);
+      if (semaphoreValue != 0x0000) {
+        return;
+      } else {
+        sleep();
+      }
     }
-
-    bool flag = true;
-    do {
-      if (Debug::semaphore()) { cout << "Semaphore::request(): trying to get semaphore" << endl; }
-      rmaphandler->setRegister(address, 0xFFFF);
-      semaphoreValue = rmaphandler->getRegister(address);
-      if (Debug::semaphore()) {
-        cout << "Semaphore::request(): semaphore value = " << hex << setw(4) << setfill('0') << (uint32_t)semaphoreValue
-             << dec << endl;
-      }
-      if (semaphoreValue != 0x00) {
-        // exit from this loop
-        flag = false;
-      } else {
-        condition.wait(100);  // wait 100ms
-      }
-    } while (flag);
-
-    if (Debug::semaphore()) { cout << "Semaphore::request(): got semaphore" << endl; }
   }
 
-  /** Release the semaphore.
-   */
+  /// Releases the semaphore.
   void release() {
-    using namespace std;
-    bool flag = true;
-    do {
-      if (Debug::semaphore()) {
-        cout << "Semaphore::release(): release semaphore(" << hex << setw(4) << setfill('0') << address << ")..."
-             << endl;
-      }
-
-      rmaphandler->setRegister(address, 0x0000);
-      semaphoreValue = rmaphandler->getRegister(address);
-      if (Debug::semaphore()) {
-        cout << "Semaphore::release(): semaphore value = " << hex << setw(4) << setfill('0') << (uint32_t)semaphoreValue
-             << dec << endl;
-      }
+    while (true) {
+      rmaphandler_->setRegister(address_, 0x0000);
+      semaphoreValue = rmaphandler_->getRegister(address_);
       if (semaphoreValue == 0x0000) {
-        // exit from this loop
-        flag = false;
+        return;
       } else {
-        condition.wait(100);  // wait 100ms
+        sleep();
       }
-    } while (flag);
-
-    if (Debug::semaphore()) { cout << "Semaphore::release(): released" << endl; }
+    }
   }
+
+ private:
+  void sleep() {
+    // TODO: Implement timeout.
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(10ms);
+  }
+
+  std::shared_ptr<RMAPHandler> rmaphandler_;
+  uint32_t address_{};
+  uint16_t semaphoreValue = 0;
+  std::mutex mutex_;
 };
 
+/// RAII lock using SemaphoreRegister.
+class SemaphoreLock {
+ public:
+  SemaphoreLock(SemaphoreRegister& semaphore) : semaphore_(semaphore) { semaphore_.request(); }
+  ~SemaphoreLock() { semaphore_.release(); }
+
+ private:
+  SemaphoreRegister& semaphore_;
+};
 #endif /* SEMAPHOREREGISTER_HH_ */

@@ -1,58 +1,25 @@
-/*
- * ChannelModule.hh
- *
- *  Created on: Dec 14, 2013
- *      Author: yuasa
- */
-
 #ifndef CHANNELMODULE_HH_
 #define CHANNELMODULE_HH_
 
-#include "GROWTH_FY2015_ADCModules/Debug.hh"
-#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 
-/** A class which represents a ChannelModule on VHDL logic.
- */
-class ChannelModule {
+class RMAPHandler;
+
+/// A class which represents a ChannelModule on VHDL logic.
+class ChannelModule : public RegisterAccessInterface {
  public:
   static const uint32_t InitialAddressOf_ChModule_0 = 0x01011000;
   static const uint32_t AddressOffsetBetweenChannels = 0x100;
 
  public:
-  uint32_t AddressOf_TriggerModeRegister;
-  uint32_t AddressOf_TriggerBusMaskRegister;
-  uint32_t AddressOf_NumberOfSamplesRegister;
-  uint32_t AddressOf_ThresholdStartingRegister;
-  uint32_t AddressOf_ThresholdClosingRegister;
-  uint32_t AddressOf_AdcPowerDownModeRegister;
-  uint32_t AddressOf_DepthOfDelayRegister;
-  uint32_t AddressOf_LivetimeRegisterL;
-  uint32_t AddressOf_LivetimeRegisterH;
-  uint32_t AddressOf_CurrentAdcDataRegister;
-  uint32_t AddressOf_CPUTriggerRegister;
-  uint32_t AddressOf_DigitalFilterTrigger_ThresholdDeltaRegister;
-  uint32_t AddressOf_DigitalFilterTrigger_WidthRegister;
-  uint32_t AddressOf_DigitalFilterTrigger_HitPattern_FilterCoefficientSelectorRegister;
-  uint32_t AddressOf_Status1Register;
-  uint32_t AddressOf_TriggerCountRegisterL;
-  uint32_t AddressOf_TriggerCountRegisterH;
-
- private:
-  RMAPHandler* rmapHandler;
-  RMAPTargetNode* adcRMAPTargetNode;
-  int chNumber;
-
- public:
   /** Constructor.
    * @param[in] rmaphandler a pointer to an instance of RMAPHandler
-   * @param[in] chNumber this instance's channel number
+   * @param[in] chNumber_ this instance's channel number
    */
-  ChannelModule(RMAPHandler* rmapHandler, RMAPTargetNode* adcRMAPTargetNode, int chNumber) {
-    this->rmapHandler = rmapHandler;
-    this->adcRMAPTargetNode = adcRMAPTargetNode;
-    this->chNumber = chNumber;
-    uint32_t BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
+  ChannelModule(std::shared_ptr<RMAPHandler> rmapHandler, uint8_t chNumber)
+      : RegisterAccessInterface(rmapHandler), chNumber_(chNumber) {
+    const uint32_t BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
     AddressOf_TriggerModeRegister = BA + 0x0002;
     AddressOf_NumberOfSamplesRegister = BA + 0x0004;
     AddressOf_ThresholdStartingRegister = BA + 0x0006;
@@ -65,219 +32,82 @@ class ChannelModule {
     AddressOf_CPUTriggerRegister = BA + 0x0014;
     AddressOf_TriggerCountRegisterL = BA + 0x0016;
     AddressOf_TriggerCountRegisterH = BA + 0x0018;
-    /*
-     AddressOf_DigitalFilterTrigger_ThresholdDeltaRegister = BA + 0x0018;
-     AddressOf_DigitalFilterTrigger_WidthRegister = BA + 0x001a;
-     AddressOf_DigitalFilterTrigger_HitPattern_FilterCoefficientSelectorRegister = BA + 0x0020;
-     */
-    AddressOf_TriggerBusMaskRegister = BA + 0x0024;
     AddressOf_Status1Register = BA + 0x0030;
     AddressOf_TriggerCountRegisterL = AddressOf_TriggerCountRegisterH;
   }
 
- public:
-  void setRegister(uint32_t address, uint16_t data) { rmapHandler->setRegister(address, data); }
-
- public:
-  uint16_t getRegister(uint32_t address) const { return rmapHandler->getRegister(address); }
-
- public:
   /** Sets trigger mode.
-   * SpaceFibreADC::TriggerMode;<br>
+   * GROWTH_FY2015_ADC_Type::TriggerMode;<br>
    * StartTh->N_samples = StartThreshold_NSamples_AutoClose<br>
    * Common Gate In = CommonGateIn<br>
    * StartTh->N_samples->ClosingTh = StartThreshold_NSamples_CloseThreshold<br>
    * CPU Trigger = CPUTrigger<br>
-   * Trigger Bus (OR) = TriggerBusSelectedOR<br>
-   * Trigger Bus (AND) = TriggerBusSelectedAND<br>
    * @param triggerMode trigger mode number
    */
   void setTriggerMode(GROWTH_FY2015_ADC_Type::TriggerMode triggerMode) {
-    uint16_t triggerModeInteger = static_cast<uint16_t>(triggerMode);
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") setting TriggerMode...";
-    }
-    this->setRegister(AddressOf_TriggerModeRegister, triggerModeInteger);
-    if (Debug::channelmodule()) {
-      const uint16_t triggerModeRead = this->getRegister(AddressOf_TriggerModeRegister);
-      cout << "done(" << hex << setw(4) << triggerModeRead << dec << ")" << endl;
-    }
+    write(AddressOf_TriggerModeRegister, static_cast<uint16_t>(triggerMode));
   }
 
- public:
   /** Returns trigger mode.
    * See setTrigger() for returned values.
    */
-  int getTriggerMode() {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") getting TriggerMode...";
-    }
-    uint16_t triggerModeInteger = this->getRegister(AddressOf_TriggerModeRegister);
-    if (Debug::channelmodule()) {
-      cout << "done(" << hex << setw(4) << triggerModeInteger << dec << ")" << endl;
-    }
-    return triggerModeInteger;
-  }
+  uint32_t getTriggerMode() { return read16(AddressOf_TriggerModeRegister); }
 
- public:
-  /** Sets TriggerBusMask which is used in TriggerMode==TriggerBus.
-   * @param enabledChannels array of enabled trigger bus channels.
-   */
-  void setTriggerBusMask(std::vector<size_t> enabledChannels) {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") setting TriggerBusMask...";
-    }
-    std::bitset<SpaceFibreADC::NumberOfChannels> maskBitPatter;
-    for (size_t i = 0; i < enabledChannels.size(); i++) {
-      maskBitPatter[enabledChannels[i]] = 1;
-    }
-    const uint16_t mask = maskBitPatter.to_ulong();
-    this->setRegister(AddressOf_TriggerBusMaskRegister, mask);
-    if (Debug::channelmodule()) {
-      const uint16_t maskRead = this->getRegister(AddressOf_TriggerBusMaskRegister);
-      cout << "done(" << hex << setw(4) << maskRead << dec << ")" << endl;
-    }
-  }
-
- public:
   void sendCPUTrigger() {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") sending CPU trigger...";
-    }
-    this->setRegister(AddressOf_CPUTriggerRegister, 0xFFFF);
-    if (Debug::channelmodule()) {
-      cout << "done" << endl;
-    }
+    constexpr uint16_t TRIG_FIRE = 0xFFFF;
+    write(AddressOf_CPUTriggerRegister, TRIG_FIRE);
   }
 
- public:
   /** Sets number of samples register.
    * Waveforms are sampled according to this number.
    * @param nSamples number of adc samples per one waveform
    */
-  void setNumberOfSamples(uint16_t nSamples) {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") setting NumberOfSamples...";
-    }
-    this->setRegister(AddressOf_NumberOfSamplesRegister, nSamples);
-    if (Debug::channelmodule()) {
-      const uint16_t nSamplesRead = this->getRegister(AddressOf_NumberOfSamplesRegister);
-      cout << "done(" << hex << setw(4) << nSamplesRead << dec << ")" << endl;
-    }
-  }
+  void setNumberOfSamples(uint16_t nSamples) { write(AddressOf_NumberOfSamplesRegister, nSamples); }
 
- public:
   /** Sets Leading Trigger Threshold.
    * @param threshold an adc value for leading trigger threshold
    */
-  void setStartingThreshold(uint16_t threshold) {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") setting LeadingTriggerThreshold...";
-    }
-    this->setRegister(AddressOf_ThresholdStartingRegister, threshold);
-    if (Debug::channelmodule()) {
-      const uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdStartingRegister);
-      cout << "done(" << hex << setw(4) << thresholdRead << dec << ")" << endl;
-    }
-  }
+  void setStartingThreshold(uint16_t threshold) { write(AddressOf_ThresholdStartingRegister, threshold); }
 
- public:
   /** Sets Trailing Trigger Threshold.
    * @param threshold an adc value for trailing trigger threshold
    */
-  void setClosingThreshold(uint16_t threshold) {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") setting TrailingTriggerThreshold...";
-    }
-    this->setRegister(AddressOf_ThresholdClosingRegister, threshold);
-    if (Debug::channelmodule()) {
-      const uint16_t thresholdRead = this->getRegister(AddressOf_ThresholdClosingRegister);
-      cout << "done(" << hex << setw(4) << thresholdRead << dec << ")" << endl;
-    }
-  }
+  void setClosingThreshold(uint16_t threshold) { write(AddressOf_ThresholdClosingRegister, threshold); }
 
- public:
-  /** Turn on/off power of this channle's ADC chip.
-   * @param trueifon true if turing on, false if turing off
-   */
+  /// Turn on/off power of this channle's ADC chip.
   void turnADCPower(bool trueifon) {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") turning ADC ";
-      if (trueifon) {
-        cout << "on...";
-      } else {
-        cout << "off...";
-      }
-    }
-    if (trueifon) {
-      this->setRegister(AddressOf_AdcPowerDownModeRegister, 0x0000);
-    } else {
-      this->setRegister(AddressOf_AdcPowerDownModeRegister, 0xFFFF);
-    }
-    if (Debug::channelmodule()) {
-      cout << "done" << endl;
-    }
+    constexpr uint16_t POWER_DOWN = 0xFFFF;
+    constexpr uint16_t POWER_UP = 0x0000;
+    write(AddressOf_AdcPowerDownModeRegister, trueifon ? POWER_UP : POWER_DOWN);
   }
 
- public:
   /** Sets depth of delay per trigger. When triggered,
    * a waveform will be recorded starting from N steps
    * before of the trigger timing.
    * @param depthOfDelay number of samples retarded
    */
-  void setDepthOfDelay(uint16_t depthOfDelay) {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") setting Depth Of Delay...";
-    }
-    this->setRegister(AddressOf_DepthOfDelayRegister, depthOfDelay);
-    if (Debug::channelmodule()) {
-      cout << "done" << endl;
-    }
-  }
+  void setDepthOfDelay(uint16_t depthOfDelay) { write(AddressOf_DepthOfDelayRegister, depthOfDelay); }
 
- public:
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
   uint32_t getLivetime() const {
-    const uint32_t livetimeL = this->getRegister(AddressOf_LivetimeRegisterL);
-    const uint32_t livetimeH = this->getRegister(AddressOf_LivetimeRegisterH);
-    const uint32_t livetime = (livetimeH << 16) + livetimeL;
-    return livetime;
+    // TODO: refactor this with a generic read32() method.
+    const auto livetimeL = read16(AddressOf_LivetimeRegisterL);
+    const auto livetimeH = read16(AddressOf_LivetimeRegisterH);
+    return (static_cast<uint32_t>(livetimeH) << 16) + livetimeL;
   }
 
- public:
   /** Get current ADC value.
    * @return temporal ADC value
    */
-  uint32_t getCurrentADCValue() const {
-    using namespace std;
-    if (Debug::channelmodule()) {
-      cout << "channelmodule(" << chNumber << ") current ADC value:0x";
-    }
-    const uint16_t adcvalue = this->getRegister(AddressOf_CurrentAdcDataRegister);
-    if (Debug::channelmodule()) {
-      cout << hex << setw(4) << setfill('0') << adcvalue << dec << endl;
-    }
-    return adcvalue;
-  }
+  uint16_t getCurrentADCValue() const { return read16(AddressOf_CurrentAdcDataRegister); }
 
- public:
   /** Reads Status Register. Result will be returned as string.
    * @return stringified status
    */
   std::string getStatus() const {
-    using namespace std;
-    uint16_t statusRegister = rmapHandler->getRegister(AddressOf_Status1Register);
+    const auto statusRegister = read16(AddressOf_Status1Register);
     std::stringstream ss;
     /*
      Status1Register <= (                             --
@@ -297,14 +127,14 @@ class ChannelModule {
      others => '1'
      );
      */
-    ss << "Veto_internal : " << ((statusRegister & 0x0001) >> 0) << endl;
-    ss << "TriggerOut    : " << ((statusRegister & 0x0002) >> 1) << endl;
-    ss << "ChMgr Veto    : " << ((statusRegister & 0x0008) >> 3) << endl;
-    ss << "TrgModuleVeto : " << ((statusRegister & 0x0010) >> 4) << endl;
-    ss << "ADCPowerDown  : " << ((statusRegister & 0x0020) >> 5) << endl;
-    ss << "BufferNoGood  : " << ((statusRegister & 0x0100) >> 8) << endl;
-    ss << "NoRoomForEvt  : " << ((statusRegister & 0x0200) >> 9) << endl;
-    ss << "hasEvent      : " << ((statusRegister & 0x0400) >> 10) << endl;
+    ss << "Veto_internal : " << ((statusRegister & 0x0001) >> 0) << std::endl;
+    ss << "TriggerOut    : " << ((statusRegister & 0x0002) >> 1) << std::endl;
+    ss << "ChMgr Veto    : " << ((statusRegister & 0x0008) >> 3) << std::endl;
+    ss << "TrgModuleVeto : " << ((statusRegister & 0x0010) >> 4) << std::endl;
+    ss << "ADCPowerDown  : " << ((statusRegister & 0x0020) >> 5) << std::endl;
+    ss << "BufferNoGood  : " << ((statusRegister & 0x0100) >> 8) << std::endl;
+    ss << "NoRoomForEvt  : " << ((statusRegister & 0x0200) >> 9) << std::endl;
+    ss << "hasEvent      : " << ((statusRegister & 0x0400) >> 10) << std::endl;
 
     return ss.str();
   }
@@ -314,10 +144,28 @@ class ChannelModule {
    * @return trigger count
    */
   size_t getTriggerCount() const {
-    const size_t low = rmapHandler->getRegister(AddressOf_TriggerCountRegisterL);
-    const size_t high = rmapHandler->getRegister(AddressOf_TriggerCountRegisterH);
-    return (high << 16) + low;
+    // TODO: refactor this with a generic read32() method.
+    const auto low = read16(AddressOf_TriggerCountRegisterL);
+    const auto high = read16(AddressOf_TriggerCountRegisterH);
+    return (static_cast<size_t>(high) << 16) + low;
   }
+
+ private:
+  uint8_t chNumber_{};
+
+  uint32_t AddressOf_TriggerModeRegister;
+  uint32_t AddressOf_NumberOfSamplesRegister;
+  uint32_t AddressOf_ThresholdStartingRegister;
+  uint32_t AddressOf_ThresholdClosingRegister;
+  uint32_t AddressOf_AdcPowerDownModeRegister;
+  uint32_t AddressOf_DepthOfDelayRegister;
+  uint32_t AddressOf_LivetimeRegisterL;
+  uint32_t AddressOf_LivetimeRegisterH;
+  uint32_t AddressOf_CurrentAdcDataRegister;
+  uint32_t AddressOf_CPUTriggerRegister;
+  uint32_t AddressOf_Status1Register;
+  uint32_t AddressOf_TriggerCountRegisterL;
+  uint32_t AddressOf_TriggerCountRegisterH;
 };
 
 #endif /* CHANNELMODULE_HH_ */
