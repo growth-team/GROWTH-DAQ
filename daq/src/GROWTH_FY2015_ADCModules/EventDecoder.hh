@@ -8,8 +8,7 @@
 #ifndef EVENTDECODER_HH_
 #define EVENTDECODER_HH_
 
-#include <queue>
-#include <stack>
+#include <deque>
 
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 
@@ -52,48 +51,31 @@ class EventDecoder {
     state_pha_list
   };
 
- private:
-  EventDecoderState state;
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueue;
-  std::vector<uint16_t> readDataUint16Array;
-  std::stack<GROWTH_FY2015_ADC_Type::Event*> eventInstanceResavoir;
-  size_t waveformLength;
-
  public:
   /** Constructor.
    */
-  EventDecoder() {
-    state = EventDecoderState::state_flag_FFF0;
-    rawEvent.waveform = new uint16_t[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
-    prepareEventInstances();
+  EventDecoder() : state(EventDecoderState::state_flag_FFF0), rawEvent(GROWTH_FY2015_ADC_Type::MaxWaveformLength) {
+    for (size_t i = 0; i < InitialEventInstanceNumber; i++) {
+      GROWTH_FY2015_ADC_Type::Event* event =
+          new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
+      eventInstanceResavoir.push_back(event);
+    }
   }
 
  public:
   virtual ~EventDecoder() {
-    while (eventInstanceResavoir.size() != 0) {
-      GROWTH_FY2015_ADC_Type::Event* event = eventInstanceResavoir.top();
-      eventInstanceResavoir.pop();
-      delete event->waveform;
+    for (auto event : eventInstanceResavoir) {
       delete event;
     }
-    delete rawEvent.waveform;
   }
 
  public:
   void decodeEvent(std::vector<uint8_t>* readDataUint8Array) {
     using namespace std;
 
-    size_t size = readDataUint8Array->size();
-    if (size % 2 == 1) {
-      cerr << "EventDecoder::decodeEvent(): odd data length " << size << " bytes" << endl;
-      exit(-1);
-    }
-
-    size_t size_half = size / 2;
-
-    if (Debug::eventdecoder()) {
-      cout << "EventDecoder::decodeEvent() read " << size << " bytes (state = " << stateToString() << ")" << endl;
-    }
+    const size_t size = readDataUint8Array->size();
+    assert(size % 2 == 0);
+    const size_t size_half = size / 2;
 
     // resize if necessary
     if (size_half > readDataUint16Array.size()) {
@@ -192,30 +174,15 @@ class EventDecoder {
  public:
   static const size_t InitialEventInstanceNumber = 10000;
 
- private:
-  void prepareEventInstances() {
-    for (size_t i = 0; i < InitialEventInstanceNumber; i++) {
-      GROWTH_FY2015_ADC_Type::Event* event = new GROWTH_FY2015_ADC_Type::Event;
-      event->waveform = new uint16_t[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
-      eventInstanceResavoir.push(event);
-    }
-  }
-
  public:
   void pushEventToQueue() {
     GROWTH_FY2015_ADC_Type::Event* event;
     if (eventInstanceResavoir.size() == 0) {
-      event = new GROWTH_FY2015_ADC_Type::Event;
-      // debug dump
-      if (Debug::eventdecoder()) {
-        using namespace std;
-        cerr << "EventDecoder::pushEventToQueue() new Event instance was created." << endl;
-      }
-      event->waveform = new uint16_t[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
+      event = new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
     } else {
       // reuse already created instance
-      event = eventInstanceResavoir.top();
-      eventInstanceResavoir.pop();
+      event = eventInstanceResavoir.back();
+      eventInstanceResavoir.pop_back();
     }
     event->ch = rawEvent.ch;
     event->timeTag = (static_cast<uint64_t>(rawEvent.timeH) << 32) + (static_cast<uint64_t>(rawEvent.timeM) << 16) +
@@ -231,9 +198,8 @@ class EventDecoder {
     event->triggerCount = rawEvent.triggerCount;
 
     // copy waveform
-    for (size_t i = 0; i < waveformLength; i++) {
-      event->waveform[i] = rawEvent.waveform[i];
-    }
+    const size_t nBytes = waveformLength << 1;
+    memcpy(event->waveform, rawEvent.waveform, nBytes);
 
     eventQueue.push_back(event);
   }
@@ -254,7 +220,7 @@ class EventDecoder {
   /** Frees event instance so that buffer area can be reused in the following commands.
    * @param event event instance to be freed
    */
-  void freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventInstanceResavoir.push(event); }
+  void freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventInstanceResavoir.push_back(event); }
 
  public:
   /** Returns the number of available (allocated) Event instances.
@@ -316,6 +282,13 @@ class EventDecoder {
     }
     return result;
   }
+
+ private:
+  EventDecoderState state{};
+  std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueue;
+  std::vector<uint16_t> readDataUint16Array;
+  std::deque<GROWTH_FY2015_ADC_Type::Event*> eventInstanceResavoir;
+  size_t waveformLength{};
 };
 
 #endif /* EVENTDECODER_HH_ */

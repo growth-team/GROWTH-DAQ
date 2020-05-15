@@ -16,8 +16,9 @@
  */
 class ChannelManager : public RegisterAccessInterface {
  public:
-  ChannelManager(std::shared_ptr<RMAPHandler> rmapHandler)
-      : RegisterAccessInterface(rmapHandler), startStopSemaphore_(rmapHandler, AddressOf_StartStopSemaphoreRegister) {}
+  ChannelManager(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(rmapHandler, rmapTargetNode),
+        startStopSemaphore_(rmapHandler, rmapTargetNode, AddressOf_StartStopSemaphoreRegister) {}
 
   /// Starts data acquisition.
   /// Configuration of registers of individual channels should be completed before invoking this method.

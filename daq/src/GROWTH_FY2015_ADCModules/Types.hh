@@ -27,6 +27,8 @@ struct HouseKeepingData {
 };
 
 struct Event {
+  explicit Event(size_t numWaveformSamples) : waveform(new uint16_t[numWaveformSamples]) {}
+  ~Event() { delete[] waveform; }
   uint8_t ch;
   uint64_t timeTag;
   uint16_t triggerCount;

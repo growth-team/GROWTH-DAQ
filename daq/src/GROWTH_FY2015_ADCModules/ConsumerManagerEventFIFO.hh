@@ -1,6 +1,7 @@
 #ifndef CONSUMERMANAGEREVENTFIFO_HH_
 #define CONSUMERMANAGEREVENTFIFO_HH_
 
+#include "GROWTH_FY2015_ADCModules/FpgaModule.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 
 class RMAPHandler;
@@ -8,15 +9,17 @@ class RMAPHandler;
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.
  */
-class ConsumerManagerEventFIFO : public RegisterAccessInterface {
+class ConsumerManagerEventFIFO : public RmapRegisterAccessInterface {
  public:
   /** Constructor.
    * @param[in] rmapHandler RMAPHandlerUART
    * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
    */
-  ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandler> rmapHandler)
-      : RegisterAccessInterface(rmapHandler), rmapHandler_(rmapHandler) {}
-  ~ConsumerManagerEventFIFO();
+  ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RmapRegisterAccessInterface(rmapHandler, rmapTargetNode),
+        rmapHandler_(rmapHandler),
+        rmapTargetNode_(rmapTargetNode) {}
+  ~ConsumerManagerEventFIFO() override = default;
 
   void reset() {
     constexpr uint16_t RESET = 0x01;
@@ -27,7 +30,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   /** Retrieve data stored in the EventFIFO.
    * @param maximumsize maximum data size to be returned (in bytes)
    */
-  std::vector<uint8_t> getEventData(uint32_t maximumsize = 4000) throw(RMAPInitiatorException) {
+  std::vector<uint8_t> getEventData(uint32_t maximumsize = 4000) {
     receiveBuffer_.resize(ReceiveBufferSize);
     try {
       // TODO: replace cout/cerr with a proper logging function
@@ -79,7 +82,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
     const size_t dataCountInBytes = readEventFIFODataCount() * 2;
     const size_t readSize = std::min(dataCountInBytes, length);
     if (readSize != 0) {
-      rmapHandler_->read(InitialAddressOf_EventFIFO, readSize, buffer);
+      rmapHandler_->read(rmapTargetNode_, InitialAddressOf_EventFIFO, readSize, buffer);
     }
     return readSize;
   }
@@ -103,8 +106,9 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr size_t ReceiveBufferSize = 3000;
   static constexpr size_t EventFIFOSizeInBytes = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
-  std::shared_ptr<RMAPHandler> rmapHandler_;
-  std::vector<uint8_t> receiveBuffer_;
+  std::shared_ptr<RMAPHandler> rmapHandler_{};
+  std::shared_ptr<RMAPTargetNode> rmapTargetNode_{};
+  std::vector<uint8_t> receiveBuffer_{};
   size_t receivedBytes = 0;
 };
 

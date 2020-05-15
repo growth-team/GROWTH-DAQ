@@ -17,8 +17,9 @@ class ChannelModule : public RegisterAccessInterface {
    * @param[in] rmaphandler a pointer to an instance of RMAPHandler
    * @param[in] chNumber_ this instance's channel number
    */
-  ChannelModule(std::shared_ptr<RMAPHandler> rmapHandler, uint8_t chNumber)
-      : RegisterAccessInterface(rmapHandler), chNumber_(chNumber) {
+  ChannelModule(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
+                uint8_t chNumber)
+      : RegisterAccessInterface(rmapHandler, rmapTargetNode), chNumber_(chNumber) {
     const uint32_t BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
     AddressOf_TriggerModeRegister = BA + 0x0002;
     AddressOf_NumberOfSamplesRegister = BA + 0x0004;
@@ -91,17 +92,17 @@ class ChannelModule : public RegisterAccessInterface {
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
-  uint32_t getLivetime() const {
-    // TODO: refactor this with a generic read32() method.
-    const auto livetimeL = read16(AddressOf_LivetimeRegisterL);
-    const auto livetimeH = read16(AddressOf_LivetimeRegisterH);
-    return (static_cast<uint32_t>(livetimeH) << 16) + livetimeL;
-  }
+  uint32_t getLivetime() const { return read32(AddressOf_LivetimeRegisterL); }
 
   /** Get current ADC value.
    * @return temporal ADC value
    */
   uint16_t getCurrentADCValue() const { return read16(AddressOf_CurrentAdcDataRegister); }
+
+  /** Reads TriggerCountRegister.
+   * @return trigger count
+   */
+  size_t getTriggerCount() const { return read32(AddressOf_TriggerCountRegisterL); }
 
   /** Reads Status Register. Result will be returned as string.
    * @return stringified status
@@ -137,17 +138,6 @@ class ChannelModule : public RegisterAccessInterface {
     ss << "hasEvent      : " << ((statusRegister & 0x0400) >> 10) << std::endl;
 
     return ss.str();
-  }
-
- public:
-  /** Reads TriggerCountRegister.
-   * @return trigger count
-   */
-  size_t getTriggerCount() const {
-    // TODO: refactor this with a generic read32() method.
-    const auto low = read16(AddressOf_TriggerCountRegisterL);
-    const auto high = read16(AddressOf_TriggerCountRegisterH);
-    return (static_cast<size_t>(high) << 16) + low;
   }
 
  private:
