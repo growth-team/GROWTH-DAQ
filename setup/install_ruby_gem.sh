@@ -7,33 +7,38 @@ gem install pi_piper git pry god serialport m2x
 # Uninstall rbczmq if already installed.
 gem uninstall rbczmq || true
 
-apt remove -y libzmq3-dev
+# Uninstall apt-installed libzmq3-dev if already installed.
+apt remove -y libzmq3-dev || true
 
-git clone https://github.com/zeromq/zeromq4-x
-git clone https://github.com/growth-team/czmq
+pushd /tmp
 
-# Build & install zeromq
-install -d zeromq4-x/build-ubuntu
-pushd zeromq4-x/build-ubuntu
-git checkout v4.0.7
-cmake ..
-make -j8 install
+  git clone https://github.com/zeromq/zeromq4-x
+  git clone https://github.com/growth-team/czmq
+
+  # Build & install zeromq
+  install -d zeromq4-x/build-ubuntu
+  pushd zeromq4-x/build-ubuntu
+  git checkout v4.0.7
+  cmake ..
+  make -j2 install
+  popd
+
+  # Build & install czmq
+  install -d czmq/build-ubuntu
+  pushd czmq/build-ubuntu
+  git checkout raspbian-buster-support
+  cmake ..
+  make -j2 install
+  popd
+
+  # Install rbczmq
+  gem install rbczmq -- --with-system-libs
+
+  # Test "require 'rbczmq'
+  export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+  ruby -e "require 'rbczmq'"
+
 popd
-
-# Build & install czmq
-install -d czmq/build-ubuntu
-pushd czmq/build-ubuntu
-git checkout raspbian-buster-support
-cmake ..
-make -j8 install
-popd
-
-# Install rbczmq
-gem install rbczmq -- --with-system-libs
-
-# Test "require 'rbczmq'
-export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-ruby -e "require 'rbczmq'"
 
 #
 # If LD_LIBRARY_PATH is not updated, the following error occurs:
