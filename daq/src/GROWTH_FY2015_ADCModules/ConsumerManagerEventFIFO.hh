@@ -1,7 +1,6 @@
 #ifndef CONSUMERMANAGEREVENTFIFO_HH_
 #define CONSUMERMANAGEREVENTFIFO_HH_
 
-#include "GROWTH_FY2015_ADCModules/FpgaModule.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 
 class RMAPHandler;
@@ -9,14 +8,14 @@ class RMAPHandler;
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.
  */
-class ConsumerManagerEventFIFO : public RmapRegisterAccessInterface {
+class ConsumerManagerEventFIFO : public RegisterAccessInterface {
  public:
   /** Constructor.
    * @param[in] rmapHandler RMAPHandlerUART
    * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
    */
   ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RmapRegisterAccessInterface(rmapHandler, rmapTargetNode),
+      : RegisterAccessInterface(rmapHandler, rmapTargetNode),
         rmapHandler_(rmapHandler),
         rmapTargetNode_(rmapTargetNode) {}
   ~ConsumerManagerEventFIFO() override = default;

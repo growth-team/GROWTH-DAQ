@@ -10,7 +10,6 @@ extern "C" {
 #include "adcboard.hh"
 
 class EventListFileFITS : public EventListFile {
-
  public:
   EventListFileFITS(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "",
                     size_t nSamples = 1024, double exposureInSec = 0,  //
@@ -35,20 +34,19 @@ class EventListFileFITS : public EventListFile {
  private:
   fitsfile* outputFile{};
   std::string detectorID{};
-  GROWTH_FY2015_ADC_Type::Event eventEntry{};
   std::string configurationYAMLFile{};
 
-  static const size_t InitialRowNumber     = 1000;
+  static const size_t InitialRowNumber = 1000;
   static const size_t InitialRowNumber_GPS = 1000;
-  int fitsStatus                           = 0;
-  bool outputFileIsOpen                    = false;
+  int fitsStatus = 0;
+  bool outputFileIsOpen = false;
   size_t rowIndex{};      // will be initialized in createOutputFITSFile()
   size_t rowIndex_GPS{};  // will be initialized in createOutputFITSFile()
   size_t fitsNRows{};     // currently allocated rows
   size_t rowExpansionStep = InitialRowNumber;
   size_t nSamples{};
   double exposureInSec{};
-  uint32_t fpgaType    = 0x00000000;
+  uint32_t fpgaType = 0x00000000;
   uint32_t fpgaVersion = 0x00000000;
 
   std::mutex fitsAccessMutex_;
@@ -59,7 +57,7 @@ class EventListFileFITS : public EventListFile {
   // event list HDU
   //---------------------------------------------
   static const size_t nColumns_Event = 11;
-  const char* ttypes[nColumns_Event]       = {
+  const char* ttypes[nColumns_Event] = {
       //
       "boardIndexAndChannel",  // B
       "timeTag",               // K
@@ -73,19 +71,19 @@ class EventListFileFITS : public EventListFile {
       "baseline",              // U
       "waveform"               // B
   };
-  const size_t MaxTFORM        = 1024;
+  const size_t MaxTFORM = 1024;
   char* tforms[nColumns_Event] = {
       //
-      const_cast<char*>("B") /*uint8_t*/,                      // boardIndexAndChannel
-      const_cast<char*>("K") /*uint64_t*/,                     // timeTag
-      const_cast<char*>("U") /*uint16_t*/,                     // triggerCount
-      const_cast<char*>("U") /*uint16_t*/,                     // phaMax
-      const_cast<char*>("U") /*uint16_t*/,                     // phaMaxTime
-      const_cast<char*>("U") /*uint16_t*/,                     // phaMin
-      const_cast<char*>("U") /*uint16_t*/,                     // phaFirst
-      const_cast<char*>("U") /*uint16_t*/,                     // phaLast
-      const_cast<char*>("U") /*uint16_t*/,                     // maxDerivative
-      const_cast<char*>("U") /*uint16_t*/,                     // baseline
+      const_cast<char*>("B") /*uint8_t*/,          // boardIndexAndChannel
+      const_cast<char*>("K") /*uint64_t*/,         // timeTag
+      const_cast<char*>("U") /*uint16_t*/,         // triggerCount
+      const_cast<char*>("U") /*uint16_t*/,         // phaMax
+      const_cast<char*>("U") /*uint16_t*/,         // phaMaxTime
+      const_cast<char*>("U") /*uint16_t*/,         // phaMin
+      const_cast<char*>("U") /*uint16_t*/,         // phaFirst
+      const_cast<char*>("U") /*uint16_t*/,         // phaLast
+      const_cast<char*>("U") /*uint16_t*/,         // maxDerivative
+      const_cast<char*>("U") /*uint16_t*/,         // baseline
       new char[MaxTFORM] /* to be filled later */  //
   };
   const char* tunits[nColumns_Event] = {
@@ -94,23 +92,23 @@ class EventListFileFITS : public EventListFile {
   };
   enum columnIndices {
     Column_boardIndexAndChannel = 1,
-    Column_timeTag              = 2,
-    Column_triggerCount         = 3,
-    Column_phaMax               = 4,
-    Column_phaMaxTime           = 5,
-    Column_phaMin               = 6,
-    Column_phaFirst             = 7,
-    Column_phaLast              = 8,
-    Column_maxDerivative        = 9,
-    Column_baseline             = 10,
-    Column_waveform             = 11
+    Column_timeTag = 2,
+    Column_triggerCount = 3,
+    Column_phaMax = 4,
+    Column_phaMaxTime = 5,
+    Column_phaMin = 6,
+    Column_phaFirst = 7,
+    Column_phaLast = 8,
+    Column_maxDerivative = 9,
+    Column_baseline = 10,
+    Column_waveform = 11
   };
 
   //---------------------------------------------
   // GPS Time Register HDU
   //---------------------------------------------
   static const size_t nColumns_GPS = 3;
-  const char* ttypes_GPS[nColumns_GPS]   = {
+  const char* ttypes_GPS[nColumns_GPS] = {
       //
       "fpgaTimeTag",  //
       "unixTime",     //
@@ -130,8 +128,8 @@ class EventListFileFITS : public EventListFile {
   };
   enum columnIndices_GPS {
     Column_fpgaTimeTag = 1,  //
-    Column_unixTime    = 2,  //
-    Column_gpsTime     = 3
+    Column_unixTime = 2,     //
+    Column_gpsTime = 3
   };
 };
 

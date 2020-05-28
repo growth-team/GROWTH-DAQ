@@ -11,20 +11,9 @@
 #include <vector>
 
 class RMAPHandlerUART : public RMAPHandler {
- private:
-  SpaceWireIFOverUART* spwif;
-  std::string deviceName;
-
  public:
-  RMAPHandlerUART(std::string deviceName, std::vector<RMAPTargetNode*> rmapTargetNodes) : RMAPHandler() {
-    using namespace std;
-    this->deviceName = deviceName;
-    this->timeOutDuration = 2000.0;
-    this->maxNTrials = 10;
-    this->useDraftECRC = false;
-    this->spwif = NULL;
-    this->rmapEngine = NULL;
-    this->rmapInitiator = NULL;
+  RMAPHandlerUART(std::string deviceName, std::vector<RMAPTargetNode*> rmapTargetNodes)
+      : RMAPHandler(), deviceName_(deviceName), timeOutDuration(2000.0), maxNTrials(10), useDraftECRC(false) {
     this->setTimeOutDuration(DefaultTimeOut);
 
     // add RMAPTargetNodes to DB
@@ -38,19 +27,17 @@ class RMAPHandlerUART : public RMAPHandler {
       exit(-1);
     }
   }
-
- public:
   virtual ~RMAPHandlerUART() {}
 
  public:
   bool connectoToSpaceWireToGigabitEther() {
     using namespace std;
-    if (spwif != NULL) {
-      delete spwif;
+    if (spwif_ != NULL) {
+      delete spwif_;
     }
 
     // connect to UART-USB-SpaceWire interface
-    spwif = new SpaceWireIFOverUART(this->deviceName);
+    spwif_ = new SpaceWireIFOverUART(this->deviceName);
     try {
       spwif->open();
       _isConnectedToSpWGbE = true;
@@ -62,7 +49,7 @@ class RMAPHandlerUART : public RMAPHandler {
     }
 
     // start RMAPEngine
-    rmapEngine = new RMAPEngine(spwif);
+    rmapEngine = new RMAPEngine(spwif_);
     if (useDraftECRC) {
       cout << "RMAPHandlerUART::connectoToSpaceWireToGigabitEther() setting DraftE CRC mode to RMAPEngine" << endl;
       rmapEngine->setUseDraftECRC(true);
@@ -99,7 +86,7 @@ class RMAPHandlerUART : public RMAPHandler {
     delete rmapInitiator;
     delete spwif;
 
-    spwif = NULL;
+    spwif_ = NULL;
     rmapEngine = NULL;
     rmapInitiator = NULL;
     cout << "RMAPHandler::disconnectSpWGbE(): Completed" << endl;
@@ -141,9 +128,9 @@ class RMAPHandlerUART : public RMAPHandler {
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << endl;
         std::cerr << "Read timed out (address="
-                  << "0x" << hex << right << setw(8) << setfill('0') << (uint32_t)memoryAddress << " length=" << dec
-                  << length << "); trying again..." << std::endl;
-        spwif->cancelReceive();
+                  << "0x" << hex << right << setw(8) << setfill('0') << memoryAddress << " length=" << dec << length
+                  << "); trying again..." << std::endl;
+        spwif_->cancelReceive();
         if (i == maxNTrials - 1) {
           if (e.getStatus() == RMAPInitiatorException::Timeout) {
             throw RMAPHandlerException(RMAPHandlerException::TimeOut);
@@ -154,7 +141,6 @@ class RMAPHandlerUART : public RMAPHandler {
         usleep(100);
       }
     }
-    //	cout << "Read successfully done." << endl;
   }
 
  public:
@@ -169,7 +155,7 @@ class RMAPHandlerUART : public RMAPHandler {
         break;
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::read() 2: RMAPInitiatorException::" << e.toString() << endl;
-        spwif->cancelReceive();
+        spwif_->cancelReceive();
         if (i == maxNTrials - 1) {
           if (e.getStatus() == RMAPInitiatorException::Timeout) {
             throw RMAPHandlerException(RMAPHandlerException::TimeOut);
@@ -262,29 +248,9 @@ class RMAPHandlerUART : public RMAPHandler {
     }
   }
 
- public:
-  RMAPTargetNode* getRMAPTargetNode(std::string rmapTargetNodeID) {
-    RMAPTargetNode* targetNode;
-    try {
-      targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) {
-      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
-    }
-    return targetNode;
-  }
-
- public:
-  void setRegister(uint32_t address, uint16_t data) {
-    uint8_t writeData[2] = {static_cast<uint8_t>(data / 0x100), static_cast<uint8_t>(data % 0x100)};
-    this->write(adcRMAPTargetNode, address, writeData, 2);
-  }
-
- public:
-  uint16_t getRegister(uint32_t address) {
-    uint8_t readData[2];
-    this->read(adcRMAPTargetNode, address, 2, readData);
-    return (static_cast<uint16_t>(readData[0]) << 16) + readData[1];
-  }
+ private:
+  std::shared_ptr<SpaceWireIFOverUART> spwif_{};
+  std::string deviceName_{};
 };
 
 #endif

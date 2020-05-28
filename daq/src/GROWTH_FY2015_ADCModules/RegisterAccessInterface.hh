@@ -3,6 +3,7 @@
 
 #include <GROWTH_FY2015_ADCModules/RMAPHandler.hh>
 
+#include <array>
 #include <memory>
 
 class RegisterAccessInterface {
@@ -35,16 +36,16 @@ class RegisterAccessInterface {
   }
 
   void write(uint32_t address, uint16_t value) {
-    const std::array<uint8_t, 2> data{(value & 0xFF00) >> 8, value & 0xFF};
+    const std::array<uint8_t, 2> data{static_cast<uint8_t>((value & 0xFF00) >> 8), static_cast<uint8_t>(value & 0xFF)};
     rmapHandler_->write(rmapTargetNode_.get(), address, data);
   }
 
   void write(uint32_t address, uint32_t value) {
-    const uint16_t lower16 = value & 0xFFFF;
-    const uint16_t upper16 = value >> 16;
+    const uint16_t lower16 = static_cast<uint16_t>(value & 0xFFFF);
+    const uint16_t upper16 = static_cast<uint8_t>(value >> 16);
     const std::array<uint8_t, 4> data{
-        (lower16 & 0xFF00) >> 8, lower16 & 0xFF,  //
-        (upper16 & 0xFF00) >> 8, upper16 & 0xFF,
+        static_cast<uint8_t>((lower16 & 0xFF00) >> 8), static_cast<uint8_t>(lower16 & 0xFF),
+        static_cast<uint8_t>((upper16 & 0xFF00) >> 8), static_cast<uint8_t>(upper16 & 0xFF),
     };
     rmapHandler_->write(rmapTargetNode_.get(), address, data);
   }

@@ -18,7 +18,7 @@ class ConsumerManager : public RegisterAccessInterface {
   /** Resets ConsumerManager module.
    */
   virtual void reset() {
-    vector<uint8_t> writedata;
+    std::vector<uint8_t> writedata;
     writedata.push_back(0x01);
     writedata.push_back(0x00);
     rmapHandler_->write(adcboxRMAPNode, AddressOf_ConsumerMgr_ResetRegister, &writedata[0], 2);

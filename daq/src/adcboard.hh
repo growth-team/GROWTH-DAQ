@@ -191,6 +191,7 @@ enum class SpaceFibreADCException {
  * a user can change individual registers in each module.
  */
 class GROWTH_FY2015_ADC {
+ public:
   /** Constructor.
    * @param deviceName UART-USB device name (e.g. /dev/tty.usb-aaa-bbb)
    */
@@ -389,7 +390,17 @@ class GROWTH_FY2015_ADC {
   void dumpMustExistKeywords();
   void loadConfigurationFile(std::string inputFileName);
 
- public:
+  // Clock Frequency
+  static constexpr double ClockFrequency = 100;  // MHz
+  // Clock Interval
+  static constexpr double ClockInterval = 10e-9;  // s
+  // FPGA TimeTag
+  static constexpr uint32_t TimeTagResolutionInNanoSec = 10;  // ns
+  // PHA Min/Max
+  static constexpr uint16_t PHAMinimum = 0;
+  static constexpr uint16_t PHAMaximum = 1023;
+  static constexpr size_t LengthOfGPSTimeRegister = 20;
+
   const size_t nChannels = 4;
   std::string DetectorID{};
   size_t PreTriggerSamples = 4;
@@ -417,7 +428,6 @@ class GROWTH_FY2015_ADC {
 
   // clang-format off
   static constexpr uint32_t AddressOfGPSTimeRegister          = 0x20000002;
-  static constexpr size_t   LengthOfGPSTimeRegister           = 20;
   static constexpr uint32_t AddressOfGPSDataFIFOResetRegister = 0x20001000;
   static constexpr uint32_t InitialAddressOfGPSDataFIFO       = 0x20001002;
   static constexpr uint32_t FinalAddressOfGPSDataFIFO         = 0x20001FFF;
@@ -427,16 +437,6 @@ class GROWTH_FY2015_ADC {
   static constexpr uint32_t AddressOfFPGAVersionRegister_L = 0x30000004;
   static constexpr uint32_t AddressOfFPGAVersionRegister_H = 0x30000006;
   // clang-format on
-
-  // Clock Frequency
-  static constexpr double ClockFrequency = 100;  // MHz
-  // Clock Interval
-  static constexpr double ClockInterval = 10e-9;  // s
-  // FPGA TimeTag
-  static constexpr uint32_t TimeTagResolutionInNanoSec = 10;  // ns
-  // PHA Min/Max
-  static constexpr uint16_t PHAMinimum = 0;
-  static constexpr uint16_t PHAMaximum = 1023;
 
   std::unique_ptr<RMAPHandlerUART> rmapHandler;
   std::unique_ptr<RMAPInitiator> rmapIniaitorForGPSRegisterAccess;

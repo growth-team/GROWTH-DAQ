@@ -1,10 +1,3 @@
-/*
- * EventDecoder.hh
- *
- *  Created on: Oct 27, 2014
- *      Author: yuasa
- */
-
 #ifndef EVENTDECODER_HH_
 #define EVENTDECODER_HH_
 
@@ -54,10 +47,11 @@ class EventDecoder {
  public:
   /** Constructor.
    */
-  EventDecoder() : state(EventDecoderState::state_flag_FFF0), rawEvent(GROWTH_FY2015_ADC_Type::MaxWaveformLength) {
+  EventDecoder()
+      : state(EventDecoderState::state_flag_FFF0),
+        rawEvent(GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength}) {
     for (size_t i = 0; i < InitialEventInstanceNumber; i++) {
-      GROWTH_FY2015_ADC_Type::Event* event =
-          new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
+      auto event = new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
       eventInstanceResavoir.push_back(event);
     }
   }
@@ -73,23 +67,23 @@ class EventDecoder {
   void decodeEvent(std::vector<uint8_t>* readDataUint8Array) {
     using namespace std;
 
-    const size_t size = readDataUint8Array->size();
-    assert(size % 2 == 0);
-    const size_t size_half = size / 2;
+    const size_t numBytes = readDataUint8Array->size();
+    assert(numBytes % 2 == 0);
+    const size_t numWords = numBytes / 2;
 
     // resize if necessary
-    if (size_half > readDataUint16Array.size()) {
-      readDataUint16Array.resize(size_half);
+    if (numWords > readDataUint16Array.size()) {
+      readDataUint16Array.resize(numWords);
     }
 
     // fill data
-    for (size_t i = 0; i < size_half; i++) {
+    for (size_t i = 0; i < numWords; i++) {
       readDataUint16Array[i] = (readDataUint8Array->at((i << 1)) << 8) + readDataUint8Array->at((i << 1) + 1);
     }
 
     // decode the data
     // event packet format version 20151016
-    for (size_t i = 0; i < size_half; i++) {
+    for (size_t i = 0; i < numWords; i++) {
       switch (state) {
         case EventDecoderState::state_flag_FFF0:
           waveformLength = 0;
@@ -97,7 +91,8 @@ class EventDecoder {
             state = EventDecoderState::state_ch_realtimeH;
           } else {
             cerr << "EventDecoder::decodeEvent(): invalid start flag ("
-                 << "0x" << hex << right << setw(4) << setfill('0') << (uint32_t)readDataUint16Array[i] << ")" << endl;
+                 << "0x" << hex << right << setw(4) << setfill('0') << static_cast<uint32_t>(readDataUint16Array[i])
+                 << ")" << endl;
           }
           break;
         case EventDecoderState::state_ch_realtimeH:
