@@ -13,3 +13,6 @@
 [submodule "lib/Adafruit_Python_SSD1306"]
 	path = lib/Adafruit_Python_SSD1306
 	url = https://github.com/adafruit/Adafruit_Python_SSD1306
+[submodule "daq/external/cppzmq"]
+	path = daq/external/cppzmq
+	url = https://github.com/zeromq/cppzmq
