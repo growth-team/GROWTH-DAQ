@@ -12,20 +12,20 @@ if [ ! -d ${git_dir}/${repo} ]; then
 fi
 
 pushd ${git_dir}/${repo}
-  if [ ! -d lib/Adafruit_Python_SSD1306 ]; then
-    git submodule init
-    git submodule update
-  fi
+#if [ ! -d lib/Adafruit_Python_SSD1306 ]; then
+git submodule init
+git submodule update
+#fi
 
-  if [ ! -d lib/Adafruit_Python_SSD1306 ]; then
+if [ ! -d lib/Adafruit_Python_SSD1306 ]; then
     echo "Error: failed to clone Adafruit_Python_SSD1306"
     exit -1
-  fi
+fi
 
-  pushd lib/Adafruit_Python_SSD1306
-    # Execute the install script
-    sudo python setup.py install
-    # Check build
-    gpio -v
-  popd
+pushd lib/Adafruit_Python_SSD1306
+# Execute the install script
+sudo python setup.py install
+# Check build
+gpio -v
+popd
 popd
