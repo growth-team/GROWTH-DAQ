@@ -31,7 +31,6 @@ sudo apt-get install -y \
   libxft-dev \
   libxpm-dev \
   libyaml-cpp-dev \
-  libzmq3-dev \
   make \
   python-dev \
   python-smbus \
@@ -45,6 +44,5 @@ sudo apt-get install -y \
   swig \
   texinfo \
   wget \
-  wicd-curses \
   zlib1g-dev \
   zsh
