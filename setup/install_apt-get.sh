@@ -44,6 +44,5 @@ sudo apt-get install -y \
   swig \
   texinfo \
   wget \
-  wicd-curses \
   zlib1g-dev \
   zsh

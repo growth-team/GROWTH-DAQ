@@ -1,0 +1,337 @@
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+Requirement already satisfied: numpy in /usr/lib/python2.7/dist-packages (1.16.2)
+Collecting scipy
+  Downloading https://files.pythonhosted.org/packages/62/4f/7e95c5000c411164d5ca6f55ac54cda5d200a3b6719dafd215ee0bd61578/scipy-1.2.3.tar.gz (23.3MB)
+Collecting ipython
+  Downloading https://files.pythonhosted.org/packages/ce/2c/2849a2b37024a01a847c87d81825c0489eb22ffc6416cac009bf281ea838/ipython-5.10.0-py2-none-any.whl (760kB)
+Requirement already satisfied: pyzmq in /usr/lib/python2.7/dist-packages (17.1.2)
+Collecting simplegeneric>0.8 (from ipython)
+  Downloading https://files.pythonhosted.org/packages/3d/57/4d9c9e3ae9a255cd4e1106bb57e24056d3d0709fc01b2e3e345898e49d5b/simplegeneric-0.8.1.zip
+Collecting backports.shutil-get-terminal-size; python_version == "2.7" (from ipython)
+  Downloading https://files.pythonhosted.org/packages/7d/cd/1750d6c35fe86d35f8562091737907f234b78fdffab42b29c72b1dd861f4/backports.shutil_get_terminal_size-1.0.0-py2.py3-none-any.whl
+Collecting pygments<2.6 (from ipython)
+  Downloading https://files.pythonhosted.org/packages/be/39/32da3184734730c0e4d3fa3b2b5872104668ad6dc1b5a73d8e477e5fe967/Pygments-2.5.2-py2.py3-none-any.whl (896kB)
+Collecting decorator (from ipython)
+  Downloading https://files.pythonhosted.org/packages/ed/1b/72a1821152d07cf1d8b6fce298aeb06a7eb90f4d6d41acec9861e7cc6df0/decorator-4.4.2-py2.py3-none-any.whl
+Collecting traitlets>=4.2 (from ipython)
+  Downloading https://files.pythonhosted.org/packages/ca/ab/872a23e29cec3cf2594af7e857f18b687ad21039c1f9b922fac5b9b142d5/traitlets-4.3.3-py2.py3-none-any.whl (75kB)
+Collecting pexpect; sys_platform != "win32" (from ipython)
+  Downloading https://files.pythonhosted.org/packages/39/7b/88dbb785881c28a102619d46423cb853b46dbccc70d3ac362d99773a78ce/pexpect-4.8.0-py2.py3-none-any.whl (59kB)
+Collecting pathlib2; python_version == "2.7" or python_version == "3.3" (from ipython)
+  Downloading https://files.pythonhosted.org/packages/e9/45/9c82d3666af4ef9f221cbb954e1d77ddbb513faf552aea6df5f37f1a4859/pathlib2-2.3.5-py2.py3-none-any.whl
+Collecting pickleshare (from ipython)
+  Downloading https://files.pythonhosted.org/packages/9a/41/220f49aaea88bc6fa6cba8d05ecf24676326156c23b991e80b3f2fc24c77/pickleshare-0.7.5-py2.py3-none-any.whl
+Requirement already satisfied: setuptools>=18.5 in /usr/lib/python2.7/dist-packages (from ipython) (40.8.0)
+Collecting prompt-toolkit<2.0.0,>=1.0.4 (from ipython)
+  Downloading https://files.pythonhosted.org/packages/9d/d2/2f099b5cd62dab819ce7a9f1431c09a9032fbfbb6474f442722e88935376/prompt_toolkit-1.0.18-py2-none-any.whl (245kB)
+Collecting ipython-genutils (from traitlets>=4.2->ipython)
+  Downloading https://files.pythonhosted.org/packages/fa/bc/9bd3b5c2b4774d5f33b2d544f1460be9df7df2fe42f352135381c347c69a/ipython_genutils-0.2.0-py2.py3-none-any.whl
+Requirement already satisfied: enum34; python_version == "2.7" in /usr/lib/python2.7/dist-packages (from traitlets>=4.2->ipython) (1.1.6)
+Requirement already satisfied: six in /usr/lib/python2.7/dist-packages (from traitlets>=4.2->ipython) (1.12.0)
+Collecting ptyprocess>=0.5 (from pexpect; sys_platform != "win32"->ipython)
+  Downloading https://files.pythonhosted.org/packages/d1/29/605c2cc68a9992d18dada28206eeada56ea4bd07a239669da41674648b6f/ptyprocess-0.6.0-py2.py3-none-any.whl
+Collecting scandir; python_version < "3.5" (from pathlib2; python_version == "2.7" or python_version == "3.3"->ipython)
+  Downloading https://files.pythonhosted.org/packages/df/f5/9c052db7bd54d0cbf1bc0bb6554362bba1012d03e5888950a4f5c5dadc4e/scandir-1.10.0.tar.gz
+Collecting wcwidth (from prompt-toolkit<2.0.0,>=1.0.4->ipython)
+  Downloading https://files.pythonhosted.org/packages/1b/7b/de30a3962d8fbebbf8d748bfbf20c05c0a7c495df6716e82af109143ba00/wcwidth-0.2.3-py2.py3-none-any.whl
+Collecting backports.functools-lru-cache>=1.2.1; python_version < "3.2" (from wcwidth->prompt-toolkit<2.0.0,>=1.0.4->ipython)
+  Downloading https://files.pythonhosted.org/packages/da/d1/080d2bb13773803648281a49e3918f65b31b7beebf009887a529357fd44a/backports.functools_lru_cache-1.6.1-py2.py3-none-any.whl
+Building wheels for collected packages: scipy, simplegeneric, scandir
+  Running setup.py bdist_wheel for scipy: started
+  Running setup.py bdist_wheel for scipy: finished with status 'error'
+  Complete output from command /usr/bin/python -u -c "import setuptools, tokenize;__file__='/tmp/pip-install-99y4rm/scipy/setup.py';f=getattr(tokenize, 'open', open)(__file__);code=f.read().replace('\r\n', '\n');f.close();exec(compile(code, __file__, 'exec'))" bdist_wheel -d /tmp/pip-wheel-Jr5y8Y --python-tag cp27:
+  Running from scipy source directory.
+  lapack_opt_info:
+  lapack_mkl_info:
+  customize UnixCCompiler
+    libraries mkl_rt not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+    NOT AVAILABLE
+  
+  openblas_lapack_info:
+  customize UnixCCompiler
+  customize UnixCCompiler
+    libraries openblas not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+    NOT AVAILABLE
+  
+  openblas_clapack_info:
+  customize UnixCCompiler
+  customize UnixCCompiler
+    libraries openblas,lapack not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+    NOT AVAILABLE
+  
+  atlas_3_10_threads_info:
+  Setting PTATLAS=ATLAS
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries tatlas,tatlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries tatlas,tatlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+  customize UnixCCompiler
+    libraries tatlas,tatlas not found in /usr/lib/arm-linux-gnueabihf
+  <class 'numpy.distutils.system_info.atlas_3_10_threads_info'>
+    NOT AVAILABLE
+  
+  atlas_3_10_info:
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries satlas,satlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries satlas,satlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+  customize UnixCCompiler
+    libraries satlas,satlas not found in /usr/lib/arm-linux-gnueabihf
+  <class 'numpy.distutils.system_info.atlas_3_10_info'>
+    NOT AVAILABLE
+  
+  atlas_threads_info:
+  Setting PTATLAS=ATLAS
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries ptf77blas,ptcblas,atlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries ptf77blas,ptcblas,atlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+  customize UnixCCompiler
+    libraries ptf77blas,ptcblas,atlas not found in /usr/lib/arm-linux-gnueabihf
+  <class 'numpy.distutils.system_info.atlas_threads_info'>
+    NOT AVAILABLE
+  
+  atlas_info:
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries f77blas,cblas,atlas not found in /usr/local/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries f77blas,cblas,atlas not found in /usr/lib
+  customize UnixCCompiler
+    libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+  customize UnixCCompiler
+    libraries f77blas,cblas,atlas not found in /usr/lib/arm-linux-gnueabihf
+  <class 'numpy.distutils.system_info.atlas_info'>
+    NOT AVAILABLE
+  
+  accelerate_info:
+    NOT AVAILABLE
+  
+  /usr/lib/python2.7/dist-packages/numpy/distutils/system_info.py:638: UserWarning:
+      Atlas (http://math-atlas.sourceforge.net/) libraries not found.
+      Directories to search for the libraries can be specified in the
+      numpy/distutils/site.cfg file (section [atlas]) or by setting
+      the ATLAS environment variable.
+    self.calc_info()
+  lapack_info:
+  customize UnixCCompiler
+    libraries lapack not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+    NOT AVAILABLE
+  
+  /usr/lib/python2.7/dist-packages/numpy/distutils/system_info.py:638: UserWarning:
+      Lapack (http://www.netlib.org/lapack/) libraries not found.
+      Directories to search for the libraries can be specified in the
+      numpy/distutils/site.cfg file (section [lapack]) or by setting
+      the LAPACK environment variable.
+    self.calc_info()
+  lapack_src_info:
+    NOT AVAILABLE
+  
+  /usr/lib/python2.7/dist-packages/numpy/distutils/system_info.py:638: UserWarning:
+      Lapack (http://www.netlib.org/lapack/) sources not found.
+      Directories to search for the sources can be specified in the
+      numpy/distutils/site.cfg file (section [lapack_src]) or by setting
+      the LAPACK_SRC environment variable.
+    self.calc_info()
+    NOT AVAILABLE
+  
+  Traceback (most recent call last):
+    File "<string>", line 1, in <module>
+    File "/tmp/pip-install-99y4rm/scipy/setup.py", line 492, in <module>
+      setup_package()
+    File "/tmp/pip-install-99y4rm/scipy/setup.py", line 488, in setup_package
+      setup(**metadata)
+    File "/usr/lib/python2.7/dist-packages/numpy/distutils/core.py", line 137, in setup
+      config = configuration()
+    File "/tmp/pip-install-99y4rm/scipy/setup.py", line 395, in configuration
+      raise NotFoundError(msg)
+  numpy.distutils.system_info.NotFoundError: No lapack/blas resources found.
+  
+  ----------------------------------------
+  Failed building wheel for scipy
+  Running setup.py clean for scipy
+  Complete output from command /usr/bin/python -u -c "import setuptools, tokenize;__file__='/tmp/pip-install-99y4rm/scipy/setup.py';f=getattr(tokenize, 'open', open)(__file__);code=f.read().replace('\r\n', '\n');f.close();exec(compile(code, __file__, 'exec'))" clean --all:
+  
+  `setup.py clean` is not supported, use one of the following instead:
+  
+    - `git clean -xdf` (cleans all files)
+    - `git clean -Xdf` (cleans all versioned files, doesn't touch
+                        files that aren't checked into the git repo)
+  
+  Add `--force` to your command to use it anyway if you must (unsupported).
+  
+  
+  ----------------------------------------
+  Failed cleaning build dir for scipy
+  Running setup.py bdist_wheel for simplegeneric: started
+  Running setup.py bdist_wheel for simplegeneric: finished with status 'done'
+  Stored in directory: /root/.cache/pip/wheels/a9/28/53/f24776b4c5bcbe91aaf1f1e247bd6fadd17191aa12fac63902
+  Running setup.py bdist_wheel for scandir: started
+  Running setup.py bdist_wheel for scandir: finished with status 'done'
+  Stored in directory: /root/.cache/pip/wheels/91/95/75/19c98a91239878abbc7c59970abd3b4e0438a7dd5b61778335
+Successfully built simplegeneric scandir
+Failed to build scipy
+Installing collected packages: scipy, simplegeneric, backports.shutil-get-terminal-size, pygments, decorator, ipython-genutils, traitlets, ptyprocess, pexpect, scandir, pathlib2, pickleshare, backports.functools-lru-cache, wcwidth, prompt-toolkit, ipython
+  Running setup.py install for scipy: started
+    Running setup.py install for scipy: finished with status 'error'
+    Complete output from command /usr/bin/python -u -c "import setuptools, tokenize;__file__='/tmp/pip-install-99y4rm/scipy/setup.py';f=getattr(tokenize, 'open', open)(__file__);code=f.read().replace('\r\n', '\n');f.close();exec(compile(code, __file__, 'exec'))" install --record /tmp/pip-record-LQJ1O3/install-record.txt --single-version-externally-managed --compile:
+    
+    Note: if you need reliable uninstall behavior, then install
+    with pip instead of using `setup.py install`:
+    
+      - `pip install .`       (from a git repo or downloaded source
+                               release)
+      - `pip install scipy`   (last SciPy release on PyPI)
+    
+    
+    Running from scipy source directory.
+    lapack_opt_info:
+    lapack_mkl_info:
+    customize UnixCCompiler
+      libraries mkl_rt not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+      NOT AVAILABLE
+    
+    openblas_lapack_info:
+    customize UnixCCompiler
+    customize UnixCCompiler
+      libraries openblas not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+      NOT AVAILABLE
+    
+    openblas_clapack_info:
+    customize UnixCCompiler
+    customize UnixCCompiler
+      libraries openblas,lapack not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+      NOT AVAILABLE
+    
+    atlas_3_10_threads_info:
+    Setting PTATLAS=ATLAS
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries tatlas,tatlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries tatlas,tatlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+    customize UnixCCompiler
+      libraries tatlas,tatlas not found in /usr/lib/arm-linux-gnueabihf
+    <class 'numpy.distutils.system_info.atlas_3_10_threads_info'>
+      NOT AVAILABLE
+    
+    atlas_3_10_info:
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries satlas,satlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries satlas,satlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+    customize UnixCCompiler
+      libraries satlas,satlas not found in /usr/lib/arm-linux-gnueabihf
+    <class 'numpy.distutils.system_info.atlas_3_10_info'>
+      NOT AVAILABLE
+    
+    atlas_threads_info:
+    Setting PTATLAS=ATLAS
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries ptf77blas,ptcblas,atlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries ptf77blas,ptcblas,atlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+    customize UnixCCompiler
+      libraries ptf77blas,ptcblas,atlas not found in /usr/lib/arm-linux-gnueabihf
+    <class 'numpy.distutils.system_info.atlas_threads_info'>
+      NOT AVAILABLE
+    
+    atlas_info:
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries f77blas,cblas,atlas not found in /usr/local/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries f77blas,cblas,atlas not found in /usr/lib
+    customize UnixCCompiler
+      libraries lapack_atlas not found in /usr/lib/arm-linux-gnueabihf
+    customize UnixCCompiler
+      libraries f77blas,cblas,atlas not found in /usr/lib/arm-linux-gnueabihf
+    <class 'numpy.distutils.system_info.atlas_info'>
+      NOT AVAILABLE
+    
+    accelerate_info:
+      NOT AVAILABLE
+    
+    /usr/lib/python2.7/dist-packages/numpy/distutils/system_info.py:638: UserWarning:
+        Atlas (http://math-atlas.sourceforge.net/) libraries not found.
+        Directories to search for the libraries can be specified in the
+        numpy/distutils/site.cfg file (section [atlas]) or by setting
+        the ATLAS environment variable.
+      self.calc_info()
+    lapack_info:
+    customize UnixCCompiler
+      libraries lapack not found in ['/usr/local/lib', '/usr/lib', '/usr/lib/arm-linux-gnueabihf']
+      NOT AVAILABLE
+    
+    /usr/lib/python2.7/dist-packages/numpy/distutils/system_info.py:638: UserWarning:
+        Lapack (http://www.netlib.org/lapack/) libraries not found.
+        Directories to search for the libraries can be specified in the
+        numpy/distutils/site.cfg file (section [lapack]) or by setting
+        the LAPACK environment variable.
+      self.calc_info()
+    lapack_src_info:
+      NOT AVAILABLE
+    
+    /usr/lib/python2.7/dist-packages/numpy/distutils/system_info.py:638: UserWarning:
+        Lapack (http://www.netlib.org/lapack/) sources not found.
+        Directories to search for the sources can be specified in the
+        numpy/distutils/site.cfg file (section [lapack_src]) or by setting
+        the LAPACK_SRC environment variable.
+      self.calc_info()
+      NOT AVAILABLE
+    
+    Traceback (most recent call last):
+      File "<string>", line 1, in <module>
+      File "/tmp/pip-install-99y4rm/scipy/setup.py", line 492, in <module>
+        setup_package()
+      File "/tmp/pip-install-99y4rm/scipy/setup.py", line 488, in setup_package
+        setup(**metadata)
+      File "/usr/lib/python2.7/dist-packages/numpy/distutils/core.py", line 137, in setup
+        config = configuration()
+      File "/tmp/pip-install-99y4rm/scipy/setup.py", line 395, in configuration
+        raise NotFoundError(msg)
+    numpy.distutils.system_info.NotFoundError: No lapack/blas resources found.
+    
+    ----------------------------------------
+Command "/usr/bin/python -u -c "import setuptools, tokenize;__file__='/tmp/pip-install-99y4rm/scipy/setup.py';f=getattr(tokenize, 'open', open)(__file__);code=f.read().replace('\r\n', '\n');f.close();exec(compile(code, __file__, 'exec'))" install --record /tmp/pip-record-LQJ1O3/install-record.txt --single-version-externally-managed --compile" failed with error code 1 in /tmp/pip-install-99y4rm/scipy/
