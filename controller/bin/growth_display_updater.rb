@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-
 require "pry"
 require "growth_controller/config"
 require "growth_controller/logger"
@@ -51,11 +50,11 @@ class DisplayUpdater
     #---------------------------------------------
     # Detector ID
     detector_id = @growth_config.detector_id()
-    detector_id_latter = detector_id.split("-")[1].upcase().strip()
+    detector_id_latter = detector_id.upcase().strip()
 
     # Date/time
     datetime = Time.now()
-    mmdd = "%02d%02d" % [datetime.month, datetime.day]
+    mmdd = "%04d%02d%02d" % [datetime.year, datetime.month, datetime.day]
     hhmmss = "%02d:%02d:%02d" % [datetime.hour, datetime.min, datetime.sec]
 
     #---------------------------------------------
@@ -85,7 +84,8 @@ class DisplayUpdater
 	    	end
     	end
     	if daq_status["daqStatus"] != nil then
-	    daq_str = "DAQ %7s %3d Hz" % [daq_status["daqStatus"], count_rate]
+	#daq_str = "DAQ %7s %3d Hz" % [daq_status["daqStatus"], count_rate]
+          daq_str = "DAQ %7s" % [daq_status["daqStatus"]]
 	else
 	    daq_str = "DAQ Stopped"
 	end
@@ -122,16 +122,16 @@ class DisplayUpdater
     end
 
     # Temperature/humidity/pressure
-    begin
-    	bme280_str = "%4.1fdeg %4dhPa %4.1f%%" % [
-	    	hk["hk"]["bme280"]["temperature"]["value"],
-	    	hk["hk"]["bme280"]["pressure"]["value"],
-	    	hk["hk"]["bme280"]["humidity"]["value"]
-		]
-    rescue => e
-    	@logger.debug e
-    	bme280_str = "BME280 ERROR"
-    end
+    #begin
+    # 	bme280_str = "%4.1fdeg %4dhPa %4.1f%%" % [
+    #    	hk["hk"]["bme280"]["temperature"]["value"],
+    #	    	hk["hk"]["bme280"]["pressure"]["value"],
+    #	    	hk["hk"]["bme280"]["humidity"]["value"]
+    #		]
+    #rescue => e
+    #	@logger.debug e
+    #	bme280_str = "BME280 ERROR"
+    #end
 
     #---------------------------------------------
     # Line 5
@@ -155,11 +155,11 @@ class DisplayUpdater
     # Construct whole message
     #---------------------------------------------
     str = <<EOS
-#{detector_id_latter} #{mmdd} #{hhmmss}
+#{detector_id_latter}
+#{mmdd} #{hhmmss}
 IP #{ip}
 #{daq_str}
 #{current_str}
-#{bme280_str}
 HV #{hv_status_str}
 EOS
     return str

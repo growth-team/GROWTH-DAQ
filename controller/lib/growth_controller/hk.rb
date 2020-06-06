@@ -52,7 +52,8 @@ class ControllerModuleHK < ControllerModule
 
 		# Read from BME280
 		bme280_result = {}
-		for trial in 0...5 do
+		#for trial in 0...5 do
+                for trial in 0..0 do
 			if (@bme == nil) then
 				# If not connected, try to connect to BME280
 				if(open_bme280() == false) then
