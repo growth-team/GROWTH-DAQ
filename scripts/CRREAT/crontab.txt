@@ -1,0 +1,3 @@
+@reboot /home/pi/scripts/stand_alone_system/boot_display_updater.sh
+@reboot /home/pi/scripts/stand_alone_system/auto_portforward.sh
+0 * * * * /home/pi/scripts/stand_alone_system/kill_forwarding.sh

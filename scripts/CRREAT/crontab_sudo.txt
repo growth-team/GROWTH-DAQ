@@ -1,0 +1,2 @@
+@reboot ruby /home/pi/scripts/stand_alone_system/check_god_status.rb
+30 */6 * * * bash /home/pi/scripts/stand_alone_system/fits_backup.sh
