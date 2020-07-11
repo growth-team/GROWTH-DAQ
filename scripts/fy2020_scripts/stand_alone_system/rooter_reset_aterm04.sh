@@ -2,13 +2,11 @@
 
 ping -c 1 www.google.co.jp >> /dev/null
 if [ $? == 0 ];then
-    echo "connected"
     exit 0
 fi
 sleep 5s
 ping -c 1 www.google.co.jp >> /dev/null
 if [ $? == 0 ];then
-    echo "connected"
     exit 0
 fi
 
