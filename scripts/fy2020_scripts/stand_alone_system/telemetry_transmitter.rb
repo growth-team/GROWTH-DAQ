@@ -2,6 +2,9 @@
 require "yaml"
 require "json"
 
+waiting=rand(1..600)
+sleep waiting
+
 inputFile="/home/pi/growth_config.yaml"
 data=YAML.load_file(inputFile)
 id=data["detectorID"]
