@@ -11,19 +11,19 @@
 class EventDecoder {
  private:
   struct RawEvent {
-    uint8_t ch;
-    uint8_t timeH;
-    uint16_t timeM;
-    uint16_t timeL;
-    uint16_t triggerCount;
-    uint16_t phaMax;
-    uint16_t phaMaxTime;
-    uint16_t phaMin;
-    uint16_t phaFirst;
-    uint16_t phaLast;
-    uint16_t maxDerivative;
-    uint16_t baseline;
-    uint16_t* waveform;
+    u8 ch;
+    u8 timeH;
+    u16 timeM;
+    u16 timeL;
+    u16 triggerCount;
+    u16 phaMax;
+    u16 phaMaxTime;
+    u16 phaMin;
+    u16 phaFirst;
+    u16 phaLast;
+    u16 maxDerivative;
+    u16 baseline;
+    u16* waveform;
   } rawEvent;
 
  private:
@@ -64,7 +64,7 @@ class EventDecoder {
   }
 
  public:
-  void decodeEvent(std::vector<uint8_t>* readDataUint8Array) {
+  void decodeEvent(std::vector<u8>* readDataUint8Array) {
     using namespace std;
 
     const size_t numBytes = readDataUint8Array->size();
@@ -91,7 +91,7 @@ class EventDecoder {
             state = EventDecoderState::state_ch_realtimeH;
           } else {
             cerr << "EventDecoder::decodeEvent(): invalid start flag ("
-                 << "0x" << hex << right << setw(4) << setfill('0') << static_cast<uint32_t>(readDataUint16Array[i])
+                 << "0x" << hex << right << setw(4) << setfill('0') << static_cast<u32>(readDataUint16Array[i])
                  << ")" << endl;
           }
           break;
@@ -180,7 +180,7 @@ class EventDecoder {
       eventInstanceResavoir.pop_back();
     }
     event->ch = rawEvent.ch;
-    event->timeTag = (static_cast<uint64_t>(rawEvent.timeH) << 32) + (static_cast<uint64_t>(rawEvent.timeM) << 16) +
+    event->timeTag = (static_cast<u64>(rawEvent.timeH) << 32) + (static_cast<u64>(rawEvent.timeM) << 16) +
                      (rawEvent.timeL);
     event->phaMax = rawEvent.phaMax;
     event->phaMaxTime = rawEvent.phaMaxTime;
@@ -281,7 +281,7 @@ class EventDecoder {
  private:
   EventDecoderState state{};
   std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueue;
-  std::vector<uint16_t> readDataUint16Array;
+  std::vector<u16> readDataUint16Array;
   std::deque<GROWTH_FY2015_ADC_Type::Event*> eventInstanceResavoir;
   size_t waveformLength{};
 };

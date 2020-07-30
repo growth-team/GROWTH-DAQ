@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   }
 
   size_t channel    = atoi(argv[1]);
-  uint16_t dacValue = atoi(argv[2]);
+  u16 dacValue = atoi(argv[2]);
 
   printf("Setting DAC Ch=%lu Value=%d\n", channel, dacValue);
   int status = ADCDAC::setDAC(channel, dacValue);

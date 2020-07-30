@@ -3,7 +3,7 @@
 EventListFileROOT::EventListFileROOT(std::string fileName, std::string detectorID = "empty",
                                      std::string configurationYAMLFile = "")
     : EventListFile(fileName), detectorID_(detectorID), configurationYAMLFile_(configurationYAMLFile) {
-  eventEntry_.waveform = new uint16_t[SpaceFibreADC::MaxWaveformLength];
+  eventEntry_.waveform = new u16[SpaceFibreADC::MaxWaveformLength];
   createOutputRootFile();
 }
 
@@ -22,7 +22,7 @@ void EventListFileROOT::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Eve
 
 size_t EventListFileROOT::getEntries() const { return eventTree_->GetEntries(); }
 
-void EventListFileROOT::fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) {
+void EventListFileROOT::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
 	// "GPS time vs local clock" table is not implemented in the ROOT file format.
 
 }
@@ -45,8 +45,8 @@ void EventListFileROOT::createOutputRootFile() {
   // - s : a 16 bit unsigned integer (UShort_t)
   // - I : a 32 bit signed integer (Int_t)
   // - i : a 32 bit unsigned integer (UInt_t)
-  // - F : a 32 bit floating point (Float_t)
-  // - D : a 64 bit floating point (Double_t)
+  // - F : a 32 bit f32ing point (Float_t)
+  // - D : a 64 bit f32ing point (Double_t)
   // - L : a 64 bit signed integer (Long64_t)
   // - l : a 64 bit unsigned integer (ULong64_t)
   // - O : [the letter 'o', not a zero] a boolean (Bool_t)
@@ -80,7 +80,7 @@ void EventListFileROOT::copyEventData(GROWTH_FY2015_ADC_Type::Event* from, GROWT
   to->maxDerivative = from->maxDerivative;
   to->baseline      = from->baseline;
   to->nSamples      = from->nSamples;
-  memcpy(to->waveform, from->waveform, sizeof(uint16_t) * from->nSamples);
+  memcpy(to->waveform, from->waveform, sizeof(u16) * from->nSamples);
 }
 
 void EventListFileROOT::writeHeader() {

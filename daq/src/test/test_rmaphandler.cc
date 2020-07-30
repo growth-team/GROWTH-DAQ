@@ -8,37 +8,37 @@
 
 #include "GROWTH_FY2015_ADC.hh"
 // ChannelManager
-static const uint32_t InitialAddressOf_ChMgr = 0x01010000;
-static const uint32_t ChMgrBA = InitialAddressOf_ChMgr;  // Base Address of ChMgr
-static const uint32_t AddressOf_StartStopRegister = ChMgrBA + 0x0002;
-static const uint32_t AddressOf_StartStopSemaphoreRegister = ChMgrBA + 0x0004;
-static const uint32_t AddressOf_PresetModeRegister = ChMgrBA + 0x0006;
-static const uint32_t AddressOf_PresetLivetimeRegisterL = ChMgrBA + 0x0008;
-static const uint32_t AddressOf_PresetLivetimeRegisterH = ChMgrBA + 0x000a;
-static const uint32_t AddressOf_RealtimeRegisterL = ChMgrBA + 0x000c;
-static const uint32_t AddressOf_RealtimeRegisterM = ChMgrBA + 0x000e;
-static const uint32_t AddressOf_RealtimeRegisterH = ChMgrBA + 0x0010;
-static const uint32_t AddressOf_ResetRegister = ChMgrBA + 0x0012;
-static const uint32_t AddressOf_ADCClock_Register = ChMgrBA + 0x0014;
-static const uint32_t AddressOf_PresetnEventsRegisterL = ChMgrBA + 0x0020;
-static const uint32_t AddressOf_PresetnEventsRegisterH = ChMgrBA + 0x0022;
+static const u32 InitialAddressOf_ChMgr = 0x01010000;
+static const u32 ChMgrBA = InitialAddressOf_ChMgr;  // Base Address of ChMgr
+static const u32 AddressOf_StartStopRegister = ChMgrBA + 0x0002;
+static const u32 AddressOf_StartStopSemaphoreRegister = ChMgrBA + 0x0004;
+static const u32 AddressOf_PresetModeRegister = ChMgrBA + 0x0006;
+static const u32 AddressOf_PresetLivetimeRegisterL = ChMgrBA + 0x0008;
+static const u32 AddressOf_PresetLivetimeRegisterH = ChMgrBA + 0x000a;
+static const u32 AddressOf_RealtimeRegisterL = ChMgrBA + 0x000c;
+static const u32 AddressOf_RealtimeRegisterM = ChMgrBA + 0x000e;
+static const u32 AddressOf_RealtimeRegisterH = ChMgrBA + 0x0010;
+static const u32 AddressOf_ResetRegister = ChMgrBA + 0x0012;
+static const u32 AddressOf_ADCClock_Register = ChMgrBA + 0x0014;
+static const u32 AddressOf_PresetnEventsRegisterL = ChMgrBA + 0x0020;
+static const u32 AddressOf_PresetnEventsRegisterH = ChMgrBA + 0x0022;
 
-static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
-static const uint32_t AddressOf_GPSTimeRegister = 0x20000002;
+static const u32 AddressOf_EventFIFO_DataCountRegister = 0x20000000;
+static const u32 AddressOf_GPSTimeRegister = 0x20000002;
 static const size_t GPSRegisterLengthInBytes = 20;  // bytes
 
-static const uint32_t AddressOf_CurrentADCRegister_Ch1 = 0x01011112;
+static const u32 AddressOf_CurrentADCRegister_Ch1 = 0x01011112;
 
 // ConsumerManager
-static const uint32_t InitialAddressOf_ConsumerMgr = 0x01010000;
-static const uint32_t ConsumerMgrBA = InitialAddressOf_ConsumerMgr;
-static const uint32_t AddressOf_EventOutputDisableRegister = ConsumerMgrBA + 0x0100;
-static const uint32_t AddressOf_GateSize_FastGate_Register = ConsumerMgrBA + 0x010e;
-static const uint32_t AddressOf_GateSize_SlowGate_Register = ConsumerMgrBA + 0x0110;
-static const uint32_t AddressOf_NumberOf_BaselineSample_Register = ConsumerMgrBA + 0x0112;
-static const uint32_t AddressOf_ConsumerMgr_ResetRegister = ConsumerMgrBA + 0x0114;
-static const uint32_t AddressOf_EventPacket_NumberOfWaveform_Register = ConsumerMgrBA + 0x0116;
-static const uint32_t AddressOf_EventPacket_WaveformDownSampling_Register = ConsumerMgrBA + 0xFFFF;
+static const u32 InitialAddressOf_ConsumerMgr = 0x01010000;
+static const u32 ConsumerMgrBA = InitialAddressOf_ConsumerMgr;
+static const u32 AddressOf_EventOutputDisableRegister = ConsumerMgrBA + 0x0100;
+static const u32 AddressOf_GateSize_FastGate_Register = ConsumerMgrBA + 0x010e;
+static const u32 AddressOf_GateSize_SlowGate_Register = ConsumerMgrBA + 0x0110;
+static const u32 AddressOf_NumberOf_BaselineSample_Register = ConsumerMgrBA + 0x0112;
+static const u32 AddressOf_ConsumerMgr_ResetRegister = ConsumerMgrBA + 0x0114;
+static const u32 AddressOf_EventPacket_NumberOfWaveform_Register = ConsumerMgrBA + 0x0116;
+static const u32 AddressOf_EventPacket_WaveformDownSampling_Register = ConsumerMgrBA + 0xFFFF;
 
 int main(int argc, char* argv[]) {
   using namespace std;
@@ -106,10 +106,10 @@ int main(int argc, char* argv[]) {
   printf("ADC Ch.1 = %d\n", channelModule->getCurrentADCValue());
 
   const size_t bufferMax = 2000;
-  uint8_t* buffer = new uint8_t[bufferMax];
+  u8* buffer = new u8[bufferMax];
 
   cout << "Reading GPS Time register" << endl;
-  uint8_t gpsTime[GPSRegisterLengthInBytes];
+  u8 gpsTime[GPSRegisterLengthInBytes];
   rmapHandler->read(&target, AddressOf_GPSTimeRegister, GPSRegisterLengthInBytes, gpsTime);
   for (size_t i = 0; i < GPSRegisterLengthInBytes - 6; i++) {
     cout << gpsTime[i];
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
     if (readSize != 0) {
       rmapHandler->read(&target, 0x10000000, readSize, buffer);
       for (size_t i = 0; i < readSize; i++) {
-        cout << hex << right << setw(2) << setfill('0') << (uint32_t)buffer[i] << " ";
+        cout << hex << right << setw(2) << setfill('0') << (u32)buffer[i] << " ";
       }
       cout << dec << endl;
     }

@@ -53,7 +53,7 @@
 
   ADCDAC::ADCDAC() { initialize(); }
 
-  int16_t ADCDAC::readADC(size_t channel) {
+  i16 ADCDAC::readADC(size_t channel) {
     int status;
 
     if (channel >= NADCChannels) { return InvalidChannel; }
@@ -61,10 +61,10 @@
     if (!initialized) { initialize(); }
 
     // send AD conversion command to MCP3208
-    uint8_t maskedChannel = channel & 0x07;  // mask lower 3 bits
+    u8 maskedChannel = channel & 0x07;  // mask lower 3 bits
 
-    uint8_t data[3] = {static_cast<uint8_t>(0x06 + (maskedChannel >> 2)),
-                       static_cast<uint8_t>(0x00 + (maskedChannel << 6)), 0x00};
+    u8 data[3] = {static_cast<u8>(0x06 + (maskedChannel >> 2)),
+                       static_cast<u8>(0x00 + (maskedChannel << 6)), 0x00};
     status          = wiringPiSPIDataRW(SPIChannelADC, data, 3);
     dumpError(status);
 
@@ -76,16 +76,16 @@
     return (data[1] & 0x0F) * 0x100 + data[2];
   }
 
-  float ADCDAC::readTemperature(size_t channel) {
+  f32 ADCDAC::readTemperature(size_t channel) {
     // check
     if (channel >= NADCChannels) { return InvalidChannel; }
 
     // convert obtained ADC value to voltage
-    int16_t adcValue = readADC(channel);
+    i16 adcValue = readADC(channel);
     if (adcValue < 0) { return adcValue; }
 
     // then to temperature
-    float temperature = convertToTemperature(adcValue);
+    f32 temperature = convertToTemperature(adcValue);
 
 #ifdef DEBUG_WIRINGPI
     printf("Temperature = %.2fdegC\n", temperature);
@@ -95,30 +95,30 @@
   }
 
  
-  double ADCDAC::convertToTemperature(uint16_t adcValue) {
-    float voltage     = ((float)adcValue) / ADCMax * ADCVref;
-    float temperature = (voltage - LM60Offset) / LM60Coefficient;
+  f64 ADCDAC::convertToTemperature(u16 adcValue) {
+    f32 voltage     = ((f32)adcValue) / ADCMax * ADCVref;
+    f32 temperature = (voltage - LM60Offset) / LM60Coefficient;
     return temperature;
   }
 
-  double ADCDAC::convertToCurrent(uint16_t adcValue) {
-    float voltage = ((float)adcValue) / ADCMax * ADCVref;
-    float Vsense  = voltage / (LT6106_Rout / LT6106_Rin);
-    float current = Vsense / LT6106_Rsense * 1000;  // mA
+  f64 ADCDAC::convertToCurrent(u16 adcValue) {
+    f32 voltage = ((f32)adcValue) / ADCMax * ADCVref;
+    f32 Vsense  = voltage / (LT6106_Rout / LT6106_Rin);
+    f32 current = Vsense / LT6106_Rsense * 1000;  // mA
     return current;
   }
 
-  double ADCDAC::convertToVoltage(uint16_t adcValue) {
-    float voltage = ((float)adcValue) / ADCMax * ADCVref;
+  f64 ADCDAC::convertToVoltage(u16 adcValue) {
+    f32 voltage = ((f32)adcValue) / ADCMax * ADCVref;
     return voltage;
   }
 
-  float ADCDAC::readCurrent(size_t channel) {
+  f32 ADCDAC::readCurrent(size_t channel) {
     // check
     if (channel != ADCChannel_Current5V && channel != ADCChannel_Current3V3) { return InvalidChannel; }
 
     // convert obtained ADC value to current
-    int16_t adcValue = readADC(channel);
+    i16 adcValue = readADC(channel);
     if (adcValue < 0) { return adcValue; }
 
 #ifdef DEBUG_WIRINGPI
@@ -128,7 +128,7 @@
     // Vout = Vsense*(Rout/Rin)
     // Isense = Vsense/Rsense
 
-    float current = convertToCurrent(adcValue);
+    f32 current = convertToCurrent(adcValue);
 
 #ifdef DEBUG_WIRINGPI
     printf("Current = %.3fmA\n", current);
@@ -137,7 +137,7 @@
     return current;
   }
 
-  int ADCDAC::setDAC(size_t channel, uint16_t value) {
+  int ADCDAC::setDAC(size_t channel, u16 value) {
     int status;
 
     // check

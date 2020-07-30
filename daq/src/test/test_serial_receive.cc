@@ -12,8 +12,8 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
   void run() {
     using namespace std;
     cerr << "ReceiveThread started." << endl;
-    // std::vector<uint8_t> receiveBuffer(1024);
-    uint8_t receiveBuffer[128];
+    // std::vector<u8> receiveBuffer(1024);
+    u8 receiveBuffer[128];
     size_t nReceivedBytes;
     port->setTimeout(10000);  // ms
 
@@ -34,7 +34,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
       cout << "Received " << dec << nReceivedBytes << " bytes" << endl;
       for (size_t i = 0; i < length; i++) {
         cout << "Received" << dec << i << ": "
-             << "0x" << hex << right << setw(2) << setfill('0') << (uint32_t)receiveBuffer[i];
+             << "0x" << hex << right << setw(2) << setfill('0') << (u32)receiveBuffer[i];
         if (0x41 <= receiveBuffer[i] && receiveBuffer[i] <= 0x7A) { cout << "(" << receiveBuffer[i] << ")"; }
         cout << endl;
       }

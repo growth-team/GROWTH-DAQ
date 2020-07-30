@@ -9,8 +9,8 @@ class RMAPHandler;
 /// A class which represents a ChannelModule on VHDL logic.
 class ChannelModule : public RegisterAccessInterface {
  public:
-  static const uint32_t InitialAddressOf_ChModule_0 = 0x01011000;
-  static const uint32_t AddressOffsetBetweenChannels = 0x100;
+  static const u32 InitialAddressOf_ChModule_0 = 0x01011000;
+  static const u32 AddressOffsetBetweenChannels = 0x100;
 
  public:
   /** Constructor.
@@ -18,9 +18,9 @@ class ChannelModule : public RegisterAccessInterface {
    * @param[in] chNumber_ this instance's channel number
    */
   ChannelModule(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
-                uint8_t chNumber)
+                u8 chNumber)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode), chNumber_(chNumber) {
-    const uint32_t BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
+    const u32 BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
     AddressOf_TriggerModeRegister = BA + 0x0002;
     AddressOf_NumberOfSamplesRegister = BA + 0x0004;
     AddressOf_ThresholdStartingRegister = BA + 0x0006;
@@ -46,16 +46,16 @@ class ChannelModule : public RegisterAccessInterface {
    * @param triggerMode trigger mode number
    */
   void setTriggerMode(GROWTH_FY2015_ADC_Type::TriggerMode triggerMode) {
-    write(AddressOf_TriggerModeRegister, static_cast<uint16_t>(triggerMode));
+    write(AddressOf_TriggerModeRegister, static_cast<u16>(triggerMode));
   }
 
   /** Returns trigger mode.
    * See setTrigger() for returned values.
    */
-  uint32_t getTriggerMode() { return read16(AddressOf_TriggerModeRegister); }
+  u32 getTriggerMode() { return read16(AddressOf_TriggerModeRegister); }
 
   void sendCPUTrigger() {
-    constexpr uint16_t TRIG_FIRE = 0xFFFF;
+    constexpr u16 TRIG_FIRE = 0xFFFF;
     write(AddressOf_CPUTriggerRegister, TRIG_FIRE);
   }
 
@@ -63,22 +63,22 @@ class ChannelModule : public RegisterAccessInterface {
    * Waveforms are sampled according to this number.
    * @param nSamples number of adc samples per one waveform
    */
-  void setNumberOfSamples(uint16_t nSamples) { write(AddressOf_NumberOfSamplesRegister, nSamples); }
+  void setNumberOfSamples(u16 nSamples) { write(AddressOf_NumberOfSamplesRegister, nSamples); }
 
   /** Sets Leading Trigger Threshold.
    * @param threshold an adc value for leading trigger threshold
    */
-  void setStartingThreshold(uint16_t threshold) { write(AddressOf_ThresholdStartingRegister, threshold); }
+  void setStartingThreshold(u16 threshold) { write(AddressOf_ThresholdStartingRegister, threshold); }
 
   /** Sets Trailing Trigger Threshold.
    * @param threshold an adc value for trailing trigger threshold
    */
-  void setClosingThreshold(uint16_t threshold) { write(AddressOf_ThresholdClosingRegister, threshold); }
+  void setClosingThreshold(u16 threshold) { write(AddressOf_ThresholdClosingRegister, threshold); }
 
   /// Turn on/off power of this channle's ADC chip.
   void turnADCPower(bool trueifon) {
-    constexpr uint16_t POWER_DOWN = 0xFFFF;
-    constexpr uint16_t POWER_UP = 0x0000;
+    constexpr u16 POWER_DOWN = 0xFFFF;
+    constexpr u16 POWER_UP = 0x0000;
     write(AddressOf_AdcPowerDownModeRegister, trueifon ? POWER_UP : POWER_DOWN);
   }
 
@@ -87,17 +87,17 @@ class ChannelModule : public RegisterAccessInterface {
    * before of the trigger timing.
    * @param depthOfDelay number of samples retarded
    */
-  void setDepthOfDelay(uint16_t depthOfDelay) { write(AddressOf_DepthOfDelayRegister, depthOfDelay); }
+  void setDepthOfDelay(u16 depthOfDelay) { write(AddressOf_DepthOfDelayRegister, depthOfDelay); }
 
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
-  uint32_t getLivetime() const { return read32(AddressOf_LivetimeRegisterL); }
+  u32 getLivetime() const { return read32(AddressOf_LivetimeRegisterL); }
 
   /** Get current ADC value.
    * @return temporal ADC value
    */
-  uint16_t getCurrentADCValue() const { return read16(AddressOf_CurrentAdcDataRegister); }
+  u16 getCurrentADCValue() const { return read16(AddressOf_CurrentAdcDataRegister); }
 
   /** Reads TriggerCountRegister.
    * @return trigger count
@@ -141,21 +141,21 @@ class ChannelModule : public RegisterAccessInterface {
   }
 
  private:
-  uint8_t chNumber_{};
+  u8 chNumber_{};
 
-  uint32_t AddressOf_TriggerModeRegister;
-  uint32_t AddressOf_NumberOfSamplesRegister;
-  uint32_t AddressOf_ThresholdStartingRegister;
-  uint32_t AddressOf_ThresholdClosingRegister;
-  uint32_t AddressOf_AdcPowerDownModeRegister;
-  uint32_t AddressOf_DepthOfDelayRegister;
-  uint32_t AddressOf_LivetimeRegisterL;
-  uint32_t AddressOf_LivetimeRegisterH;
-  uint32_t AddressOf_CurrentAdcDataRegister;
-  uint32_t AddressOf_CPUTriggerRegister;
-  uint32_t AddressOf_Status1Register;
-  uint32_t AddressOf_TriggerCountRegisterL;
-  uint32_t AddressOf_TriggerCountRegisterH;
+  u32 AddressOf_TriggerModeRegister;
+  u32 AddressOf_NumberOfSamplesRegister;
+  u32 AddressOf_ThresholdStartingRegister;
+  u32 AddressOf_ThresholdClosingRegister;
+  u32 AddressOf_AdcPowerDownModeRegister;
+  u32 AddressOf_DepthOfDelayRegister;
+  u32 AddressOf_LivetimeRegisterL;
+  u32 AddressOf_LivetimeRegisterH;
+  u32 AddressOf_CurrentAdcDataRegister;
+  u32 AddressOf_CPUTriggerRegister;
+  u32 AddressOf_Status1Register;
+  u32 AddressOf_TriggerCountRegisterL;
+  u32 AddressOf_TriggerCountRegisterH;
 };
 
 #endif /* CHANNELMODULE_HH_ */

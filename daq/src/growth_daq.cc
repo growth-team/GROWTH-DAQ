@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   }
   const std::string deviceName(argv[1]);
   const std::string configurationFile(argv[2]);
-  const double exposureInSec = atoi(argv[3]);
+  const f64 exposureInSec = atoi(argv[3]);
 
   int dummyArgc = 0;
   const char* dummyArgv[] = {""};

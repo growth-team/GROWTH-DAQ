@@ -68,13 +68,13 @@ GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
   delete gpsDataFIFOReadBuffer;
 }
 
-uint32_t GROWTH_FY2015_ADC::getFPGAType() {
+u32 GROWTH_FY2015_ADC::getFPGAType() {
   return rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
 }
 
-uint32_t GROWTH_FY2015_ADC::getFPGAVersion() {
+u32 GROWTH_FY2015_ADC::getFPGAVersion() {
   using namespace std;
-  uint32_t fpgaVersion = rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
+  u32 fpgaVersion = rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
   return fpgaVersion;
 }
 
@@ -87,23 +87,23 @@ std::string GROWTH_FY2015_ADC::getGPSRegister() {
   return ss.str();
 }
 
-uint8_t* GROWTH_FY2015_ADC::getGPSRegisterUInt8() {
+u8* GROWTH_FY2015_ADC::getGPSRegisterUInt8() {
   rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
   gpsTimeRegister[LengthOfGPSTimeRegister] = 0x00;
   return gpsTimeRegister;
 }
 
 void GROWTH_FY2015_ADC::clearGPSDataFIFO() {
-  uint8_t dummy[2];
+  u8 dummy[2];
   rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, 2, dummy);
 }
 
-std::vector<uint8_t> GROWTH_FY2015_ADC::readGPSDataFIFO() {
+std::vector<u8> GROWTH_FY2015_ADC::readGPSDataFIFO() {
   if (gpsDataFIFOData.size() != GPSDataFIFODepthInBytes) {
     gpsDataFIFOData.resize(GPSDataFIFODepthInBytes);
   }
   if (gpsDataFIFOReadBuffer == NULL) {
-    gpsDataFIFOReadBuffer = new uint8_t[GPSDataFIFODepthInBytes];
+    gpsDataFIFOReadBuffer = new u8[GPSDataFIFODepthInBytes];
   }
   rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, GPSDataFIFODepthInBytes,
                     gpsDataFIFOReadBuffer);
@@ -134,7 +134,7 @@ void GROWTH_FY2015_ADC::closeDevice() {
 
 std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
   events.clear();
-  std::vector<uint8_t> data = consumerManager->getEventData();
+  std::vector<u8> data = consumerManager->getEventData();
   if (data.size() != 0) {
     eventDecoder->decodeEvent(&data);
     events = eventDecoder->getDecodedEvents();
@@ -161,18 +161,18 @@ void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, TriggerMode triggerMode)
   }
 }
 
-void GROWTH_FY2015_ADC::setNumberOfSamples(uint16_t nSamples) {
+void GROWTH_FY2015_ADC::setNumberOfSamples(u16 nSamples) {
   for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
     channelModules[i]->setNumberOfSamples(nSamples);
   }
   setNumberOfSamplesInEventPacket(nSamples);
 }
 
-void GROWTH_FY2015_ADC::setNumberOfSamplesInEventPacket(uint16_t nSamples) {
+void GROWTH_FY2015_ADC::setNumberOfSamplesInEventPacket(u16 nSamples) {
   consumerManager->setEventPacket_NumberOfWaveform(nSamples);
 }
 
-void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, uint32_t threshold) {
+void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, u32 threshold) {
   if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setStartingThreshold(threshold);
   } else {
@@ -182,7 +182,7 @@ void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, uint32_t threshold
   }
 }
 
-void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, uint32_t threshold) {
+void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, u32 threshold) {
   if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setClosingThreshold(threshold);
   } else {
@@ -192,7 +192,7 @@ void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, uint32_t threshold)
   }
 }
 
-void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay) {
+void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, u32 depthOfDelay) {
   if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     channelModules[chNumber]->setDepthOfDelay(depthOfDelay);
   } else {
@@ -202,7 +202,7 @@ void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay) 
   }
 }
 
-uint32_t GROWTH_FY2015_ADC::getLivetime(size_t chNumber) {
+u32 GROWTH_FY2015_ADC::getLivetime(size_t chNumber) {
   if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     return channelModules[chNumber]->getLivetime();
   } else {
@@ -212,7 +212,7 @@ uint32_t GROWTH_FY2015_ADC::getLivetime(size_t chNumber) {
   }
 }
 
-uint32_t GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) {
+u32 GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) {
   if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
     return channelModules[chNumber]->getCurrentADCValue();
   } else {
@@ -286,13 +286,13 @@ void GROWTH_FY2015_ADC::setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetM
   channelManager->setPresetMode(presetMode);
 }
 
-void GROWTH_FY2015_ADC::setPresetLivetime(uint32_t livetimeIn10msUnit) {
+void GROWTH_FY2015_ADC::setPresetLivetime(u32 livetimeIn10msUnit) {
   channelManager->setPresetLivetime(livetimeIn10msUnit);
 }
 
-void GROWTH_FY2015_ADC::setPresetnEvents(uint32_t nEvents) { channelManager->setPresetnEvents(nEvents); }
+void GROWTH_FY2015_ADC::setPresetnEvents(u32 nEvents) { channelManager->setPresetnEvents(nEvents); }
 
-double GROWTH_FY2015_ADC::getRealtime() { return channelManager->getRealtime(); }
+f64 GROWTH_FY2015_ADC::getRealtime() { return channelManager->getRealtime(); }
 
 void GROWTH_FY2015_ADC::setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency) {
   channelManager->setAdcClock(adcClockFrequency);
@@ -373,8 +373,8 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
   this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
   this->DownSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
   this->ChannelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
-  this->TriggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<uint16_t>>();
-  this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<uint16_t>>();
+  this->TriggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<u16>>();
+  this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<u16>>();
 
   //---------------------------------------------
   // dump setting

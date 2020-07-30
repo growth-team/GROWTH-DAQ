@@ -17,7 +17,7 @@ class SemaphoreRegister : public RegisterAccessInterface {
    * @param address an address of which semaphore this instance should handle
    */
   SemaphoreRegister(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
-                    uint32_t address)
+                    u32 address)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode), address_(address) {}
 
  public:
@@ -25,7 +25,7 @@ class SemaphoreRegister : public RegisterAccessInterface {
   /// This method will wait for indefinitely until it successfully gets the semaphore.
   void request() {
     while (true) {
-      constexpr uint16_t ACQUIRE = 0xFFFF;
+      constexpr u16 ACQUIRE = 0xFFFF;
       write(address_, ACQUIRE);
       semaphoreValue = read16(address_);
       if (semaphoreValue != 0x0000) {
@@ -39,7 +39,7 @@ class SemaphoreRegister : public RegisterAccessInterface {
   /// Releases the semaphore.
   void release() {
     while (true) {
-      constexpr uint16_t RELEASE = 0x0000;
+      constexpr u16 RELEASE = 0x0000;
       write(address_, RELEASE);
       semaphoreValue = read16(address_);
       if (semaphoreValue == 0x0000) {
@@ -57,8 +57,8 @@ class SemaphoreRegister : public RegisterAccessInterface {
     std::this_thread::sleep_for(10ms);
   }
 
-  uint32_t address_{};
-  uint16_t semaphoreValue = 0;
+  u32 address_{};
+  u16 semaphoreValue = 0;
   std::mutex mutex_;
 };
 

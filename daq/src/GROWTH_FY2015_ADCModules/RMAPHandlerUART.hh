@@ -93,7 +93,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void read(std::string rmapTargetNodeID, uint32_t memoryAddress, uint32_t length, uint8_t* buffer) {
+  void read(std::string rmapTargetNodeID, u32 memoryAddress, u32 length, u8* buffer) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -104,7 +104,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void read(std::string rmapTargetNodeID, std::string memoryObjectID, uint8_t* buffer) {
+  void read(std::string rmapTargetNodeID, std::string memoryObjectID, u8* buffer) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -116,7 +116,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void read(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint32_t length, uint8_t* buffer) {
+  void read(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) {
     using namespace std;
     if (rmapInitiator == NULL) {
       return;
@@ -144,7 +144,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* buffer) {
+  void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, u8* buffer) {
     using namespace std;
     if (rmapInitiator == NULL) {
       return;
@@ -172,7 +172,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void write(std::string rmapTargetNodeID, uint32_t memoryAddress, uint8_t* data, uint32_t length) {
+  void write(std::string rmapTargetNodeID, u32 memoryAddress, u8* data, u32 length) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -183,7 +183,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void write(std::string rmapTargetNodeID, std::string memoryObjectID, uint8_t* data) {
+  void write(std::string rmapTargetNodeID, std::string memoryObjectID, u8* data) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -194,7 +194,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void write(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint8_t* data, uint32_t length) {
+  void write(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u8* data, u32 length) {
     using namespace std;
     if (rmapInitiator == NULL) {
       return;
@@ -224,7 +224,7 @@ class RMAPHandlerUART : public RMAPHandler {
   }
 
  public:
-  void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* data) {
+  void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, u8* data) {
     using namespace std;
     if (rmapInitiator == NULL) {
       return;

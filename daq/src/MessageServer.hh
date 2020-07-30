@@ -29,7 +29,7 @@ class MessageServer : public CxxUtilities::StoppableThread {
   MessageServer(std::shared_ptr<MainThread> mainThread);
   ~MessageServer();
   void run();
-  static constexpr uint16_t TCPPortNumber  = 10020;
+  static constexpr u16 TCPPortNumber  = 10020;
   static constexpr int TimeOutInMilisecond = 1000;  // 1 sec
 
  private:

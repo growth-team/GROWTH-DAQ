@@ -48,7 +48,7 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
   static const int BAUD_RATE = 230400;
 
  public:
-  static constexpr double WaitTimeAfterCancelReceive = 1500;  // ms
+  static constexpr f64 WaitTimeAfterCancelReceive = 1500;  // ms
 
  private:
   std::string deviceName;
@@ -90,7 +90,7 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
   }
 
  public:
-  void send(uint8_t* data, size_t length,
+  void send(u8* data, size_t length,
             SpaceWireEOPMarker::EOPType eopType = SpaceWireEOPMarker::EOP) throw(SpaceWireIFException) {
     using namespace std;
     if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
@@ -106,10 +106,10 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
   }
 
  public:
-  void receive(std::vector<uint8_t>* buffer) throw(SpaceWireIFException) {
+  void receive(std::vector<u8>* buffer) throw(SpaceWireIFException) {
     if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
     try {
-      uint32_t eopType;
+      u32 eopType;
       ssdtp->receive(buffer, eopType);
       if (eopType == SpaceWireEOPMarker::EEP) {
         this->setReceivedPacketEOPMarkerType(SpaceWireIF::EEP);
@@ -131,7 +131,7 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
   }
 
  public:
-  void emitTimecode(uint8_t timeIn, uint8_t controlFlagIn = 0x00) throw(SpaceWireIFException) {
+  void emitTimecode(u8 timeIn, u8 controlFlagIn = 0x00) throw(SpaceWireIFException) {
     using namespace std;
     if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
     timeIn = timeIn % 64 + (controlFlagIn << 6);
@@ -152,7 +152,7 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
   }
 
  public:
-  virtual void setTxLinkRate(uint32_t linkRateType) throw(SpaceWireIFException) {
+  virtual void setTxLinkRate(u32 linkRateType) throw(SpaceWireIFException) {
     using namespace std;
     cerr << "SpaceWireIFOverIPClient::setTxLinkRate() is not implemented." << endl;
     cerr << "Please use SpaceWireIFOverIPClient::setTxDivCount() instead." << endl;
@@ -160,29 +160,29 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
   }
 
  public:
-  virtual uint32_t getTxLinkRateType() throw(SpaceWireIFException) {
+  virtual u32 getTxLinkRateType() throw(SpaceWireIFException) {
     using namespace std;
     cerr << "SpaceWireIFOverIPClient::getTxLinkRate() is not implemented." << endl;
     throw SpaceWireIFException(SpaceWireIFException::FunctionNotImplemented);
   }
 
  public:
-  void setTxDivCount(uint8_t txdivcount) {}
+  void setTxDivCount(u8 txdivcount) {}
 
  public:
-  void setTimeoutDuration(double microsecond) throw(SpaceWireIFException) {
+  void setTimeoutDuration(f64 microsecond) throw(SpaceWireIFException) {
     serialPort->setTimeout(microsecond / 1000.);
     timeoutDurationInMicroSec = microsecond;
   }
 
  public:
-  uint8_t getTimeCode() throw(SpaceWireIFException) {
+  u8 getTimeCode() throw(SpaceWireIFException) {
     if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
     return ssdtp->getTimeCode();
   }
 
  public:
-  void doAction(uint8_t timecode) { this->invokeTimecodeSynchronizedActions(timecode); }
+  void doAction(u8 timecode) { this->invokeTimecodeSynchronizedActions(timecode); }
 
  public:
   SpaceWireSSDTPModuleUART* getSSDTPModule() { return ssdtp; }

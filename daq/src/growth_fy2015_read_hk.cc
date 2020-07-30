@@ -17,14 +17,14 @@ int main(int argc, char* argv[]) {
   }
 
   CxxUtilities::Condition condition;
-  static const double WaitDuration = 10000;  // ms = 10s
+  static const f64 WaitDuration = 10000;  // ms = 10s
   bool loop                        = true;
   size_t elapsedTime               = 0;
   size_t duration                  = atoi(argv[1]);
   ADCDAC adcdac;
   while (loop) {
     ADCData adcData   = adcdac.getADCData();
-    uint32_t unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+    u32 unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
     cout << unixTime << " " << adcData.toString() << endl;
     condition.wait(WaitDuration);
     elapsedTime++;

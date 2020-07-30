@@ -13,16 +13,16 @@
 class ADCData {
  public:
   static const size_t nTemperatureSensors = 4;
-  uint16_t temperature_raw[nTemperatureSensors];
-  double temperature[nTemperatureSensors];
+  u16 temperature_raw[nTemperatureSensors];
+  f64 temperature[nTemperatureSensors];
 
   static const size_t nCurrentSensors = 2;
-  uint16_t current_raw[nCurrentSensors];
-  double current[nCurrentSensors];
+  u16 current_raw[nCurrentSensors];
+  f64 current[nCurrentSensors];
 
   static const size_t nGeneralPurposeADC = 2;
-  uint16_t generalPurposeADC_raw[nGeneralPurposeADC];
-  double generalPurposeADC[nGeneralPurposeADC];
+  u16 generalPurposeADC_raw[nGeneralPurposeADC];
+  f64 generalPurposeADC[nGeneralPurposeADC];
 
   std::string toString();
   ADCData();
@@ -38,15 +38,15 @@ class ADCDAC {
    * @param[in] channel ADC channel 0-7 (0-3 are temperature sensor)
    * @return 12-bit ADC value
    */
-  int16_t readADC(size_t channel);
+  i16 readADC(size_t channel);
   /** Reads temperature sensor.
    * @param[in] channel Temperature sensor channel 0-3
    * @return temperature in degC
    */
-  float readTemperature(size_t channel);
-  double convertToTemperature(uint16_t adcValue);
-  double convertToCurrent(uint16_t adcValue);
-  double convertToVoltage(uint16_t adcValue);
+  f32 readTemperature(size_t channel);
+  f64 convertToTemperature(u16 adcValue);
+  f64 convertToCurrent(u16 adcValue);
+  f64 convertToVoltage(u16 adcValue);
 
   /** Reads consumed current of 5V or 3.3V line.<br>
    * Channel 4 = 5V current <br>
@@ -54,7 +54,7 @@ class ADCDAC {
    * @param[in] channel Temperature sensor channel 4-5
    * @return current in mA
    */
-  float readCurrent(size_t channel);
+  f32 readCurrent(size_t channel);
   /** Sets value to DAC.
    * Execute the following in the command line before using this method.
    * <pre>
@@ -65,7 +65,7 @@ class ADCDAC {
    * @param[in] value DAC value (0-4095)
    * @return status (0=successfully set, -1=range error)
    */
-  int setDAC(size_t channel, uint16_t value);
+  int setDAC(size_t channel, u16 value);
   /** Disable DAC output.
    * @param[in] channel 0 or 1 for Channel 0 and 1
    * @return status
@@ -73,23 +73,23 @@ class ADCDAC {
   int disableDAC(size_t channel);
   ADCData getADCData();
 
-  static constexpr float LT6106_Rout   = 10e3;   // 10kOhm
-  static constexpr float LT6106_Rin    = 100;    // 100Ohm
-  static constexpr float LT6106_Rsense = 10e-3;  // 10mOhm
+  static constexpr f32 LT6106_Rout   = 10e3;   // 10kOhm
+  static constexpr f32 LT6106_Rin    = 100;    // 100Ohm
+  static constexpr f32 LT6106_Rsense = 10e-3;  // 10mOhm
 
   // ADC (MCP3208)
   static const size_t NADCChannels          = 8;
   static const int SPIChannelADC            = 0x00;
-  static const uint16_t ADCMax              = 4095;
-  static constexpr float ADCVref            = 2.5;  // V
+  static const u16 ADCMax              = 4095;
+  static constexpr f32 ADCVref            = 2.5;  // V
   static const size_t ADCChannel_Current5V  = 4;
   static const size_t ADCChannel_Current3V3 = 5;
 
   // DAC
   static const size_t NDACChannels = 2;
   static const int SPIChannelDAC   = 0x01;
-  static const uint16_t DACMin     = 0;
-  static const uint16_t DACMax     = 4095;
+  static const u16 DACMin     = 0;
+  static const u16 DACMax     = 4095;
 
   static const unsigned char DACChannelA    = 0x00;
   static const unsigned char DACChannelB    = 0x80;
@@ -102,8 +102,8 @@ class ADCDAC {
   static const int SPIClockFrequency = 500000;  // Hz
 
   // Temperature sensor LM60
-  static constexpr double LM60Coefficient = 0.00625;  // V/deg
-  static constexpr double LM60Offset      = 0.424;    // V
+  static constexpr f64 LM60Coefficient = 0.00625;  // V/deg
+  static constexpr f64 LM60Offset      = 0.424;    // V
 
   // Error status
   enum ADCDACError {

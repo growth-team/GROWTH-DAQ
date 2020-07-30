@@ -11,7 +11,7 @@ class EventListFileROOT : public EventListFile {
  public:
   EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "");
   ~EventListFileROOT();
-  void fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) override;
+  void fillGPSTime(const u8* gpsTimeRegisterBuffer) override;
   void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) override;
   size_t getEntries() const override;
   void close() override;
@@ -25,7 +25,7 @@ class EventListFileROOT : public EventListFile {
   std::unique_ptr<TTree> eventTree_;
   std::unique_ptr<TFile> outputFile_;
   std::string detectorID_{};
-  uint32_t unixTime_{};
+  u32 unixTime_{};
   GROWTH_FY2015_ADC_Type::Event eventEntry_{};
   std::string configurationYAMLFile_{};
 };

@@ -48,7 +48,7 @@ SerialPort::SerialPort(std::string deviceName, size_t baudRate) : timeoutDuratio
 
 void SerialPort::close() { port_->close(); }
 
-void SerialPort::send(const std::vector<uint8_t>& sendBuffer) {
+void SerialPort::send(const std::vector<u8>& sendBuffer) {
 #ifdef DEBUG_SERIALPORT
   using namespace std;
   cout << "Send: ";
@@ -57,7 +57,7 @@ void SerialPort::send(const std::vector<uint8_t>& sendBuffer) {
   port_->write_some(boost::asio::buffer(sendBuffer));
 }
 
-void SerialPort::send(const uint8_t* sendBuffer, size_t length) {
+void SerialPort::send(const u8* sendBuffer, size_t length) {
   internalSendBuffer_.resize(length);
   memcpy(&(internalSendBuffer_[0]), sendBuffer, length);
 #ifdef DEBUG_SERIALPORT
@@ -97,11 +97,11 @@ void SerialPort::receiveWithTimeout(MutableBufferSequence& buffers, size_t& nRec
   }
 }
 
-inline size_t SerialPort::receiveLoopUntilSpecifiedLengthCompletes(uint8_t* data, uint32_t length) {
+inline size_t SerialPort::receiveLoopUntilSpecifiedLengthCompletes(u8* data, u32 length) {
   return receive(data, length, true);
 }
 
-size_t SerialPort::receive(uint8_t* data, uint32_t length, bool waitUntilSpecifiedLengthCompletes) {
+size_t SerialPort::receive(u8* data, u32 length, bool waitUntilSpecifiedLengthCompletes) {
   size_t remainingLength = length;
   size_t readDoneLength = 0;
   size_t nReceivedBytes{};
@@ -137,7 +137,7 @@ size_t SerialPort::receive(uint8_t* data, uint32_t length, bool waitUntilSpecifi
   }
 }
 
-void SerialPort::setTimeout(double timeoutDurationInMilliSec) {
+void SerialPort::setTimeout(f64 timeoutDurationInMilliSec) {
   this->timeoutDurationInMilliSec_ = timeoutDurationInMilliSec;
-  timeoutDurationObject_ = boost::posix_time::millisec(static_cast<uint32_t>(timeoutDurationInMilliSec));
+  timeoutDurationObject_ = boost::posix_time::millisec(static_cast<u32>(timeoutDurationInMilliSec));
 }

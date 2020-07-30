@@ -12,7 +12,7 @@
 #include "TH1D.h"
 #include "TROOT.h"
 
-static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
+static const u32 AddressOf_EventFIFO_DataCountRegister = 0x20000000;
 
 #define DRAW_CANVAS 1
 
@@ -40,7 +40,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     const size_t TriggerThresholds[1][4] = {{900, 530, 900, 900}};
 
     std::vector<size_t> enabledChannels = {0, 1, 2, 3};
-    uint16_t ChannelEnableMask = 0x0F;  // enable all 4 channels
+    u16 ChannelEnableMask = 0x0F;  // enable all 4 channels
 
 #ifdef DRAW_CANVAS
     //---------------------------------------------
@@ -86,7 +86,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     // Start acquisition
     //---------------------------------------------
     std::vector<bool> startStopRegister(nChannels);
-    uint16_t mask = 0x0001;
+    u16 mask = 0x0001;
     for (size_t i = 0; i < nChannels; i++) {
       if ((ChannelEnableMask & mask) == 0) {
         startStopRegister[i] = false;
@@ -149,9 +149,9 @@ class MainThread : public CxxUtilities::StoppableThread {
       cout << "Received " << events.size() << " events" << endl;
       for (auto event : events) {
         /*
-         cout << (uint32_t) event->ch << endl;
+         cout << (u32) event->ch << endl;
          for (size_t i = 0; i < event->nSamples; i++) {
-         cout << dec << (uint32_t) event->waveform[i] << " ";
+         cout << dec << (u32) event->waveform[i] << " ";
          }
          cout << dec << endl;
          */

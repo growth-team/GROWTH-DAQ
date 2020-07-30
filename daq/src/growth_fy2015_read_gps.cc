@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
   // Read GPS Register
   //---------------------------------------------
   cout << "Reading GPS Register" << endl;
-  uint8_t* buffer   = adcBoard->getGPSRegisterUInt8();
+  u8* buffer   = adcBoard->getGPSRegisterUInt8();
   long long timeTag = 0;
 
   for (size_t i = 14; i < GROWTH_FY2015_ADC::LengthOfGPSTimeRegister; i++) { timeTag = buffer[i] + (timeTag << 8); }
@@ -41,13 +41,13 @@ int main(int argc, char* argv[]) {
   cout << "Wait for 1.5 sec" << endl;
   c.wait(2500);
   cout << "Read GPS Data FIFO" << endl;
-  std::vector<uint8_t> gpsDataFIFOReadData = adcBoard->readGPSDataFIFO();
+  std::vector<u8> gpsDataFIFOReadData = adcBoard->readGPSDataFIFO();
   cout << "Read result (" << gpsDataFIFOReadData.size() << " bytes):" << endl;
   for (size_t i = 0; i < gpsDataFIFOReadData.size(); i++) { cout << (char)gpsDataFIFOReadData[i]; }
   cout << endl;
   cout << "---------------------------------------------" << endl;
   for (size_t i = 0; i < gpsDataFIFOReadData.size(); i++) {
-    cout << hex << right << setw(2) << setfill('0') << (uint32_t)gpsDataFIFOReadData[i] << " ";
+    cout << hex << right << setw(2) << setfill('0') << (u32)gpsDataFIFOReadData[i] << " ";
   }
   cout << endl;
 

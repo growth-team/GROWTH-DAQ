@@ -20,7 +20,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
   void run() {
     using namespace std;
     cerr << "ReceiveThread started." << endl;
-    std::vector<uint8_t> receivedData;
+    std::vector<u8> receivedData;
 
     while (!stopped) {
       try {
@@ -35,7 +35,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
       cout << "Received " << dec << length << " bytes" << endl;
       cout << "Dump ";
       for (size_t i = 0; i < length; i++) {
-        cout << hex << right << setw(2) << setfill('0') << (uint32_t)receivedData[i] << " ";
+        cout << hex << right << setw(2) << setfill('0') << (u32)receivedData[i] << " ";
         if (i != 0) {
           if (receivedData[i - 1] + 1 != receivedData[i]) { cout << "Transfer Error! "; }
         }
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   ReceiveThread receiveThread(&ssdtp);
   receiveThread.start();
 
-  std::vector<uint8_t> sendData;
+  std::vector<u8> sendData;
 
   c.wait(100);
   for (size_t i = 0; i < 100; i++) {

@@ -4,7 +4,7 @@
 #include "GROWTH_FY2015_ADCModules/Constants.hh"
 
 namespace GROWTH_FY2015_ADC_Type {
-enum class TriggerMode : uint32_t {
+enum class TriggerMode : u32 {
   StartThreshold_NSamples_AutoClose = 1,       //
   CommonGateIn = 2,                            //
   StartThreshold_NSamples_CloseThreshold = 3,  //
@@ -14,36 +14,36 @@ enum class TriggerMode : uint32_t {
   TriggerBusSelectedAND = 9
 };
 
-enum class PresetMode : uint32_t {
+enum class PresetMode : u32 {
   NonStop = 0,         //
   Livetime = 1,        //
   NumberOfEvents = 2,  //
 };
 
 struct HouseKeepingData {
-  uint32_t realtime;
-  uint32_t livetime[GROWTH_FY2015_ADC_Type::NumberOfChannels];
+  u32 realtime;
+  u32 livetime[GROWTH_FY2015_ADC_Type::NumberOfChannels];
   bool acquisitionStarted[GROWTH_FY2015_ADC_Type::NumberOfChannels];
 };
 
 struct Event {
-  explicit Event(size_t numWaveformSamples) : waveform(new uint16_t[numWaveformSamples]) {}
+  explicit Event(size_t numWaveformSamples) : waveform(new u16[numWaveformSamples]) {}
   ~Event() { delete[] waveform; }
-  uint8_t ch;
-  uint64_t timeTag;
-  uint16_t triggerCount;
-  uint16_t phaMax;
-  uint16_t phaMaxTime;
-  uint16_t phaMin;
-  uint16_t phaFirst;
-  uint16_t phaLast;
-  uint16_t maxDerivative;
-  uint16_t baseline;
-  uint16_t nSamples;
-  uint16_t* waveform;
+  u8 ch;
+  u64 timeTag;
+  u16 triggerCount;
+  u16 phaMax;
+  u16 phaMaxTime;
+  u16 phaMin;
+  u16 phaFirst;
+  u16 phaLast;
+  u16 maxDerivative;
+  u16 baseline;
+  u16 nSamples;
+  u16* waveform;
 };
 
-enum class ADCClockFrequency : uint16_t { ADCClock200MHz = 20000, ADCClock100MHz = 10000, ADCClock50MHz = 5000 };
+enum class ADCClockFrequency : u16 { ADCClock200MHz = 20000, ADCClock100MHz = 10000, ADCClock50MHz = 5000 };
 }  // namespace GROWTH_FY2015_ADC_Type
 
 #endif

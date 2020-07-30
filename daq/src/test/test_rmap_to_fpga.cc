@@ -34,10 +34,10 @@
  *
  */
 
-void dump(uint8_t* buffer) {
+void dump(u8* buffer) {
   using namespace std;
   for (size_t i = 0; i < 2; i++) {
-    cout << "0x" << hex << right << setw(2) << setfill('0') << (uint32_t)buffer[i] << " ";
+    cout << "0x" << hex << right << setw(2) << setfill('0') << (u32)buffer[i] << " ";
   }
   cout << dec << endl;
 }
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
   target.setReplyAddress({});
 
   RMAPInitiator* rmapInitiator = new RMAPInitiator(rmapEngine);
-  uint8_t buffer[2];
+  u8 buffer[2];
   try {
     rmapInitiator->read(&target, 0x00001112, 2, buffer);
     cout << "Read done" << endl;
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     cout << "Read done" << endl;
     dump(buffer);
     // write
-    uint16_t threshold = 540;
+    u16 threshold = 540;
     buffer[1]          = threshold % 0x100;
     buffer[0]          = threshold / 0x100;
     rmapInitiator->write(&target, 0x00001006, buffer, 2);

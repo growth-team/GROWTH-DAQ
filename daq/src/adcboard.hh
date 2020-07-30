@@ -76,8 +76,8 @@
  adc->setTriggerMode(ch, TriggerMode::CPUTrigger);
 
  // Trigger Mode: StartingThreshold-NSamples-ClosingThreshold
- // uint16_t startingThreshold=2300;
- // uint16_t closingThreshold=2100;
+ // u16 startingThreshold=2300;
+ // u16 closingThreshold=2100;
  // adc->setStartingThreshold(ch, startingThreshold);
  // adc->setClosingThreshold(ch, closingThreshold);
  //adc->setTriggerMode(ch, TriggerMode::StartThreshold_NSamples_CloseThreshold);
@@ -122,11 +122,11 @@
  cout << "---------------------------------------------" << endl;
  cout << "timeTag = " << event->timeTag << endl;
  cout << "triggerCount = " << event->triggerCount << endl;
- cout << "phaMax = " << (uint32_t)event->phaMax << endl;
- cout << "nSamples = " << (uint32_t)event->nSamples << endl;
+ cout << "phaMax = " << (u32)event->phaMax << endl;
+ cout << "nSamples = " << (u32)event->nSamples << endl;
  cout << "waveform = ";
  for(size_t i=0;i<event->nSamples;i++){
- cout << dec << (uint32_t)event->waveform[i] << " ";
+ cout << dec << (u32)event->waveform[i] << " ";
  }
  cout << endl;
  i++;
@@ -198,10 +198,10 @@ class GROWTH_FY2015_ADC {
   GROWTH_FY2015_ADC(std::string deviceName);
   ~GROWTH_FY2015_ADC();
 
-  uint32_t getFPGAType();
-  uint32_t getFPGAVersion();
+  u32 getFPGAType();
+  u32 getFPGAVersion();
   std::string getGPSRegister();
-  uint8_t* getGPSRegisterUInt8();
+  u8* getGPSRegisterUInt8();
 
   /** Clears the GPS Data FIFO.
    *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
@@ -211,7 +211,7 @@ class GROWTH_FY2015_ADC {
   /** Reads GPS Data FIFO.
    *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
    */
-  std::vector<uint8_t> readGPSDataFIFO();
+  std::vector<u8> readGPSDataFIFO();
 
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
@@ -261,47 +261,47 @@ class GROWTH_FY2015_ADC {
    * in the waveform buffer,
    * and then analyzed in the Pulse Processing Module to form an event packet.
    * In this processing, the waveform can be truncated at a specified length,
-   * and see setNumberOfSamplesInEventPacket(uint16_t nSamples) for this
+   * and see setNumberOfSamplesInEventPacket(u16 nSamples) for this
    * truncating length setting.
    * @note As of 20141103, the maximum waveform length is 1000.
    * This value can be increased by modifying the depth of the event FIFO
    * in the FPGA.
    * @param nSamples number of adc samples per one waveform data
    */
-  void setNumberOfSamples(uint16_t nSamples);
+  void setNumberOfSamples(u16 nSamples);
 
   /** Sets the number of ADC samples which should be output in the
    * event packet (this must be smaller than the number of samples
-   * recorded for a trigger, see setNumberOfSamples(uint16_t nSamples) ).
+   * recorded for a trigger, see setNumberOfSamples(u16 nSamples) ).
    * @param[in] nSamples number of ADC samples in the event packet
    */
-  void setNumberOfSamplesInEventPacket(uint16_t nSamples);
+  void setNumberOfSamplesInEventPacket(u16 nSamples);
 
   /** Sets Leading Trigger Threshold.
    * @param threshold an adc value for leading trigger threshold
    */
-  void setStartingThreshold(size_t chNumber, uint32_t threshold);
+  void setStartingThreshold(size_t chNumber, u32 threshold);
 
   /** Sets Trailing Trigger Threshold.
    * @param threshold an adc value for trailing trigger threshold
    */
-  void setClosingThreshold(size_t chNumber, uint32_t threshold);
+  void setClosingThreshold(size_t chNumber, u32 threshold);
 
   /** Sets depth of delay per trigger. When triggered,
    * a waveform will be recorded starting from N steps
    * before of the trigger timing.
    * @param depthOfDelay number of samples retarded
    */
-  void setDepthOfDelay(size_t chNumber, uint32_t depthOfDelay);
+  void setDepthOfDelay(size_t chNumber, u32 depthOfDelay);
 
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
-  uint32_t getLivetime(size_t chNumber);
+  u32 getLivetime(size_t chNumber);
   /** Get current ADC value.
    * @return temporal ADC value
    */
-  uint32_t getCurrentADCValue(size_t chNumber);
+  u32 getCurrentADCValue(size_t chNumber);
 
   /** Turn on ADC.
    */
@@ -360,17 +360,17 @@ class GROWTH_FY2015_ADC {
   /** Sets Livetime preset value.
    * @param livetimeIn10msUnit live time to be set (in a unit of 10ms)
    */
-  void setPresetLivetime(uint32_t livetimeIn10msUnit);
+  void setPresetLivetime(u32 livetimeIn10msUnit);
 
   /** Sets PresetnEventsRegister.
    * @param nEvents number of event to be taken
    */
-  void setPresetnEvents(uint32_t nEvents);
+  void setPresetnEvents(u32 nEvents);
 
   /** Get Realtime which is elapsed time since the board power was turned on.
    * @return elapsed real time in 10ms unit
    */
-  double getRealtime();
+  f64 getRealtime();
 
   /** Sets ADC Clock.
    * - ADCClockFrequency::ADCClock200MHz <br>
@@ -391,14 +391,14 @@ class GROWTH_FY2015_ADC {
   void loadConfigurationFile(std::string inputFileName);
 
   // Clock Frequency
-  static constexpr double ClockFrequency = 100;  // MHz
+  static constexpr f64 ClockFrequency = 100;  // MHz
   // Clock Interval
-  static constexpr double ClockInterval = 10e-9;  // s
+  static constexpr f64 ClockInterval = 10e-9;  // s
   // FPGA TimeTag
-  static constexpr uint32_t TimeTagResolutionInNanoSec = 10;  // ns
+  static constexpr u32 TimeTagResolutionInNanoSec = 10;  // ns
   // PHA Min/Max
-  static constexpr uint16_t PHAMinimum = 0;
-  static constexpr uint16_t PHAMaximum = 1023;
+  static constexpr u16 PHAMinimum = 0;
+  static constexpr u16 PHAMaximum = 1023;
   static constexpr size_t LengthOfGPSTimeRegister = 20;
 
   const size_t nChannels = 4;
@@ -411,8 +411,8 @@ class GROWTH_FY2015_ADC {
   size_t SamplesInEventPacket = 1000;
   size_t DownSamplingFactorForSavedWaveform = 1;
   std::vector<bool> ChannelEnable{};
-  std::vector<uint16_t> TriggerThresholds{};
-  std::vector<uint16_t> TriggerCloseThresholds{};
+  std::vector<u16> TriggerThresholds{};
+  std::vector<u16> TriggerCloseThresholds{};
 
  private:
   template <typename T, typename Y>
@@ -427,15 +427,15 @@ class GROWTH_FY2015_ADC {
   void dumpThread();
 
   // clang-format off
-  static constexpr uint32_t AddressOfGPSTimeRegister          = 0x20000002;
-  static constexpr uint32_t AddressOfGPSDataFIFOResetRegister = 0x20001000;
-  static constexpr uint32_t InitialAddressOfGPSDataFIFO       = 0x20001002;
-  static constexpr uint32_t FinalAddressOfGPSDataFIFO         = 0x20001FFF;
+  static constexpr u32 AddressOfGPSTimeRegister          = 0x20000002;
+  static constexpr u32 AddressOfGPSDataFIFOResetRegister = 0x20001000;
+  static constexpr u32 InitialAddressOfGPSDataFIFO       = 0x20001002;
+  static constexpr u32 FinalAddressOfGPSDataFIFO         = 0x20001FFF;
 
-  static constexpr uint32_t AddressOfFPGATypeRegister_L    = 0x30000000;
-  static constexpr uint32_t AddressOfFPGATypeRegister_H    = 0x30000002;
-  static constexpr uint32_t AddressOfFPGAVersionRegister_L = 0x30000004;
-  static constexpr uint32_t AddressOfFPGAVersionRegister_H = 0x30000006;
+  static constexpr u32 AddressOfFPGATypeRegister_L    = 0x30000000;
+  static constexpr u32 AddressOfFPGATypeRegister_H    = 0x30000002;
+  static constexpr u32 AddressOfFPGAVersionRegister_L = 0x30000004;
+  static constexpr u32 AddressOfFPGAVersionRegister_H = 0x30000006;
   // clang-format on
 
   std::unique_ptr<RMAPHandlerUART> rmapHandler;
@@ -446,10 +446,10 @@ class GROWTH_FY2015_ADC {
   std::vector<std::unique_ptr<ChannelModule>> channelModules;
 
   size_t nReceivedEvents = 0;
-  uint8_t gpsTimeRegister[LengthOfGPSTimeRegister + 1];
+  u8 gpsTimeRegister[LengthOfGPSTimeRegister + 1];
   const size_t GPSDataFIFODepthInBytes = 1024;
-  uint8_t* gpsDataFIFOReadBuffer = NULL;
-  std::vector<uint8_t> gpsDataFIFOData{};
+  u8* gpsDataFIFOReadBuffer = NULL;
+  std::vector<u8> gpsDataFIFOData{};
   std::vector<GROWTH_FY2015_ADC_Type::Event*> events{};
   bool stopDumpThread_ = false;
 };

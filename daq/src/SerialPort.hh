@@ -37,34 +37,34 @@ struct SerialPort {
   void read_callback(const boost::system::error_code& e, std::size_t size, boost::array<char, ReadBufferSize> r);
   void write_callback(const boost::system::error_code& e, std::size_t size);
   void close();
-  void send(const std::vector<uint8_t>& sendBuffer);
-  void send(const uint8_t* sendBuffer, size_t length);
+  void send(const std::vector<u8>& sendBuffer);
+  void send(const u8* sendBuffer, size_t length);
   template <typename MutableBufferSequence>
   void receiveWithTimeout(MutableBufferSequence& buffers, size_t& nReceivedBytes,
                           const boost::asio::deadline_timer::duration_type& expiry_time);
   /** Receives data until specified length is completely received.
    * Received data are stored in the data buffer.
-   * @param[in] data uint8_t buffer where received data will be stored
+   * @param[in] data u8 buffer where received data will be stored
    * @param[in] length length of data to be received
    * @return received size
    */
-  inline size_t receiveLoopUntilSpecifiedLengthCompletes(uint8_t* data, uint32_t length);
+  inline size_t receiveLoopUntilSpecifiedLengthCompletes(u8* data, u32 length);
   /** Receives data. The maximum length can be specified as length.
    * Receive size may be shorter than the specified length.
-   * @param[in] data uint8_t buffer where received data will be stored
+   * @param[in] data u8 buffer where received data will be stored
    * @param[in] length the maximum size of the data buffer
    * @return received size
    */
-  size_t receive(uint8_t* data, uint32_t length, bool waitUntilSpecifiedLengthCompletes = false);
-  void setTimeout(double timeoutDurationInMilliSec);
+  size_t receive(u8* data, u32 length, bool waitUntilSpecifiedLengthCompletes = false);
+  void setTimeout(f64 timeoutDurationInMilliSec);
 
  private:
   std::unique_ptr<boost::asio::serial_port> port_;
   boost::asio::io_service io_{};
   boost::asio::streambuf receiveBuffer_{};
-  std::vector<uint8_t> internalSendBuffer_{};
+  std::vector<u8> internalSendBuffer_{};
   std::mutex mutex_{};
-  double timeoutDurationInMilliSec_ = 1000.0;
+  f64 timeoutDurationInMilliSec_ = 1000.0;
   boost::posix_time::millisec timeoutDurationObject_;
 };
 

@@ -31,23 +31,23 @@ class DataRecorder : public CxxUtilities::StoppableThread {
 
  private:
   // event data
-  uint32_t flag_fff0;
-  uint32_t chid;
-  uint32_t consumerid;
-  uint32_t pha_max;
-  uint32_t time_H;
-  uint32_t time_M;
-  uint32_t time_L;
-  uint32_t baseline;
-  uint32_t risetime_ld_time;
-  uint32_t risetime_ud_time;
-  uint32_t flag_fff1;
-  // uint32_t pha_list[1024];//not used now
-  uint32_t flag_fff2;
-  uint32_t flag_ffff;
+  u32 flag_fff0;
+  u32 chid;
+  u32 consumerid;
+  u32 pha_max;
+  u32 time_H;
+  u32 time_M;
+  u32 time_L;
+  u32 baseline;
+  u32 risetime_ld_time;
+  u32 risetime_ud_time;
+  u32 flag_fff1;
+  // u32 pha_list[1024];//not used now
+  u32 flag_fff2;
+  u32 flag_ffff;
 
-  uint32_t pha_list_size;
-  uint32_t last_pha_list_size[SpaceWireADCBox::NumberOfChannels];
+  u32 pha_list_size;
+  u32 last_pha_list_size[SpaceWireADCBox::NumberOfChannels];
 
  private:
   enum {
@@ -201,7 +201,7 @@ class DataRecorder : public CxxUtilities::StoppableThread {
   Long64_t getNumberOfEvents() {
     if (tree != NULL) {
       treemutex.lock();
-      uint32_t n = tree->GetEntries();
+      u32 n = tree->GetEntries();
       treemutex.unlock();
       return tree->GetEntries();
     } else {
@@ -223,24 +223,24 @@ class DataRecorder : public CxxUtilities::StoppableThread {
 
   /** Returns WritePointer.
    */
-  uint32_t getWritePointer() {
+  u32 getWritePointer() {
     mutex.lock();
-    uint32_t writepointer = consumermanager->getWritePointer();
+    u32 writepointer = consumermanager->getWritePointer();
     mutex.unlock();
     return writepointer;
   }
 
   /** Returns ReadPointer.
    */
-  uint32_t getReadPointer() {
-    uint32_t readpointer = consumermanager->getReadPointer();
+  u32 getReadPointer() {
+    u32 readpointer = consumermanager->getReadPointer();
     return readpointer;
   }
 
   /** Draws histogram.
    * param channelnumber the number of channel to be plotted
    */
-  void drawHistogram(uint32_t channelnumber) {
+  void drawHistogram(u32 channelnumber) {
     drawmutex.lock();
     histogramcanvas->cd(0);
     histograms[channelnumber]->Draw();
@@ -264,7 +264,7 @@ class DataRecorder : public CxxUtilities::StoppableThread {
 
   /** Draws the latest Waveform.
    */
-  void drawWaveform(uint32_t channelnumber) {
+  void drawWaveform(u32 channelnumber) {
     using namespace std;
     if (last_pha_list_size[channelnumber] != 0) {
       drawmutex.lock();
@@ -289,8 +289,8 @@ class DataRecorder : public CxxUtilities::StoppableThread {
 
   void run() {
     using namespace std;
-    vector<uint8_t> tmp;
-    vector<uint32_t> readdata;
+    vector<u8> tmp;
+    vector<u32> readdata;
     cout << "DataRecorder::run() starting thread" << endl;
     resumed = false;
     while (!stopped) {

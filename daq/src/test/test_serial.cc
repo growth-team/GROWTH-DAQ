@@ -12,8 +12,8 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
   void run() {
     using namespace std;
     cerr << "ReceiveThread started." << endl;
-    // std::vector<uint8_t> receiveBuffer(1024);
-    uint8_t receiveBuffer[128];
+    // std::vector<u8> receiveBuffer(1024);
+    u8 receiveBuffer[128];
     size_t nReceivedBytes;
     while (!stopped) {
       try {
@@ -32,7 +32,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
       cout << "Received " << nReceivedBytes << " bytes" << endl;
       for (size_t i = 0; i < length; i++) {
         cout << "Received" << dec << i << ": "
-             << "0x" << hex << right << setw(2) << setfill('0') << (uint32_t)receiveBuffer[i] << endl;
+             << "0x" << hex << right << setw(2) << setfill('0') << (u32)receiveBuffer[i] << endl;
       }
     }
   }
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   ReceiveThread receiveThread(&serialPort);
   receiveThread.start();
 
-  std::vector<uint8_t> sendData = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xfe, 0x01,
+  std::vector<u8> sendData = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xfe, 0x01,
                                    0x4c, 0x00, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x12, 0x00, 0x00, 0x02, 0xbe};
 
   serialPort.send(sendData);

@@ -28,12 +28,12 @@ class RegisterAccessInterface {
     return (upper16 << 16) + lower16;
   }
 
-  uint64_t read48(u32 address) const {
+  u64 read48(u32 address) const {
     std::array<u8, 6> data{};
     rmapHandler_->read(rmapTargetNode_.get(), address, data);
-    const auto lower16 = (static_cast<uint64_t>(data[0]) << 8) + data[1];
-    const auto middle16 = (static_cast<uint64_t>(data[2]) << 8) + data[3];
-    const auto upper16 = (static_cast<uint64_t>(data[4]) << 8) + data[5];
+    const auto lower16 = (static_cast<u64>(data[0]) << 8) + data[1];
+    const auto middle16 = (static_cast<u64>(data[2]) << 8) + data[3];
+    const auto upper16 = (static_cast<u64>(data[4]) << 8) + data[5];
     return (upper16 << 24) + (middle16 << 16) + lower16;
   }
 

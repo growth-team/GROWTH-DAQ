@@ -12,8 +12,8 @@ extern "C" {
 class EventListFileFITS : public EventListFile {
  public:
   EventListFileFITS(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "",
-                    size_t nSamples = 1024, double exposureInSec = 0,  //
-                    uint32_t fpgaType = 0x00000000, uint32_t fpgaVersion = 0x00000000);
+                    size_t nSamples = 1024, f64 exposureInSec = 0,  //
+                    u32 fpgaType = 0x00000000, u32 fpgaVersion = 0x00000000);
   ~EventListFileFITS();
 
   /** Fill an entry to the HDU containing GPS Time and FPGA Time Tag.
@@ -21,7 +21,7 @@ class EventListFileFITS : public EventListFile {
    * @param[in] buffer buffer containing a GPS Time Register data
    */
   void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) override;
-  void fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) override;
+  void fillGPSTime(const u8* gpsTimeRegisterBuffer) override;
   size_t getEntries() const override;
   void close() override;
   void expandIfNecessary();
@@ -45,9 +45,9 @@ class EventListFileFITS : public EventListFile {
   size_t fitsNRows{};     // currently allocated rows
   size_t rowExpansionStep = InitialRowNumber;
   size_t nSamples{};
-  double exposureInSec{};
-  uint32_t fpgaType = 0x00000000;
-  uint32_t fpgaVersion = 0x00000000;
+  f64 exposureInSec{};
+  u32 fpgaType = 0x00000000;
+  u32 fpgaVersion = 0x00000000;
 
   std::mutex fitsAccessMutex_;
 
@@ -74,16 +74,16 @@ class EventListFileFITS : public EventListFile {
   const size_t MaxTFORM = 1024;
   char* tforms[nColumns_Event] = {
       //
-      const_cast<char*>("B") /*uint8_t*/,          // boardIndexAndChannel
-      const_cast<char*>("K") /*uint64_t*/,         // timeTag
-      const_cast<char*>("U") /*uint16_t*/,         // triggerCount
-      const_cast<char*>("U") /*uint16_t*/,         // phaMax
-      const_cast<char*>("U") /*uint16_t*/,         // phaMaxTime
-      const_cast<char*>("U") /*uint16_t*/,         // phaMin
-      const_cast<char*>("U") /*uint16_t*/,         // phaFirst
-      const_cast<char*>("U") /*uint16_t*/,         // phaLast
-      const_cast<char*>("U") /*uint16_t*/,         // maxDerivative
-      const_cast<char*>("U") /*uint16_t*/,         // baseline
+      const_cast<char*>("B") /*u8*/,          // boardIndexAndChannel
+      const_cast<char*>("K") /*u64*/,         // timeTag
+      const_cast<char*>("U") /*u16*/,         // triggerCount
+      const_cast<char*>("U") /*u16*/,         // phaMax
+      const_cast<char*>("U") /*u16*/,         // phaMaxTime
+      const_cast<char*>("U") /*u16*/,         // phaMin
+      const_cast<char*>("U") /*u16*/,         // phaFirst
+      const_cast<char*>("U") /*u16*/,         // phaLast
+      const_cast<char*>("U") /*u16*/,         // maxDerivative
+      const_cast<char*>("U") /*u16*/,         // baseline
       new char[MaxTFORM] /* to be filled later */  //
   };
   const char* tunits[nColumns_Event] = {

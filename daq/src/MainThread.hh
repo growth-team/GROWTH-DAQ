@@ -23,7 +23,7 @@ enum class DAQStatus {
 
 class MainThread : public CxxUtilities::StoppableThread {
  public:
-  MainThread(std::string deviceName, std::string configurationFile, double exposureInSec)
+  MainThread(std::string deviceName, std::string configurationFile, f64 exposureInSec)
       : deviceName_(deviceName),
         exposureInSec_(exposureInSec),
         configurationFile_(configurationFile),
@@ -95,7 +95,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     //---------------------------------------------
     // Read events
     //---------------------------------------------
-    uint32_t elapsedTime = 0;
+    u32 elapsedTime = 0;
     size_t nReceivedEvents = 0;
     stopped = false;
     while (!stopped) {
@@ -104,7 +104,7 @@ class MainThread : public CxxUtilities::StoppableThread {
         std::this_thread::sleep_for(std::chrono::milliseconds(eventReadWaitDuration));
       }
       // Get current UNIX time
-      uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+      u32 currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
       // Read GPS register if necessary
       if (currentUnixTime - unixTimeOfLastGPSRegisterRead > GPSRegisterReadWaitInSec) {
         readAnsSaveGPSRegister();
@@ -151,14 +151,14 @@ class MainThread : public CxxUtilities::StoppableThread {
 
  public:
   size_t getElapsedTime() const {
-    uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+    u32 currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
     return currentUnixTime - startUnixTime_;
   }
 
  public:
   const size_t getElapsedTimeOfCurrentOutputFile() const {
     if (daqStatus_ == DAQStatus::Running) {
-      uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+      u32 currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
       return currentUnixTime - startUnixTimeOfCurrentOutputFile_;
     } else {
       return 0;
@@ -203,7 +203,7 @@ class MainThread : public CxxUtilities::StoppableThread {
   void setWaitDurationBetweenEventRead() {
     const char* envPointer = std::getenv("GROWTH_DAQ_WAIT_DURATION");
     if (envPointer != NULL) {
-      const uint32_t waitDurationInMillisec = atoi(envPointer);
+      const u32 waitDurationInMillisec = atoi(envPointer);
       if (waitDurationInMillisec != 0) {
         eventReadWaitDuration = waitDurationInMillisec;
       }
@@ -265,16 +265,16 @@ class MainThread : public CxxUtilities::StoppableThread {
  private:
   std::string deviceName_;
   std::string configurationFile_;
-  double exposureInSec_{};
+  f64 exposureInSec_{};
 
-  static constexpr uint32_t DefaultEventReadWaitDurationInMillisec = 50;
-  uint32_t eventReadWaitDuration = DefaultEventReadWaitDurationInMillisec;
+  static constexpr u32 DefaultEventReadWaitDurationInMillisec = 50;
+  u32 eventReadWaitDuration = DefaultEventReadWaitDurationInMillisec;
   static constexpr size_t GPSRegisterReadWaitInSec = 30;  // 30s
-  uint32_t unixTimeOfLastGPSRegisterRead = 0;
+  u32 unixTimeOfLastGPSRegisterRead = 0;
 
   std::unique_ptr<GROWTH_FY2015_ADC> adcBoard_;
-  uint32_t fpgaType_{};
-  uint32_t fpgaVersion_{};
+  u32 fpgaType_{};
+  u32 fpgaVersion_{};
   size_t nEvents_ = 0;
   size_t nEventsOfCurrentOutputFile_ = 0;
 #ifdef USE_ROOT
@@ -283,8 +283,8 @@ class MainThread : public CxxUtilities::StoppableThread {
   EventListFileFITS* eventListFile_ = nullptr;
 #endif
 
-  uint32_t startUnixTime_{};
-  uint32_t startUnixTimeOfCurrentOutputFile_{};
+  u32 startUnixTime_{};
+  u32 startUnixTimeOfCurrentOutputFile_{};
   std::string outputFileName_{};
   bool switchOutputFile_{};
   DAQStatus daqStatus_ = DAQStatus::Paused;

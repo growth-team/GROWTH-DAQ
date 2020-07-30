@@ -17,23 +17,23 @@ class RMAPHandler {
  protected:
   RMAPTargetNodeDB rmapTargetDB;
   std::string ipAddress;
-  uint32_t tcpPortNumber;
+  u32 tcpPortNumber;
 
   SpaceWireIFOverTCP* spwif;
   RMAPEngine* rmapEngine;
   RMAPInitiator* rmapInitiator;
   RMAPTargetNode* adcRMAPTargetNode;
 
-  double timeOutDuration;
+  f64 timeOutDuration;
   int maxNTrials;
   bool useDraftECRC = false;
   bool _isConnectedToSpWGbE;
 
  public:
-  static constexpr double DefaultTimeOut = 1000;  // ms
+  static constexpr f64 DefaultTimeOut = 1000;  // ms
 
  public:
-  RMAPHandler(std::string ipAddress, uint32_t tcpPortNumber = 10030,
+  RMAPHandler(std::string ipAddress, u32 tcpPortNumber = 10030,
               std::vector<RMAPTargetNode*> rmapTargetNodes = {}) {
     using namespace std;
     this->ipAddress = ipAddress;
@@ -129,7 +129,7 @@ class RMAPHandler {
   std::string getIPAddress() const { return ipAddress; }
 
  public:
-  uint32_t getIPPortNumber() const { return tcpPortNumber; }
+  u32 getIPPortNumber() const { return tcpPortNumber; }
 
  public:
   RMAPInitiator* getRMAPInitiator() const { return rmapInitiator; }
@@ -144,10 +144,10 @@ class RMAPHandler {
   }
 
  public:
-  void setTimeOutDuration(double msec) { timeOutDuration = msec; }
+  void setTimeOutDuration(f64 msec) { timeOutDuration = msec; }
 
  public:
-  virtual void read(std::string rmapTargetNodeID, uint32_t memoryAddress, uint32_t length, uint8_t* buffer) {
+  virtual void read(std::string rmapTargetNodeID, u32 memoryAddress, u32 length, u8* buffer) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -158,7 +158,7 @@ class RMAPHandler {
   }
 
  public:
-  virtual void read(std::string rmapTargetNodeID, std::string memoryObjectID, uint8_t* buffer) {
+  virtual void read(std::string rmapTargetNodeID, std::string memoryObjectID, u8* buffer) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -170,8 +170,8 @@ class RMAPHandler {
   }
 
  public:
-  virtual uint32_t read32BitRegister(const RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress) const {
-    uint8_t buffer[4];
+  virtual u32 read32BitRegister(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress) const {
+    u8 buffer[4];
     using namespace std;
     if (rmapInitiator == nullptr) {
       return 0x00;
@@ -182,7 +182,7 @@ class RMAPHandler {
         rmapInitiator->read(rmapTargetNode, memoryAddress, 2, buffer + 2, timeOutDuration);
         // Upper 16 bits
         rmapInitiator->read(rmapTargetNode, memoryAddress + 2, 2, buffer, timeOutDuration);
-        uint32_t result = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + (buffer[3]);
+        u32 result = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + (buffer[3]);
         return result;
         break;
       } catch (RMAPInitiatorException& e) {
@@ -204,7 +204,7 @@ class RMAPHandler {
   }
 
  public:
-  virtual void read(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, uint32_t length, uint8_t* buffer) {
+  virtual void read(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) {
     using namespace std;
     if (rmapInitiator == nullptr) {
       return;
@@ -231,7 +231,7 @@ class RMAPHandler {
   }
 
  public:
-  virtual void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t* buffer) {
+  virtual void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, u8* buffer) {
     using namespace std;
     if (rmapInitiator == nullptr) {
       return;
@@ -259,7 +259,7 @@ class RMAPHandler {
   }
 
  public:
-  virtual void write(std::string rmapTargetNodeID, uint32_t memoryAddress, const uint8_t* data, size_t length) {
+  virtual void write(std::string rmapTargetNodeID, u32 memoryAddress, const u8* data, size_t length) {
     RMAPTargetNode* targetNode;
     try {
       targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
@@ -270,15 +270,15 @@ class RMAPHandler {
   }
 
  public:
-  virtual void write(RMAPTargetNode* rmapTargetNode, uint32_t memoryAddress, const uint8_t* data, size_t length) {
+  virtual void write(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, const u8* data, size_t length) {
     if (rmapInitiator == nullptr) {
       return;
     }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         if (length != 0) {
-          // TODO: Remove const_cast when SpaceWireRMAPLibrary is updated to accept const uint8_t*.
-          rmapInitiator->write(rmapTargetNode, memoryAddress, const_cast<uint8_t*>(data), length, timeOutDuration);
+          // TODO: Remove const_cast when SpaceWireRMAPLibrary is updated to accept const u8*.
+          rmapInitiator->write(rmapTargetNode, memoryAddress, const_cast<u8*>(data), length, timeOutDuration);
         } else {
           rmapInitiator->write(rmapTargetNode, memoryAddress, nullptr, 0, timeOutDuration);
         }
@@ -298,14 +298,14 @@ class RMAPHandler {
   }
 
  public:
-  virtual void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, const uint8_t* data) {
+  virtual void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, const u8* data) {
     if (rmapInitiator == nullptr) {
       return;
     }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
-        // TODO: Remove const_cast when SpaceWireRMAPLibrary is updated to accept const uint8_t*.
-        rmapInitiator->write(rmapTargetNode, memoryObjectID, const_cast<uint8_t*>(data), timeOutDuration);
+        // TODO: Remove const_cast when SpaceWireRMAPLibrary is updated to accept const u8*.
+        rmapInitiator->write(rmapTargetNode, memoryObjectID, const_cast<u8*>(data), timeOutDuration);
       } catch (RMAPInitiatorException& e) {
         std::cerr << "Time out; trying again..." << std::endl;
         if (i == maxNTrials - 1) {
@@ -332,16 +332,16 @@ class RMAPHandler {
   }
 
  public:
-  virtual void setRegister(uint32_t address, uint16_t data) {
-    const uint8_t writeData[2] = {static_cast<uint8_t>(data / 0x100), static_cast<uint8_t>(data % 0x100)};
+  virtual void setRegister(u32 address, u16 data) {
+    const u8 writeData[2] = {static_cast<u8>(data / 0x100), static_cast<u8>(data % 0x100)};
     this->write(adcRMAPTargetNode, address, writeData, 2);
   }
 
  public:
-  virtual uint16_t getRegister(uint32_t address) {
-    uint8_t readData[2];
+  virtual u16 getRegister(u32 address) {
+    u8 readData[2];
     this->read(adcRMAPTargetNode, address, 2, readData);
-    return (static_cast<uint16_t>(readData[0]) << 16) + readData[1];
+    return (static_cast<u16>(readData[0]) << 16) + readData[1];
   }
 
   /*

@@ -1,7 +1,7 @@
 #include "EventListFileFITS.hh"
 
 EventListFileFITS::EventListFileFITS(std::string fileName, std::string detectorID, std::string configurationYAMLFile,
-                                     size_t nSamples, double exposureInSec, uint32_t fpgaType, uint32_t fpgaVersion)
+                                     size_t nSamples, f64 exposureInSec, u32 fpgaType, u32 fpgaVersion)
     : EventListFile(fileName),
       detectorID(std::move(detectorID)),
       nSamples(nSamples),
@@ -116,7 +116,7 @@ void reportErrorThenQuitIfError(int fitsStatus, std::string methodName) {
   }
 }
 
-void EventListFileFITS::fillGPSTime(const uint8_t* gpsTimeRegisterBuffer) {
+void EventListFileFITS::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
   // 0123456789X123456789
   // GPYYMMDDHHMMSSxxxxxx
   long long timeTag = 0;
@@ -193,7 +193,7 @@ void EventListFileFITS::close() {
     using namespace std;
     int fitsStatus = 0;
 
-    uint32_t nUnusedRow = fitsNRows - rowIndex;
+    u32 nUnusedRow = fitsNRows - rowIndex;
     cout << "Closing the current output file." << endl;
     cout << " rowIndex    = " << dec << rowIndex << " (number of filled rows)" << endl;
     cout << " fitsNRows   = " << dec << fitsNRows << " (allocated row number)" << endl;

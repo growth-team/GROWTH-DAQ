@@ -94,7 +94,7 @@ picojson::object MessageServer::processMessage(const std::string& messagePayload
   // Return error message if the received command is invalid
   picojson::object errorMessage;
   errorMessage["status"] = picojson::value("error");
-  errorMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  errorMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   errorMessage["message"] = picojson::value("invalid command");
   return errorMessage;
 }
@@ -106,7 +106,7 @@ picojson::object MessageServer::processPingCommand() {
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   return replyMessage;
 }
 
@@ -122,7 +122,7 @@ picojson::object MessageServer::processStopCommand() {
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   return replyMessage;
 }
 
@@ -137,7 +137,7 @@ picojson::object MessageServer::processPauseCommand() {
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   return replyMessage;
 }
 
@@ -154,7 +154,7 @@ picojson::object MessageServer::processResumeCommand() {
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   return replyMessage;
 }
 
@@ -165,19 +165,19 @@ picojson::object MessageServer::processGetStatusCommand() {
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   if (mainThread_->getDAQStatus() == DAQStatus::Running) {
     replyMessage["daqStatus"] = picojson::value("Running");
   } else {
     replyMessage["daqStatus"] = picojson::value("Paused");
   }
   replyMessage["outputFileName"] = picojson::value(mainThread_->getOutputFileName());
-  replyMessage["elapsedTime"] = picojson::value(static_cast<double>(mainThread_->getElapsedTime()));
-  replyMessage["nEvents"] = picojson::value(static_cast<double>(mainThread_->getNEvents()));
+  replyMessage["elapsedTime"] = picojson::value(static_cast<f64>(mainThread_->getElapsedTime()));
+  replyMessage["nEvents"] = picojson::value(static_cast<f64>(mainThread_->getNEvents()));
   replyMessage["elapsedTimeOfCurrentOutputFile"] =  //
-      picojson::value(static_cast<double>(mainThread_->getElapsedTimeOfCurrentOutputFile()));
+      picojson::value(static_cast<f64>(mainThread_->getElapsedTimeOfCurrentOutputFile()));
   replyMessage["nEventsOfCurrentOutputFile"] =  //
-      picojson::value(static_cast<double>(mainThread_->getNEventsOfCurrentOutputFile()));
+      picojson::value(static_cast<f64>(mainThread_->getNEventsOfCurrentOutputFile()));
   return replyMessage;
 }
 
@@ -188,6 +188,6 @@ picojson::object MessageServer::processStartNewOutputFileCommand() {
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
   return replyMessage;
 }
