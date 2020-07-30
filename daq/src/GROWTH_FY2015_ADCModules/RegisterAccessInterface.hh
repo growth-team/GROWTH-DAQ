@@ -3,31 +3,33 @@
 
 #include <GROWTH_FY2015_ADCModules/RMAPHandler.hh>
 
+#include "types.h"
+
 #include <array>
 #include <memory>
 
 class RegisterAccessInterface {
  public:
   RegisterAccessInterface(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : rmapHandler_(rmapHandler), rmapTargetNode_(rmapTargetNode) {}
+      : rmapHandler_(std::move(rmapHandler)), rmapTargetNode_(std::move(rmapTargetNode)) {}
   virtual ~RegisterAccessInterface() = default;
 
-  uint16_t read16(uint32_t address) const {
-    std::array<uint8_t, 2> data{};
+  u16 read16(u32 address) const {
+    std::array<u8, 2> data{};
     rmapHandler_->read(rmapTargetNode_.get(), address, data);
-    return (static_cast<uint16_t>(data[0]) << 8) + data[1];
+    return (static_cast<u16>(data[0]) << 8) + data[1];
   }
 
-  uint32_t read32(uint32_t address) const {
-    std::array<uint8_t, 4> data{};
+  u32 read32(u32 address) const {
+    std::array<u8, 4> data{};
     rmapHandler_->read(rmapTargetNode_.get(), address, data);
-    const auto lower16 = (static_cast<uint32_t>(data[0]) << 8) + data[1];
-    const auto upper16 = (static_cast<uint32_t>(data[2]) << 8) + data[3];
+    const auto lower16 = (static_cast<u32>(data[0]) << 8) + data[1];
+    const auto upper16 = (static_cast<u32>(data[2]) << 8) + data[3];
     return (upper16 << 16) + lower16;
   }
 
-  uint64_t read48(uint32_t address) const {
-    std::array<uint8_t, 6> data{};
+  uint64_t read48(u32 address) const {
+    std::array<u8, 6> data{};
     rmapHandler_->read(rmapTargetNode_.get(), address, data);
     const auto lower16 = (static_cast<uint64_t>(data[0]) << 8) + data[1];
     const auto middle16 = (static_cast<uint64_t>(data[2]) << 8) + data[3];
@@ -35,17 +37,21 @@ class RegisterAccessInterface {
     return (upper16 << 24) + (middle16 << 16) + lower16;
   }
 
-  void write(uint32_t address, uint16_t value) {
-    const std::array<uint8_t, 2> data{static_cast<uint8_t>((value & 0xFF00) >> 8), static_cast<uint8_t>(value & 0xFF)};
+  void read(u32 address, size_t numBytes, u8* buffer) const {
+    rmapHandler_->read(rmapTargetNode_.get(), address, numBytes, buffer);
+  }
+
+  void write(u32 address, u16 value) {
+    const std::array<u8, 2> data{static_cast<u8>((value & 0xFF00) >> 8), static_cast<u8>(value & 0xFF)};
     rmapHandler_->write(rmapTargetNode_.get(), address, data);
   }
 
-  void write(uint32_t address, uint32_t value) {
-    const uint16_t lower16 = static_cast<uint16_t>(value & 0xFFFF);
-    const uint16_t upper16 = static_cast<uint8_t>(value >> 16);
-    const std::array<uint8_t, 4> data{
-        static_cast<uint8_t>((lower16 & 0xFF00) >> 8), static_cast<uint8_t>(lower16 & 0xFF),
-        static_cast<uint8_t>((upper16 & 0xFF00) >> 8), static_cast<uint8_t>(upper16 & 0xFF),
+  void write(u32 address, u32 value) {
+    const u16 lower16 = static_cast<u16>(value & 0xFFFF);
+    const u16 upper16 = static_cast<u8>(value >> 16);
+    const std::array<u8, 4> data{
+        static_cast<u8>((lower16 & 0xFF00) >> 8), static_cast<u8>(lower16 & 0xFF),
+        static_cast<u8>((upper16 & 0xFF00) >> 8), static_cast<u8>(upper16 & 0xFF),
     };
     rmapHandler_->write(rmapTargetNode_.get(), address, data);
   }
