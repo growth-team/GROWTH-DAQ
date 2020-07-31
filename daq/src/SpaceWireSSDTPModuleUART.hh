@@ -8,6 +8,7 @@
 #include "SerialPort.hh"
 
 #include <array>
+#include <mutex>
 
 /** A class that performs synchronous data transfer via
  * UART using "Simple- Synchronous- Data Transfer Protocol".

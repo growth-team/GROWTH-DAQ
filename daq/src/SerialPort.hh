@@ -17,6 +17,7 @@
 #include <boost/system/system_error.hpp>
 //#include <boost/bind1st.hpp>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "SpaceWireRMAPLibrary/SpaceWireUtilities.hh"

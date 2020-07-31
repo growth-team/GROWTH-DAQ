@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <thread>
 
 /// An internal class which represents a semaphore in the VHDL logic.
