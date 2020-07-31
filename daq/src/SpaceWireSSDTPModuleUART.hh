@@ -3,6 +3,7 @@
 
 #include "SpaceWireRMAPLibrary/SpaceWireIF.hh"
 #include "SpaceWireRMAPLibrary/SpaceWireSSDTPModule.hh"
+#include "types.h"
 
 #include "SerialPort.hh"
 
@@ -241,6 +242,7 @@ class SpaceWireSSDTPModuleUART {
         }
         cout << endl;
 #endif
+        u8* data_pointer = receiveBuffer_.data();
 
         // data or control code part
         if (rheader_[0] == DataFlag_Complete_EOP || rheader_[0] == DataFlag_Complete_EEP ||
@@ -255,7 +257,7 @@ class SpaceWireSSDTPModuleUART {
                  << endl;
             cerr << "Something is wrong with SSDTP over Serial Port data communication." << endl;
             cerr << "Trying to receive remaining data from receive buffer." << endl;
-            size_t result = serialPort_->receive(receiveBuffer_.data(), BufferSize);
+            size_t result = serialPort_->receive(data_pointer, BufferSize);
             cerr << result << " bytes received." << endl;
             cout << "Data: ";
             for (size_t i = 0; i < result; i++) {
@@ -266,7 +268,6 @@ class SpaceWireSSDTPModuleUART {
             exit(-1);
           }
 
-          u8* data_pointer = receiveBuffer_;
           while (received_size != flagment_size) {
             long result;
           _loop_receiveDataPart:  //

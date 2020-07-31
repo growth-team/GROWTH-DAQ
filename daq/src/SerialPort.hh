@@ -8,6 +8,8 @@
 #ifndef SERIALPORT_HH_
 #define SERIALPORT_HH_
 
+#include "types.h"
+
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>

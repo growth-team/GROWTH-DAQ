@@ -8,6 +8,8 @@
 #ifndef ADCDAC_HH_
 #define ADCDAC_HH_
 
+#include "types.h"
+
 /** Represents ADC data.
  */
 class ADCData {

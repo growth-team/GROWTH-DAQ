@@ -1,6 +1,7 @@
 #ifndef EVENTLISTFILE_HH_
 #define EVENTLISTFILE_HH_
 
+#include "types.h"
 #include "CxxUtilities/CxxUtilities.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 

@@ -1,18 +1,18 @@
 #ifndef SRC_MESSAGESERVER_HH_
 #define SRC_MESSAGESERVER_HH_
 
+#include "types.h"
+#include "CxxUtilities/CxxUtilities.hh"
+#include "picojson.h"
+
 #include <iomanip>
 #include <sstream>
 #include <memory>
-
-#include "CxxUtilities/CxxUtilities.hh"
 
 // ZeroMQ
 #include <unistd.h>
 #include <string>
 #include <zmq.hpp>
-
-#include "picojson.h"
 
 class MainThread;
 

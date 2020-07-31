@@ -1,6 +1,7 @@
 #ifndef EVENTLISTFILEROOT_HH_
 #define EVENTLISTFILEROOT_HH_
 
+#include "types.h"
 #include "CxxUtilities/ROOTUtilities.hh"
 #include "EventListFile.hh"
 #include "TCanvas.h"

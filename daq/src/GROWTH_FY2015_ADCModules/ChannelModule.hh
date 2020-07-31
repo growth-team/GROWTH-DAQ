@@ -4,7 +4,7 @@
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 
-class RMAPHandler;
+class RMAPHandlerUART;
 
 /// A class which represents a ChannelModule on VHDL logic.
 class ChannelModule : public RegisterAccessInterface {
@@ -17,7 +17,7 @@ class ChannelModule : public RegisterAccessInterface {
    * @param[in] rmaphandler a pointer to an instance of RMAPHandler
    * @param[in] chNumber_ this instance's channel number
    */
-  ChannelModule(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
+  ChannelModule(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
                 u8 chNumber)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode), chNumber_(chNumber) {
     const u32 BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;

@@ -34,6 +34,7 @@
 #ifndef SPACEWIREIFOVERUART_HH_
 #define SPACEWIREIFOVERUART_HH_
 
+#include "types.h"
 #include "CxxUtilities/CxxUtilities.hh"
 
 #include "SpaceWireRMAPLibrary/SpaceWireIF.hh"

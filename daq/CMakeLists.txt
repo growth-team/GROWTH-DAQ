@@ -33,6 +33,7 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 # Include path
 #=============================================
 include_directories(SYSTEM
+  include
   include/picojson
   include/SpaceWireRMAPLibrary/includes/SpaceWireRMAPLibrary
   include/XMLUtilities/include

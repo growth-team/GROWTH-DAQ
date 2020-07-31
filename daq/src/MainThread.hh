@@ -7,11 +7,12 @@
 #include "TH1D.h"
 #endif
 
-#include <cstdlib>
 #include "EventListFileFITS.hh"
 #include "adcboard.hh"
+#include "picojson.h"
 
 #include <chrono>
+#include <cstdlib>
 #include <thread>
 
 //#define DRAW_CANVAS 0
@@ -133,10 +134,6 @@ class MainThread : public CxxUtilities::StoppableThread {
     // Close output file
     closeOutputEventListFile();
 
-    // FIanlize the board
-    adcBoard_->closeDevice();
-    cout << "Waiting child threads to be finalized..." << endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     setDAQStatus(DAQStatus::Paused);
   }
 

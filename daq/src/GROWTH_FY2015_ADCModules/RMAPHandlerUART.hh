@@ -1,256 +1,99 @@
 #ifndef RMAPHandlerUART_HH_
 #define RMAPHandlerUART_HH_
 
-#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
 #include "SpaceWireIFOverUART.hh"
+#include "SpaceWireRMAPLibrary/RMAP.hh"
+#include "types.h"
 
-#include "CxxUtilities/CxxUtilities.hh"
-
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include <vector>
-
-class RMAPHandlerUART : public RMAPHandler {
+class RMAPHandlerUART {
  public:
-  RMAPHandlerUART(std::string deviceName, std::vector<RMAPTargetNode*> rmapTargetNodes)
-      : RMAPHandler(), deviceName_(deviceName), timeOutDuration(2000.0), maxNTrials(10), useDraftECRC(false) {
-    this->setTimeOutDuration(DefaultTimeOut);
-
-    // add RMAPTargetNodes to DB
-    for (auto& rmapTargetNode : rmapTargetNodes) {
-      rmapTargetDB.addRMAPTargetNode(rmapTargetNode);
-    }
-
-    adcRMAPTargetNode = rmapTargetDB.getRMAPTargetNode("ADCBox");
-    if (adcRMAPTargetNode == NULL) {
-      cerr << "RMAPHandlerUART::RMAPHandlerUART(): ADCBox RMAP Target Node not found" << endl;
-      exit(-1);
-    }
-  }
-  virtual ~RMAPHandlerUART() {}
-
- public:
-  bool connectoToSpaceWireToGigabitEther() {
-    using namespace std;
-    if (spwif_ != NULL) {
-      delete spwif_;
-    }
-
-    // connect to UART-USB-SpaceWire interface
-    spwif_ = new SpaceWireIFOverUART(this->deviceName);
-    try {
-      spwif->open();
-      _isConnectedToSpWGbE = true;
-    } catch (...) {
-      cout << "RMAPHandlerUART::connectoToSpaceWireToGigabitEther() connection failed (" << this->deviceName << ")"
-           << endl;
-      _isConnectedToSpWGbE = false;
-      return false;
-    }
+  RMAPHandlerUART(const std::string& deviceName) : deviceName_(deviceName) {
+    spwif_.reset(new SpaceWireIFOverUART(deviceName_));
+    spwif_->open();
 
     // start RMAPEngine
-    rmapEngine = new RMAPEngine(spwif_);
-    if (useDraftECRC) {
-      cout << "RMAPHandlerUART::connectoToSpaceWireToGigabitEther() setting DraftE CRC mode to RMAPEngine" << endl;
-      rmapEngine->setUseDraftECRC(true);
-    }
-    rmapEngine->start();
-    rmapInitiator = new RMAPInitiator(rmapEngine);
-    rmapInitiator->setInitiatorLogicalAddress(0xFE);
-    rmapInitiator->setVerifyMode(true);
-    rmapInitiator->setReplyMode(true);
-    if (useDraftECRC) {
-      rmapInitiator->setUseDraftECRC(true);
-      cout << "RMAPHandlerUART::connectoToSpaceWireToGigabitEther() setting DraftE CRC mode to RMAPInitiator" << endl;
-    }
-
-    return true;
+    rmapEngine_.reset(new RMAPEngine(spwif_.get()));
+    rmapEngine_->start();
+    rmapInitiator_.reset(new RMAPInitiator(rmapEngine_.get()));
+    rmapInitiator_->setInitiatorLogicalAddress(0xFE);
+    rmapInitiator_->setVerifyMode(true);
+    rmapInitiator_->setReplyMode(true);
   }
 
- public:
-  virtual void disconnectSpWGbE() {
-    _isConnectedToSpWGbE = false;
-
-    using namespace std;
-    cout << "RMAPHandler::disconnectSpWGbE(): Stopping RMAPEngine" << endl;
-    rmapEngine->stop();
-    while (!rmapEngine->hasStopped) {
-      CxxUtilities::Condition c;
-      c.wait(100);
-      cout << "Waiting for RMAPEngine to completely stop." << endl;
+  ~RMAPHandlerUART() {
+    rmapEngine_->stop();
+    while (!rmapEngine_->hasStopped) {
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(100ms);
     }
-    cout << "RMAPHandler::disconnectSpWGbE(): Closing SpaceWire interface" << endl;
-    this->spwif->close();
-    cout << "RMAPHandler::disconnectSpWGbE(): Deleting instances" << endl;
-    delete rmapEngine;
-    delete rmapInitiator;
-    delete spwif;
-
-    spwif_ = NULL;
-    rmapEngine = NULL;
-    rmapInitiator = NULL;
-    cout << "RMAPHandler::disconnectSpWGbE(): Completed" << endl;
+    spwif_->close();
+    spwif_.reset();
+    rmapEngine_.reset();
+    rmapInitiator_.reset();
   }
 
- public:
-  void read(std::string rmapTargetNodeID, u32 memoryAddress, u32 length, u8* buffer) {
-    RMAPTargetNode* targetNode;
-    try {
-      targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) {
-      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
-    }
-    read(targetNode, memoryAddress, length, buffer);
-  }
-
- public:
-  void read(std::string rmapTargetNodeID, std::string memoryObjectID, u8* buffer) {
-    RMAPTargetNode* targetNode;
-    try {
-      targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) {
-      std::cout << "NoSuchTarget" << std::endl;
-      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
-    }
-    read(targetNode, memoryObjectID, buffer);
-  }
-
- public:
-  void read(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) {
-    using namespace std;
-    if (rmapInitiator == NULL) {
-      return;
-    }
+  void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) {
+    assert(!rmapInitiator_);
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
-        rmapInitiator->read(rmapTargetNode, memoryAddress, length, buffer, timeOutDuration);
+        // TODO: remove const_cast when the library is modernized.
+        rmapInitiator_->read(const_cast<RMAPTargetNode*>(rmapTargetNode), memoryAddress, length, buffer,
+                             timeOutDuration);
         break;
       } catch (RMAPInitiatorException& e) {
-        cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << endl;
+        std::cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << std::endl;
         std::cerr << "Read timed out (address="
-                  << "0x" << hex << right << setw(8) << setfill('0') << memoryAddress << " length=" << dec << length
-                  << "); trying again..." << std::endl;
+                  << "0x" << std::hex << std::right << std::setw(8) << std::setfill('0') << memoryAddress
+                  << " length=" << std::dec << length << "); trying again..." << std::endl;
         spwif_->cancelReceive();
         if (i == maxNTrials - 1) {
-          if (e.getStatus() == RMAPInitiatorException::Timeout) {
-            throw RMAPHandlerException(RMAPHandlerException::TimeOut);
-          } else {
-            throw RMAPHandlerException(RMAPHandlerException::LowerException);
-          }
+          assert(false && "Transaction failed");
         }
         usleep(100);
       }
     }
   }
 
- public:
-  void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, u8* buffer) {
-    using namespace std;
-    if (rmapInitiator == NULL) {
-      return;
-    }
-    for (size_t i = 0; i < maxNTrials; i++) {
-      try {
-        rmapInitiator->read(rmapTargetNode, memoryObjectID, buffer, timeOutDuration);
-        break;
-      } catch (RMAPInitiatorException& e) {
-        cerr << "RMAPHandler::read() 2: RMAPInitiatorException::" << e.toString() << endl;
-        spwif_->cancelReceive();
-        if (i == maxNTrials - 1) {
-          if (e.getStatus() == RMAPInitiatorException::Timeout) {
-            throw RMAPHandlerException(RMAPHandlerException::TimeOut);
-          } else {
-            throw RMAPHandlerException(RMAPHandlerException::LowerException);
-          }
-        }
-        usleep(100);
-      } catch (RMAPReplyException& e) {
-        std::cerr << "RMAPReplyException" << std::endl;
-        throw RMAPHandlerException(RMAPHandlerException::LowerException);
-      }
-    }
-  }
-
- public:
-  void write(std::string rmapTargetNodeID, u32 memoryAddress, u8* data, u32 length) {
-    RMAPTargetNode* targetNode;
-    try {
-      targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) {
-      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
-    }
-    write(targetNode, memoryAddress, data, length);
-  }
-
- public:
-  void write(std::string rmapTargetNodeID, std::string memoryObjectID, u8* data) {
-    RMAPTargetNode* targetNode;
-    try {
-      targetNode = rmapTargetDB.getRMAPTargetNode(rmapTargetNodeID);
-    } catch (...) {
-      throw RMAPHandlerException(RMAPHandlerException::NoSuchTarget);
-    }
-    write(targetNode, memoryObjectID, data);
-  }
-
- public:
-  void write(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u8* data, u32 length) {
-    using namespace std;
-    if (rmapInitiator == NULL) {
-      return;
-    }
+  void write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, const u8* data) {
+    assert(!rmapInitiator_);
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         if (length != 0) {
-          rmapInitiator->write(rmapTargetNode, memoryAddress, data, length, timeOutDuration);
+          // TODO: remove const_cast when the library is modernized.
+          rmapInitiator_->write(const_cast<RMAPTargetNode*>(rmapTargetNode), memoryAddress, const_cast<u8*>(data),
+                                length, timeOutDuration);
         } else {
-          rmapInitiator->write(rmapTargetNode, memoryAddress, nullptr, 0, timeOutDuration);
+          // TODO: remove const_cast when the library is modernized.
+          rmapInitiator_->write(const_cast<RMAPTargetNode*>(rmapTargetNode), memoryAddress, nullptr, 0,
+                                timeOutDuration);
         }
         break;
       } catch (RMAPInitiatorException& e) {
-        cerr << "RMAPHandler::write() 1: RMAPInitiatorException::" << e.toString() << endl;
-        cerr << "Time out; trying again..." << endl;
-        spwif->cancelReceive();
+        std::cerr << "RMAPHandler::write() RMAPInitiatorException::" << e.toString() << std::endl;
+        std::cerr << "Time out; trying again..." << std::endl;
+        spwif_->cancelReceive();
         if (i == maxNTrials - 1) {
-          if (e.getStatus() == RMAPInitiatorException::Timeout) {
-            throw RMAPHandlerException(RMAPHandlerException::TimeOut);
-          } else {
-            throw RMAPHandlerException(RMAPHandlerException::LowerException);
-          }
+          assert(false && "Transaction failed");
         }
         usleep(100);
       }
     }
   }
 
- public:
-  void write(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, u8* data) {
-    using namespace std;
-    if (rmapInitiator == NULL) {
-      return;
-    }
-    for (size_t i = 0; i < maxNTrials; i++) {
-      try {
-        rmapInitiator->write(rmapTargetNode, memoryObjectID, data, timeOutDuration);
-      } catch (RMAPInitiatorException& e) {
-        cerr << "RMAPHandler::write() 2: RMAPInitiatorException::" << e.toString() << endl;
-        cerr << "Time out; trying again..." << endl;
-        spwif->cancelReceive();
-        if (i == maxNTrials - 1) {
-          if (e.getStatus() == RMAPInitiatorException::Timeout) {
-            throw RMAPHandlerException(RMAPHandlerException::TimeOut);
-          } else {
-            throw RMAPHandlerException(RMAPHandlerException::LowerException);
-          }
-        }
-        usleep(100);
-      }
-    }
-  }
+  std::shared_ptr<RMAPEngine> getRMAPEngine() const { return rmapEngine_; }
 
  private:
-  std::shared_ptr<SpaceWireIFOverUART> spwif_{};
   std::string deviceName_{};
+  std::shared_ptr<SpaceWireIFOverUART> spwif_{};
+  std::shared_ptr<RMAPEngine> rmapEngine_{};
+  std::shared_ptr<RMAPInitiator> rmapInitiator_{};
+  f64 timeOutDuration = 1000.0;
+  size_t maxNTrials = 5;
 };
 
 #endif

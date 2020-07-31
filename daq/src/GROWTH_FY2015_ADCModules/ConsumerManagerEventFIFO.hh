@@ -5,7 +5,7 @@
 
 #include "types.h"
 
-class RMAPHandler;
+class RMAPHandlerUART;
 
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.
@@ -16,7 +16,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
    * @param[in] rmapHandler RMAPHandlerUART
    * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
    */
-  ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+  ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
   ~ConsumerManagerEventFIFO() override = default;
 
@@ -25,11 +25,11 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
     write(AddressOf_ConsumerMgr_ResetRegister, RESET);
   }
 
- public:
   /** Retrieve data stored in the EventFIFO.
-   * @param maximumsize maximum data size to be returned (in bytes)
+   * @param maxBytes maximum data size to be returned (in bytes)
    */
   std::vector<u8> getEventData(size_t maxBytes = 4000) {
+    assert(maxBytes <= ReceiveBufferSize);
     receiveBuffer_.resize(ReceiveBufferSize);
     try {
       // TODO: replace cout/cerr with a proper logging function
@@ -80,7 +80,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
     const size_t dataCountInBytes = dataCountsInWords * sizeof(u16);
     const size_t readSize = std::min(dataCountInBytes, length);
     if (readSize != 0) {
-      rmapHandler_->read(rmapTargetNode_, InitialAddressOf_EventFIFO, readSize, buffer);
+      read(InitialAddressOf_EventFIFO, readSize, buffer);
     }
     return readSize;
   }

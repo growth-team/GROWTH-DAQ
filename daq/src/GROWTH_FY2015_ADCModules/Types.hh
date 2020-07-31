@@ -1,6 +1,7 @@
 #ifndef GROWTH_FY2015_ADC_TYPES_HH_
 #define GROWTH_FY2015_ADC_TYPES_HH_
 
+#include "types.h"
 #include "GROWTH_FY2015_ADCModules/Constants.hh"
 
 namespace GROWTH_FY2015_ADC_Type {

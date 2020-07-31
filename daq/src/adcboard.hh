@@ -163,6 +163,7 @@
  */
 
 #include "GROWTH_FY2015_ADCModules/Types.hh"
+#include "types.h"
 #include "yaml-cpp/yaml.h"
 
 #include <memory>
@@ -175,6 +176,8 @@ class ConsumerManagerEventFIFO;
 class EventDecoder;
 class RMAPHandlerUART;
 class RMAPInitiator;
+class RMAPTargetNode;
+class RegisterAccessInterface;
 
 using GROWTH_FY2015_ADC_Type::TriggerMode;
 
@@ -216,10 +219,6 @@ class GROWTH_FY2015_ADC {
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
   void reset();
-
-  /** Closes the device.
-   */
-  void closeDevice();
 
   /** Reads, decodes, and returns event data recorded by the board.
    * When no event packet is received within a timeout duration,
@@ -438,12 +437,16 @@ class GROWTH_FY2015_ADC {
   static constexpr u32 AddressOfFPGAVersionRegister_H = 0x30000006;
   // clang-format on
 
-  std::unique_ptr<RMAPHandlerUART> rmapHandler;
+  std::shared_ptr<RMAPHandlerUART> rmapHandler;
+  std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode;
   std::unique_ptr<RMAPInitiator> rmapIniaitorForGPSRegisterAccess;
   std::unique_ptr<EventDecoder> eventDecoder;
   std::unique_ptr<ChannelManager> channelManager;
   std::unique_ptr<ConsumerManagerEventFIFO> consumerManager;
-  std::vector<std::unique_ptr<ChannelModule>> channelModules;
+  using ChannelModulePtr = std::unique_ptr<ChannelModule>;
+  std::vector<ChannelModulePtr> channelModules;
+
+  std::shared_ptr<RegisterAccessInterface> reg;
 
   size_t nReceivedEvents = 0;
   u8 gpsTimeRegister[LengthOfGPSTimeRegister + 1];

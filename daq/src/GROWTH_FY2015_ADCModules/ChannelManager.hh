@@ -1,10 +1,11 @@
 #ifndef CHANNELMANAGER_HH_
 #define CHANNELMANAGER_HH_
 
-#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
+#include "types.h"
 
 #include <array>
 #include <bitset>
@@ -16,7 +17,7 @@
  */
 class ChannelManager : public RegisterAccessInterface {
  public:
-  ChannelManager(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+  ChannelManager(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode),
         startStopSemaphore_(rmapHandler, rmapTargetNode, AddressOf_StartStopSemaphoreRegister) {}
 

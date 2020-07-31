@@ -1,9 +1,10 @@
 #ifndef SEMAPHOREREGISTER_HH_
 #define SEMAPHOREREGISTER_HH_
 
-#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
+#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
+#include "types.h"
 
 #include <chrono>
 #include <memory>
@@ -16,7 +17,7 @@ class SemaphoreRegister : public RegisterAccessInterface {
    * @param rmaphandler instance of RMAPHandler which is used for this class to communicate the ADC board
    * @param address an address of which semaphore this instance should handle
    */
-  SemaphoreRegister(std::shared_ptr<RMAPHandler> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
+  SemaphoreRegister(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
                     u32 address)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode), address_(address) {}
 
@@ -42,7 +43,7 @@ class SemaphoreRegister : public RegisterAccessInterface {
       constexpr u16 RELEASE = 0x0000;
       write(address_, RELEASE);
       semaphoreValue = read16(address_);
-      if (semaphoreValue == 0x0000) {
+      if (semaphoreValue == RELEASE) {
         return;
       } else {
         sleep();

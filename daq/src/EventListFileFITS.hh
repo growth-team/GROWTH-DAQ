@@ -8,11 +8,12 @@ extern "C" {
 #include "CxxUtilities/FitsUtility.hh"
 #include "EventListFile.hh"
 #include "adcboard.hh"
+#include "types.h"
 
 class EventListFileFITS : public EventListFile {
  public:
-  EventListFileFITS(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "",
-                    size_t nSamples = 1024, f64 exposureInSec = 0,  //
+  EventListFileFITS(const std::string& fileName, const std::string& detectorID = "empty",
+                    const std::string& configurationYAMLFile = "", size_t nSamples = 1024, f64 exposureInSec = 0,  //
                     u32 fpgaType = 0x00000000, u32 fpgaVersion = 0x00000000);
   ~EventListFileFITS();
 
@@ -22,14 +23,14 @@ class EventListFileFITS : public EventListFile {
    */
   void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) override;
   void fillGPSTime(const u8* gpsTimeRegisterBuffer) override;
-  size_t getEntries() const override;
+  size_t getEntries() const override { return rowIndex; }
   void close() override;
   void expandIfNecessary();
 
  private:
   void createOutputFITSFile();
   void writeHeader();
-  void reportErrorThenQuitIfError(int fitsStatus, std::string methodName);
+  void reportErrorThenQuitIfError(int fitsStatus, const std::string& methodName);
 
  private:
   fitsfile* outputFile{};
@@ -38,10 +39,10 @@ class EventListFileFITS : public EventListFile {
 
   static const size_t InitialRowNumber = 1000;
   static const size_t InitialRowNumber_GPS = 1000;
-  int fitsStatus = 0;
+  i32 fitsStatus = 0;
   bool outputFileIsOpen = false;
   size_t rowIndex{};      // will be initialized in createOutputFITSFile()
-  size_t rowIndex_GPS{};  // will be initialized in createOutputFITSFile()
+  size_t rowIndexGPS{};  // will be initialized in createOutputFITSFile()
   size_t fitsNRows{};     // currently allocated rows
   size_t rowExpansionStep = InitialRowNumber;
   size_t nSamples{};
@@ -74,16 +75,16 @@ class EventListFileFITS : public EventListFile {
   const size_t MaxTFORM = 1024;
   char* tforms[nColumns_Event] = {
       //
-      const_cast<char*>("B") /*u8*/,          // boardIndexAndChannel
-      const_cast<char*>("K") /*u64*/,         // timeTag
-      const_cast<char*>("U") /*u16*/,         // triggerCount
-      const_cast<char*>("U") /*u16*/,         // phaMax
-      const_cast<char*>("U") /*u16*/,         // phaMaxTime
-      const_cast<char*>("U") /*u16*/,         // phaMin
-      const_cast<char*>("U") /*u16*/,         // phaFirst
-      const_cast<char*>("U") /*u16*/,         // phaLast
-      const_cast<char*>("U") /*u16*/,         // maxDerivative
-      const_cast<char*>("U") /*u16*/,         // baseline
+      const_cast<char*>("B") /*u8*/,               // boardIndexAndChannel
+      const_cast<char*>("K") /*u64*/,              // timeTag
+      const_cast<char*>("U") /*u16*/,              // triggerCount
+      const_cast<char*>("U") /*u16*/,              // phaMax
+      const_cast<char*>("U") /*u16*/,              // phaMaxTime
+      const_cast<char*>("U") /*u16*/,              // phaMin
+      const_cast<char*>("U") /*u16*/,              // phaFirst
+      const_cast<char*>("U") /*u16*/,              // phaLast
+      const_cast<char*>("U") /*u16*/,              // maxDerivative
+      const_cast<char*>("U") /*u16*/,              // baseline
       new char[MaxTFORM] /* to be filled later */  //
   };
   const char* tunits[nColumns_Event] = {

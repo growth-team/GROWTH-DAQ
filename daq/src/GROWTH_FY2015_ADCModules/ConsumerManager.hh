@@ -1,16 +1,17 @@
 #ifndef CONSUMERMANAGER_HH_
 #define CONSUMERMANAGER_HH_
 
-#include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
+
+class RMAPHandlerUART;
 
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.
  */
 class ConsumerManager : public RegisterAccessInterface {
  public:
-  ConsumerManager(std::shared_ptr<RMAPHandler> rmapHandler)
+  ConsumerManager(std::shared_ptr<RMAPHandlerUART> rmapHandler)
       : RegisterAccessInterface(rmapHandler),
         writePointerSemaphore_(rmapHandler, ConsumerManager::AddressOf_Writepointer_Semaphore_Register) {}
   ~ConsumerManager() override = default;
@@ -28,7 +29,7 @@ class ConsumerManager : public RegisterAccessInterface {
    * @param numberofsamples number of data points to be sampled
    */
   virtual void setNumberOfBaselineSamples(size_t nSamples) {
-    vector<u8> writedata;
+    std::vector<u8> writedata;
     writedata.push_back((u8)nSamples);
     writedata.push_back(0x00);
     rmapHandler_->write(adcboxRMAPNode, AddressOf_NumberOf_BaselineSample_Register, &writedata[0], 2);
