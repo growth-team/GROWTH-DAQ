@@ -22,7 +22,7 @@ void EventListFileFITS::createOutputFITSFile() {
   rowIndex = 0;
   rowIndexGPS = 0;
 
-  size_t nColumns = nColumns_Event;
+  size_t nColumns = NumColumnsEvent;
 
   if (nSamples == 0) {
     nColumns--;  // delete waveform column
@@ -32,7 +32,7 @@ void EventListFileFITS::createOutputFITSFile() {
     strcpy(tforms[nColumns - 1], ss.str().c_str());
   }
 
-  fitsNRows = InitialRowNumber;
+  fitsNRows = InitialRowNumberEvent;
   long naxis = 1;
   long naxes[1] = {1};
   i32 tbltype = BINARY_TBL;
@@ -56,8 +56,8 @@ void EventListFileFITS::createOutputFITSFile() {
   writeHeader();
 
   // Create GPS Time HDU
-  fits_create_tbl(outputFile, tbltype, InitialRowNumber_GPS, nColumns_GPS, const_cast<char**>(ttypes_GPS),
-                  const_cast<char**>(tforms_GPS), const_cast<char**>(tunits_GPS), "GPS", &fitsStatus);
+  fits_create_tbl(outputFile, tbltype, InitialRowNumberGPS, NumColumnsGPS, const_cast<char**>(ttypesGPS),
+                  const_cast<char**>(tformsGPS), const_cast<char**>(tunitsGPS), "GPS", &fitsStatus);
   reportErrorThenQuitIfError(fitsStatus, __func__);
 
   fits_movnam_hdu(outputFile, tbltype, const_cast<char*>("EVENTS"), 0, &fitsStatus);
