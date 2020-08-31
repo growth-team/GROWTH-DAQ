@@ -141,7 +141,6 @@ class RemoteCommandExecutor
     end
 
     begin
-      puts "/media/pi/GROWTH-DATA/data/#{@growth_config.detector_id}/"
       from_datetime = DateTime.parse(option["from"])
       to_datetime = DateTime.parse(option["to"])
       from_yyyymm = from_datetime.year * 100 + from_datetime.month
