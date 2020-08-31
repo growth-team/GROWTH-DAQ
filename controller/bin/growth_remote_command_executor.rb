@@ -17,8 +17,8 @@ class RemoteCommandExecutor
   COMMAND_TIMESTAMP_LOG_FILE_PATH = "/var/log/growth/command.timestamp.log"
   COMMAND_ORIGIN = "https://thdr.info"
   UPLOAD_COMMAND = "rsync -auv "
-  UPLOAD_DESTINATION = "galileo:/work-galileo/home/growth-data/upload"
-  #UPLOAD_DESTINATION = "thdr:growth-data/upload"
+  #UPLOAD_DESTINATION = "galileo:/work-galileo/home/growth-data/upload"
+  UPLOAD_DESTINATION = "wada@thdr.info:/home/wada/upload"
 
   def initialize()
     @logger = GROWTH.logger(ARGV, "growth_remote_command_executor")
@@ -28,7 +28,8 @@ class RemoteCommandExecutor
     @last_command_timestamp = get_last_command_timestamp()
 
     # Command download URI
-    @uri = URI.parse("#{COMMAND_ORIGIN}/command/#{@growth_config.detector_id}/command.json")
+    #@uri = URI.parse("#{COMMAND_ORIGIN}/command/#{@growth_config.detector_id}/command.json")
+    @uri = URI.parse("#{COMMAND_ORIGIN}/command/#{@growth_config.detector_id}.json")
     @logger.info "Command JSON file fetched from #{@uri}"
   end
   
@@ -140,6 +141,7 @@ class RemoteCommandExecutor
     end
 
     begin
+      puts "/media/pi/GROWTH-DATA/data/#{@growth_config.detector_id}/"
       from_datetime = DateTime.parse(option["from"])
       to_datetime = DateTime.parse(option["to"])
       from_yyyymm = from_datetime.year * 100 + from_datetime.month
@@ -148,7 +150,8 @@ class RemoteCommandExecutor
       to_yyyymmddhhmmss = to_yyyymm * 1e8 + to_datetime.day * 1e6 + to_datetime.hour * 1e4 + to_datetime.minute * 1e2 + to_datetime.second
 
       # Process YYYYMM directories
-      Dir.glob("#{@growth_config.daq_run_dir}/20[0-9]*/").sort().each(){|dir|
+            #Dir.glob("#{@growth_config.daq_run_dir}/20[0-9]*/").sort().each(){|dir|
+      Dir.glob("/media/pi/GROWTH-DATA/data/#{@growth_config.detector_id}/20[0-9]*/").sort().each(){|dir|
         yyyymm = dir.split("/")[-1].to_i
         if(from_yyyymm<=yyyymm and yyyymm<=to_yyyymm)then
           @logger.info "Processing #{dir}"
