@@ -3,10 +3,10 @@
 
 class ReceiveThread : public CxxUtilities::StoppableThread {
  private:
-  SerialPort *port;
+  SerialPort* port;
 
  public:
-  ReceiveThread(SerialPort *port) { this->port = port; }
+  ReceiveThread(SerialPort* port) { this->port = port; }
 
  public:
   void run() {
@@ -20,11 +20,11 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
         cout << "Receive() loop:" << endl;
         // port->receiveWithTimeout(boost::asio::buffer(receiveBuffer), nReceivedBytes, boost::posix_time::seconds(2));
         nReceivedBytes = port->receive(receiveBuffer, 128);
-      } catch (boost::system::system_error &e) {
+      } catch (boost::system::system_error& e) {
         using namespace std;
         cerr << e.code() << "," << e.what() << endl;
         continue;
-      } catch (SerialPortException &e) {
+      } catch (SerialPortException& e) {
         cout << "SerialPortException " << e.toString() << endl;
         ::exit(-1);
       }
@@ -39,7 +39,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
 };
 
 //#include "SpaceWireSSDTPModuleUART.hh"
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   if (argc != 2) {
     std::cerr << "Provide serial port device (e.g. /dev/tty.usb-xxxxx)." << std::endl;
     return 1;
@@ -50,9 +50,9 @@ int main(int argc, char *argv[]) {
   receiveThread.start();
 
   std::vector<u8> sendData = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xfe, 0x01,
-                                   0x4c, 0x00, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x12, 0x00, 0x00, 0x02, 0xbe};
+                              0x4c, 0x00, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x12, 0x00, 0x00, 0x02, 0xbe};
 
-  serialPort.send(sendData);
+  serialPort.send(sendData.data(), sendData.size());
 
   for (size_t i = 0; i < 10; i++) {
     serialPort.send(sendData);

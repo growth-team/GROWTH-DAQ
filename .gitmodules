@@ -16,3 +16,12 @@
 [submodule "daq/external/cppzmq"]
 	path = daq/external/cppzmq
 	url = https://github.com/zeromq/cppzmq
+[submodule "daq/external/serial"]
+	path = daq/external/serial
+	url = https://github.com/wjwwood/serial.git
+[submodule "daq/external/libzmq"]
+	path = daq/external/libzmq
+	url = https://github.com/zeromq/libzmq.git
+[submodule "daq/external/yaml-cpp"]
+	path = daq/external/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

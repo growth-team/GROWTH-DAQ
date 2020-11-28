@@ -1,14 +1,12 @@
 #ifndef SPACEWIRESSDTPMODULEUART_HH_
 #define SPACEWIRESSDTPMODULEUART_HH_
 
-#include "SpaceWireRMAPLibrary/SpaceWireIF.hh"
-#include "SpaceWireRMAPLibrary/SpaceWireSSDTPModule.hh"
-#include "types.h"
-
-#include "SerialPort.hh"
-
 #include <array>
 #include <mutex>
+
+#include "SerialPort.hh"
+#include "spacewire/spacewireif.hh"
+#include "types.h"
 
 /** A class that performs synchronous data transfer via
  * UART using "Simple- Synchronous- Data Transfer Protocol".
@@ -23,16 +21,6 @@ class SpaceWireSSDTPModuleUART {
 
   ~SpaceWireSSDTPModuleUART() = default;
 
-  /** Sends a SpaceWire packet via the SpaceWire interface.
-   * This is a blocking method.
-   * @param[in] data packet content.
-   * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
-   */
-  void send(std::vector<u8>& data, u32 eopType = SpaceWireEOPMarker::EOP) {
-    std::lock_guard<std::mutex> guard(sendMutex_);
-    send(&data, eopType);
-  }
-
  public:
   /** Sends a SpaceWire packet via the SpaceWire interface.
    * This is a blocking method.
@@ -40,44 +28,7 @@ class SpaceWireSSDTPModuleUART {
    * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
    */
   void send(std::vector<u8>* data, u32 eopType = SpaceWireEOPMarker::EOP) {
-    std::lock_guard<std::mutex> guard(sendMutex_);
-    if (closed_) {
-      return;
-    }
-    size_t size = data->size();
-    if (eopType == SpaceWireEOPMarker::EOP) {
-      sheader_[0] = DataFlag_Complete_EOP;
-    } else if (eopType == SpaceWireEOPMarker::EEP) {
-      sheader_[0] = DataFlag_Complete_EEP;
-    } else if (eopType == SpaceWireEOPMarker::Continued) {
-      sheader_[0] = DataFlag_Flagmented;
-    }
-    sheader_[1] = 0x00;
-    for (size_t i = 11; i > 1; i--) {
-      sheader_[i] = size % 0x100;
-      size = size / 0x100;
-    }
-    try {
-      serialPort_->send(sheader_.data(), 12);
-      serialPort_->send(&(data->at(0)), data->size());
-#ifdef DEBUG_SSDTP
-      using namespace std;
-      size_t length = data->size();
-      cout << "SSDTP::send():" << endl;
-      cout << "Header: ";
-      for (size_t i = 0; i < 12; i++) {
-        cout << hex << right << setw(2) << setfill('0') << static_cast<u32>(sheader_[i]) << " ";
-      }
-      cout << endl;
-      cout << "Data: " << dec << length << " bytes" << endl;
-      for (size_t i = 0; i < length; i++) {
-        cout << hex << right << setw(2) << setfill('0') << static_cast<u32>(data->at(i)) << " ";
-      }
-      cout << endl << dec;
-#endif
-    } catch (...) {
-      throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
-    }
+    send(data->data(), eopType);
   }
 
  public:
@@ -220,16 +171,12 @@ class SpaceWireSSDTPModuleUART {
             const size_t result = serialPort_->receive(rheader_.data() + hsize, 12 - hsize);
             hsize += result;
           }
-        } catch (SerialPortException& e) {
-          if (e.getStatus() == SerialPortException::Timeout) {
+        } catch (SerialPortTimeoutException& e) {
 #ifdef DEBUG_SSDTP
-            using namespace std;
-            cout << "SSDTP::receive(): serial port timed out." << endl;
+          using namespace std;
+          cout << "SSDTP::receive(): serial port timed out." << endl;
 #endif
-            throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
-          } else {
-            throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
-          }
+          throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
         } catch (...) {
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
         }
@@ -298,10 +245,8 @@ class SpaceWireSSDTPModuleUART {
               }
               cout << endl;
 #endif
-            } catch (SerialPortException e) {
-              if (e.getStatus() == SerialPortException::Timeout) {
-                goto _loop_receiveDataPart;
-              }
+            } catch (SerialPortTimeoutException e) {
+              goto _loop_receiveDataPart;
               cout << "SSDTPModule::receive() exception when receiving data" << endl;
               cout << "rheader[0]=0x" << setw(2) << setfill('0') << hex << static_cast<u32>(rheader_[0]) << endl;
               cout << "rheader[1]=0x" << setw(2) << setfill('0') << hex << static_cast<u32>(rheader_[1]) << endl;
@@ -373,108 +318,8 @@ class SpaceWireSSDTPModuleUART {
       return size;
     } catch (SpaceWireSSDTPException& e) {
       throw e;
-    } catch (SerialPortException& e) {
-      using namespace std;
+    } catch (SerialPortTimeoutException& e) {
       throw SpaceWireSSDTPException(SpaceWireSSDTPException::TCPSocketError);
-    }
-  }
-
- public:
-  /** Emits a TimeCode.
-   * @param[in] timecode timecode value.
-   */
-  void sendTimeCode(u8 timecode) {
-    std::lock_guard<std::mutex> guard(sendMutex_);
-    sendBuffer_[0] = SpaceWireSSDTPModule::ControlFlag_SendTimeCode;
-    sendBuffer_[1] = 0x00;  // Reserved
-    for (u32 i = 0; i < LengthOfSizePart - 1; i++) {
-      sendBuffer_[i + 2] = 0x00;
-    }
-    sendBuffer_[11] = 0x02;  // 2bytes = 1byte timecode + 1byte reserved
-    sendBuffer_[12] = timecode;
-    sendBuffer_[13] = 0;
-    try {
-      serialPort_->send(sendBuffer_.data(), 14);
-    } catch (SerialPortException& e) {
-      if (e.getStatus() == SerialPortException::Timeout) {
-        throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
-      } else {
-        throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
-      }
-    }
-  }
-
- public:
-  /** Returns a time-code counter value.
-   * The time-code counter will be updated when a TimeCode is
-   * received from the SpaceWire interface. Receive of TimeCodes
-   * is not automatic, but performed in received() method silently.
-   * Therefore, to continuously receive TimeCodes, it is necessary to
-   * invoke receive() method repeatedly in, for example, a dedicated
-   * thread.
-   * @returns a locally stored TimeCode value.
-   */
-  u8 getTimeCode() { return internalTimecode_; }
-
- public:
-  /** Registers an action instance which will be invoked when a TimeCode is received.
-   * @param[in] SpaceWireIFActionTimecodeScynchronizedAction an action instance.
-   */
-  void setTimeCodeAction(SpaceWireIFActionTimecodeScynchronizedAction* action) { timecodeaction_ = action; }
-
- public:
-  /** Sets link frequency.
-   * @attention This method is deprecated.
-   * @attention 4-port SpaceWire-to-GigabitEther does not provides this function since
-   * Link Speeds of external SpaceWire ports can be changed by updating
-   * dedicated registers available at Router Configuration port via RMAP.
-   */
-  void setTxFrequency(f64 frequencyInMHz) { throw SpaceWireSSDTPException(SpaceWireSSDTPException::NotImplemented); }
-
- public:
-  /** An action method which is internally invoked when a TimeCode is received.
-   * This method is automatically called by SpaceWireSSDTP::receive() methods,
-   * and users do not need to use this method.
-   * @param[in] timecode a received TimeCode value.
-   */
-  void gotTimeCode(u8 timecode) {
-    if (timecodeaction_) {
-      timecodeaction_->doAction(timecode);
-    }
-  }
-
- private:
-  void registerRead(u32 address) { throw SpaceWireSSDTPException(SpaceWireSSDTPException::NotImplemented); }
-
- private:
-  void registerWrite(u32 address, const std::vector<u8>& data) {
-    std::lock_guard<std::mutex> guard(sendMutex_);
-    sendBuffer_[0] = ControlFlag_RegisterAccess_WriteCommand;
-  }
-
- public:
-  /** @attention This method can be used only with 1-port SpaceWire-to-GigabitEther
-   * (i.e. open-source version of SpaceWire-to-GigabitEther running with the ZestET1 FPGA board).
-   * @param[in] txdivcount link frequency will be 200/(txdivcount+1) MHz.
-   */
-  void setTxDivCount(u8 txdivcount) {
-    std::lock_guard<std::mutex> guard(sendMutex_);
-    sendBuffer_[0] = SpaceWireSSDTPModule::ControlFlag_ChangeTxSpeed;
-    sendBuffer_[1] = 0x00;  // Reserved
-    for (u32 i = 0; i < LengthOfSizePart - 1; i++) {
-      sendBuffer_[i + 2] = 0x00;
-    }
-    sendBuffer_[11] = 0x02;  // 2bytes = 1byte txdivcount + 1byte reserved
-    sendBuffer_[12] = txdivcount;
-    sendBuffer_[13] = 0;
-    try {
-      serialPort_->send(sendBuffer_.data(), 14);
-    } catch (SerialPortException& e) {
-      if (e.getStatus() == SerialPortException::Timeout) {
-        throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
-      } else {
-        throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
-      }
     }
   }
 
@@ -486,12 +331,8 @@ class SpaceWireSSDTPModuleUART {
     std::lock_guard<std::mutex> guard(sendMutex_);
     try {
       serialPort_->send(data, length);
-    } catch (SerialPortException& e) {
-      if (e.getStatus() == SerialPortException::Timeout) {
-        throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
-      } else {
-        throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
-      }
+    } catch (SerialPortTimeoutException& e) {
+      throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
     }
   }
 
@@ -511,7 +352,6 @@ class SpaceWireSSDTPModuleUART {
   std::shared_ptr<SerialPort> serialPort_;
   std::vector<u8> sendBuffer_;
   std::vector<u8> receiveBuffer_;
-  std::stringstream ss;
   u8 internalTimecode_{};
   u32 latestSendSize_{};
   std::mutex sendMutex_;
@@ -542,4 +382,4 @@ class SpaceWireSSDTPModuleUART {
   static constexpr u32 LengthOfSizePart = 10;
 };
 
-#endif /* SPACEWIRESSDTPMODULEUART_HH_ */
+#endif

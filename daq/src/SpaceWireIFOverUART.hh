@@ -1,102 +1,47 @@
-/*
- ============================================================================
- SpaceWire/RMAP Library is provided under the MIT License.
- ============================================================================
-
- Copyright (c) 2006-2013 Takayuki Yuasa and The Open-source SpaceWire Project
-
- Permission is hereby granted, free of charge, to any person obtaining a
- copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
-
- The above copyright notice and this permission notice shall be included
- in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-/*
- * SpaceWireIFOverTCP.hh
- *
- *  Created on: Dec 12, 2011
- *      Author: yuasa
- */
-
 #ifndef SPACEWIREIFOVERUART_HH_
 #define SPACEWIREIFOVERUART_HH_
 
-#include "types.h"
-#include "CxxUtilities/CxxUtilities.hh"
+#include <chrono>
+#include <thread>
 
-#include "SpaceWireRMAPLibrary/SpaceWireIF.hh"
-#include "SpaceWireRMAPLibrary/SpaceWireSSDTPModule.hh"
-#include "SpaceWireRMAPLibrary/SpaceWireUtilities.hh"
+#include "spacewire/spacewireif.hh"
 #include "SpaceWireSSDTPModuleUART.hh"
+#include "types.h"
 
 /** SpaceWire IF class which transfers data over UART.
  */
-class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecodeScynchronizedAction {
+class SpaceWireIFOverUART : public SpaceWireIF {
  public:
-  static const int BAUD_RATE = 230400;
+  static constexpr i32 BAUD_RATE = 230400;
 
- public:
-  static constexpr f64 WaitTimeAfterCancelReceive = 1500;  // ms
+  SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
 
- private:
-  std::string deviceName;
-  SpaceWireSSDTPModuleUART* ssdtp;
-  SerialPort* serialPort;
+  ~SpaceWireIFOverUART() override = default;
 
- public:
-  /** Constructor.
-   */
-  SpaceWireIFOverUART(std::string deviceName) : SpaceWireIF(), deviceName(deviceName) {}
-
- public:
-  virtual ~SpaceWireIFOverUART() {}
-
- public:
-  void open() throw(SpaceWireIFException) {
-    using namespace std;
-    using namespace std;
-    using namespace CxxUtilities;
-    ssdtp = NULL;
+  void open() override {
     try {
-      serialPort = new SerialPort(deviceName, BAUD_RATE);
+      serial_ = std::make_unique<SerialPort>(deviceName_, BAUD_RATE);
       setTimeoutDuration(500000);
-    } catch (SerialPortException& e) {
+    } catch (...) {
       throw SpaceWireIFException(SpaceWireIFException::OpeningConnectionFailed);
-    } catch (...) { throw SpaceWireIFException(SpaceWireIFException::OpeningConnectionFailed); }
+    }
 
-    ssdtp = new SpaceWireSSDTPModuleUART(serialPort);
-    ssdtp->setTimeCodeAction(this);
+    ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(serial_.get());
     state = Opened;
   }
 
- public:
-  void close() throw(SpaceWireIFException) {
-    using namespace CxxUtilities;
-    using namespace std;
-    ssdtp->cancelReceive();
-    serialPort->close();
+  void close() override {
+    ssdtp_->cancelReceive();
+    serial_->close();
+    state = Closed;
   }
 
- public:
   void send(u8* data, size_t length,
-            SpaceWireEOPMarker::EOPType eopType = SpaceWireEOPMarker::EOP) throw(SpaceWireIFException) {
+            SpaceWireEOPMarker::EOPType eopType = SpaceWireEOPMarker::EOP) override {
     using namespace std;
-    if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
+    assert(!ssdtp_);
     try {
-      ssdtp->send(data, length, eopType);
+      ssdtp_->send(data, length, eopType);
     } catch (SpaceWireSSDTPException& e) {
       if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
         throw SpaceWireIFException(SpaceWireIFException::Timeout);
@@ -106,15 +51,16 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
     }
   }
 
- public:
-  void receive(std::vector<u8>* buffer) throw(SpaceWireIFException) {
-    if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
+  void receive(std::vector<u8>* buffer) override {
+    assert(!ssdtp_);
     try {
-      u32 eopType;
-      ssdtp->receive(buffer, eopType);
+      u32 eopType{};
+      ssdtp_->receive(buffer, eopType);
       if (eopType == SpaceWireEOPMarker::EEP) {
         this->setReceivedPacketEOPMarkerType(SpaceWireIF::EEP);
-        if (this->eepShouldBeReportedAsAnException_) { throw SpaceWireIFException(SpaceWireIFException::EEP); }
+        if (this->eepShouldBeReportedAsAnException_) {
+          throw SpaceWireIFException(SpaceWireIFException::EEP);
+        }
       } else {
         this->setReceivedPacketEOPMarkerType(SpaceWireIF::EOP);
       }
@@ -124,83 +70,29 @@ class SpaceWireIFOverUART : public SpaceWireIF, public SpaceWireIFActionTimecode
       }
       using namespace std;
       throw SpaceWireIFException(SpaceWireIFException::Disconnected);
-    } catch (SerialPortException& e) {
-      if (e.getStatus() == SerialPortException::Timeout) { throw SpaceWireIFException(SpaceWireIFException::Timeout); }
-      using namespace std;
-      throw SpaceWireIFException(SpaceWireIFException::Disconnected);
+    } catch (SerialPortTimeoutException& e) {
+      throw SpaceWireIFException(SpaceWireIFException::Timeout);
     }
   }
 
- public:
-  void emitTimecode(u8 timeIn, u8 controlFlagIn = 0x00) throw(SpaceWireIFException) {
-    using namespace std;
-    if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
-    timeIn = timeIn % 64 + (controlFlagIn << 6);
-    try {
-      // emit timecode via SSDTP module
-      ssdtp->sendTimeCode(timeIn);
-    } catch (SpaceWireSSDTPException& e) {
-      if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
-        throw SpaceWireIFException(SpaceWireIFException::Timeout);
-      }
-      throw SpaceWireIFException(SpaceWireIFException::Disconnected);
-    } catch (SerialPortException& e) {
-      if (e.getStatus() == SerialPortException::Timeout) { throw SpaceWireIFException(SpaceWireIFException::Timeout); }
-      throw SpaceWireIFException(SpaceWireIFException::Disconnected);
-    }
-    // invoke timecode synchronized action
-    if (timecodeSynchronizedActions.size() != 0) { this->invokeTimecodeSynchronizedActions(timeIn); }
-  }
-
- public:
-  virtual void setTxLinkRate(u32 linkRateType) throw(SpaceWireIFException) {
-    using namespace std;
-    cerr << "SpaceWireIFOverIPClient::setTxLinkRate() is not implemented." << endl;
-    cerr << "Please use SpaceWireIFOverIPClient::setTxDivCount() instead." << endl;
-    throw SpaceWireIFException(SpaceWireIFException::FunctionNotImplemented);
-  }
-
- public:
-  virtual u32 getTxLinkRateType() throw(SpaceWireIFException) {
-    using namespace std;
-    cerr << "SpaceWireIFOverIPClient::getTxLinkRate() is not implemented." << endl;
-    throw SpaceWireIFException(SpaceWireIFException::FunctionNotImplemented);
-  }
-
- public:
-  void setTxDivCount(u8 txdivcount) {}
-
- public:
-  void setTimeoutDuration(f64 microsecond) throw(SpaceWireIFException) {
-    serialPort->setTimeout(microsecond / 1000.);
+  void setTimeoutDuration(f64 microsecond) override {
+    serial_->setTimeout(microsecond / 1000.);
     timeoutDurationInMicroSec = microsecond;
   }
 
- public:
-  u8 getTimeCode() throw(SpaceWireIFException) {
-    if (ssdtp == NULL) { throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened); }
-    return ssdtp->getTimeCode();
-  }
-
- public:
-  void doAction(u8 timecode) { this->invokeTimecodeSynchronizedActions(timecode); }
-
- public:
-  SpaceWireSSDTPModuleUART* getSSDTPModule() { return ssdtp; }
-
- public:
   /** Cancels ongoing receive() method if any exist.
    */
-  void cancelReceive() {
-    ssdtp->cancelReceive();
-    CxxUtilities::Condition c;
-    c.wait(WaitTimeAfterCancelReceive);
+  void cancelReceive() override {
+    using namespace std::chrono_literals;
+    static constexpr std::chrono::milliseconds WaitTimeAfterCancelReceive = 1500ms;
+    ssdtp_->cancelReceive();
+    std::this_thread::sleep_for(WaitTimeAfterCancelReceive);
   }
-};
 
-/** History
- * 2008-08-26 file created (Takayuki Yuasa)
- * 2011-10-21 rewritten (Takayuki Yuasa)
- */
+ private:
+  const std::string deviceName_;
+  std::unique_ptr<SpaceWireSSDTPModuleUART> ssdtp_;
+  std::unique_ptr<SerialPort> serial_;
+};
 
 #endif /* SPACEWIREIFOVERUART_HH_ */
