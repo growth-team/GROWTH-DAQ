@@ -1,6 +1,8 @@
 #ifndef SPACEWIRE_TYPES_HH_
 #define SPACEWIRE_TYPES_HH_
 
+#include <memory>
+
 using i8 = int8_t;
 using u8 = uint8_t;
 using i16 = int16_t;
@@ -14,4 +16,8 @@ using f64 = double;
 
 enum class EOPType { EOP = 0, EEP = 1, Continued = 0xFFFF };
 
+class RMAPEngine;
+class RMAPPacket;
+using RMAPEnginePtr = std::shared_ptr<RMAPEngine>;
+using RMAPPacketPtr = std::unique_ptr<RMAPPacket>;
 #endif

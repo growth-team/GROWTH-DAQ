@@ -1,31 +1,5 @@
-/* 
- ============================================================================
- SpaceWire/RMAP Library is provided under the MIT License.
- ============================================================================
-
- Copyright (c) 2006-2013 Takayuki Yuasa and The Open-source SpaceWire Project
-
- Permission is hereby granted, free of charge, to any person obtaining a
- copy of this software and associated documentation files (the
- "Software"), to deal in the Software without restriction, including
- without limitation the rights to use, copy, modify, merge, publish,
- distribute, sublicense, and/or sell copies of the Software, and to
- permit persons to whom the Software is furnished to do so, subject to
- the following conditions:
-
- The above copyright notice and this permission notice shall be included
- in all copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-#ifndef SPACEWIRESSDTPMODULE_HH_
-#define SPACEWIRESSDTPMODULE_HH_
+#ifndef SPACEWIRE_SPACEWIRESSDTPMODULE_HH_
+#define SPACEWIRE_SPACEWIRESSDTPMODULE_HH_
 
 #include "CxxUtilities/CommonHeader.hh"
 #include "CxxUtilities/Exception.hh"
@@ -52,7 +26,7 @@ public:
 	};
 
 public:
-	SpaceWireSSDTPException(uint32_t status) :
+	SpaceWireSSDTPException(u32 status) :
 			CxxUtilities::Exception(status) {
 	}
 
@@ -107,18 +81,18 @@ public:
  */
 class SpaceWireSSDTPModule {
 public:
-	static const uint32_t BufferSize = 10 * 1024 * 1024;
+	static const u32 BufferSize = 10 * 1024 * 1024;
 
 private:
 	bool closed = false;
 
 private:
 	CxxUtilities::TCPSocket* datasocket;
-	uint8_t* sendbuffer;
-	uint8_t* receivebuffer;
+	u8* sendbuffer;
+	u8* receivebuffer;
 	std::stringstream ss;
-	uint8_t internal_timecode;
-	uint32_t latest_sentsize;
+	u8 internal_timecode;
+	u32 latest_sentsize;
 	CxxUtilities::Mutex sendmutex;
 	CxxUtilities::Mutex receivemutex;
 	SpaceWireIFActionTimecodeScynchronizedAction* timecodeaction;
@@ -127,12 +101,12 @@ private:
 	/* for SSDTP2 */
 	CxxUtilities::Mutex registermutex;
 	CxxUtilities::Condition registercondition;
-	std::map<uint32_t, uint32_t> registers;
+	std::map<u32, u32> registers;
 
 private:
-	uint8_t rheader[12];
-	uint8_t r_tmp[30];
-	uint8_t sheader[12];
+	u8 rheader[12];
+	u8 r_tmp[30];
+	u8 sheader[12];
 
 public:
 	size_t receivedsize;
@@ -142,8 +116,8 @@ public:
 	/** Constructor. */
 	SpaceWireSSDTPModule(CxxUtilities::TCPSocket* newdatasocket) {
 		datasocket = newdatasocket;
-		sendbuffer = (uint8_t*) malloc(SpaceWireSSDTPModule::BufferSize);
-		receivebuffer = (uint8_t*) malloc(SpaceWireSSDTPModule::BufferSize);
+		sendbuffer = (u8*) malloc(SpaceWireSSDTPModule::BufferSize);
+		receivebuffer = (u8*) malloc(SpaceWireSSDTPModule::BufferSize);
 		internal_timecode = 0x00;
 		latest_sentsize = 0;
 		timecodeaction = NULL;
@@ -169,7 +143,7 @@ public:
 	 * @param[in] data packet content.
 	 * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
 	 */
-	void send(std::vector<uint8_t>& data, uint32_t eopType = SpaceWireEOPMarker::EOP) throw (SpaceWireSSDTPException) {
+	void send(std::vector<u8>& data, u32 eopType = SpaceWireEOPMarker::EOP) throw (SpaceWireSSDTPException) {
 		sendmutex.lock();
 		send(&data, eopType);
 		sendmutex.unlock();
@@ -181,7 +155,7 @@ public:
 	 * @param[in] data packet content.
 	 * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
 	 */
-	void send(std::vector<uint8_t>* data, uint32_t eopType = SpaceWireEOPMarker::EOP) throw (SpaceWireSSDTPException) {
+	void send(std::vector<u8>* data, u32 eopType = SpaceWireEOPMarker::EOP) throw (SpaceWireSSDTPException) {
 		sendmutex.lock();
 		if(this->closed){
 			sendmutex.unlock();
@@ -196,7 +170,7 @@ public:
 			sheader[0] = DataFlag_Flagmented;
 		}
 		sheader[1] = 0x00;
-		for (uint32_t i = 11; i > 1; i--) {
+		for (u32 i = 11; i > 1; i--) {
 			sheader[i] = size % 0x100;
 			size = size / 0x100;
 		}
@@ -217,7 +191,7 @@ public:
 	 * @param[in] the length length of the packet.
 	 * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
 	 */
-	void send(uint8_t* data, size_t length, uint32_t eopType = SpaceWireEOPMarker::EOP) throw (SpaceWireSSDTPException) {
+	void send(u8* data, size_t length, u32 eopType = SpaceWireEOPMarker::EOP) throw (SpaceWireSSDTPException) {
 		sendmutex.lock();
 		if(this->closed){
 			sendmutex.unlock();
@@ -268,14 +242,14 @@ public:
 	 * @endcode
 	 * @returns packet content.
 	 */
-	std::vector<uint8_t> receive() throw (SpaceWireSSDTPException) {
+	std::vector<u8> receive() throw (SpaceWireSSDTPException) {
 		receivemutex.lock();
 		if(this->closed){
 			receivemutex.unlock();
 			return {};
 		}
-		std::vector<uint8_t> data;
-		uint32_t eopType;
+		std::vector<u8> data;
+		u32 eopType;
 		receive(&data, eopType);
 		receivemutex.unlock();
 		return data;
@@ -304,7 +278,7 @@ public:
 	 * @param[out] data a vector instance which is used to store received data.
 	 * @param[out] eopType contains an EOP marker type (SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP).
 	 */
-	int receive(std::vector<uint8_t>* data, uint32_t& eopType) throw (SpaceWireSSDTPException) {
+	int receive(std::vector<u8>* data, u32& eopType) throw (SpaceWireSSDTPException) {
 		size_t size = 0;
 		size_t hsize = 0;
 		size_t flagment_size = 0;
@@ -362,11 +336,11 @@ public:
 						|| rheader[0] == DataFlag_Flagmented) {
 //				cout << "#4" << endl;
 					//data
-					for (uint32_t i = 2; i < 12; i++) {
+					for (u32 i = 2; i < 12; i++) {
 						flagment_size = flagment_size * 0x100 + rheader[i];
 					}
-					//uint8_t* data_pointer=&(data->at(0));
-					uint8_t* data_pointer = receivebuffer;
+					//u8* data_pointer=&(data->at(0));
+					u8* data_pointer = receivebuffer;
 //				cout << "#5" << endl;
 					while (received_size != flagment_size) {
 //					cout << "#6" << endl;
@@ -379,8 +353,8 @@ public:
 								goto _loop_receiveDataPart;
 							}
 							cout << "SSDTPModule::receive() exception when receiving data" << endl;
-							cout << "rheader[0]=0x" << setw(2) << setfill('0') << hex << (uint32_t) rheader[0] << endl;
-							cout << "rheader[1]=0x" << setw(2) << setfill('0') << hex << (uint32_t) rheader[1] << endl;
+							cout << "rheader[0]=0x" << setw(2) << setfill('0') << hex << (u32) rheader[0] << endl;
+							cout << "rheader[1]=0x" << setw(2) << setfill('0') << hex << (u32) rheader[1] << endl;
 							cout << "size=" << dec << size << endl;
 							cout << "flagment_size=" << dec << flagment_size << endl;
 							cout << "received_size=" << dec << received_size << endl;
@@ -392,8 +366,8 @@ public:
 					size += received_size;
 				} else if (rheader[0] == ControlFlag_SendTimeCode || rheader[0] == ControlFlag_GotTimeCode) {
 					//control
-					uint8_t timecode_and_reserved[2];
-					uint32_t tmp_size = 0;
+					u8 timecode_and_reserved[2];
+					u32 tmp_size = 0;
 					try {
 						while (tmp_size != 2) {
 							int result = datasocket->receive(timecode_and_reserved + tmp_size, 2 - tmp_size);
@@ -414,7 +388,7 @@ public:
 					}
 //				cout << "#11" << endl;
 				} else {
-					cout << "SSDTP fatal error with flag value of 0x" << hex << (uint32_t) rheader[0] << dec << endl;
+					cout << "SSDTP fatal error with flag value of 0x" << hex << (u32) rheader[0] << dec << endl;
 					throw SpaceWireSSDTPException(SpaceWireSSDTPException::TCPSocketError);
 				}
 			}
@@ -448,7 +422,7 @@ public:
 		 cout << "#SpaceWireSSDTPModule::receive() caught an unexpected exception" << endl;
 		 cout << "Receive Header: ";
 		 for (size_t i = 0; i < 12; i++) {
-		 cout << "0x" << hex << right << setw(2) << setfill('0') << (uint32_t) rheader[i] << " ";
+		 cout << "0x" << hex << right << setw(2) << setfill('0') << (u32) rheader[i] << " ";
 		 }
 		 cout << endl;
 		 cout << "size=" << size << endl;
@@ -464,11 +438,11 @@ public:
 	/** Emits a TimeCode.
 	 * @param[in] timecode timecode value.
 	 */
-	void sendTimeCode(uint8_t timecode) throw (SpaceWireSSDTPException) {
+	void sendTimeCode(u8 timecode) throw (SpaceWireSSDTPException) {
 		sendmutex.lock();
 		sendbuffer[0] = SpaceWireSSDTPModule::ControlFlag_SendTimeCode;
 		sendbuffer[1] = 0x00; //Reserved
-		for (uint32_t i = 0; i < LengthOfSizePart - 1; i++) {
+		for (u32 i = 0; i < LengthOfSizePart - 1; i++) {
 			sendbuffer[i + 2] = 0x00;
 		}
 		sendbuffer[11] = 0x02; //2bytes = 1byte timecode + 1byte reserved
@@ -497,7 +471,7 @@ public:
 	 * thread.
 	 * @returns a locally stored TimeCode value.
 	 */
-	uint8_t getTimeCode() throw (SpaceWireSSDTPException) {
+	u8 getTimeCode() throw (SpaceWireSSDTPException) {
 		return internal_timecode;
 	}
 
@@ -526,23 +500,23 @@ public:
 	 * and users do not need to use this method.
 	 * @param[in] timecode a received TimeCode value.
 	 */
-	void gotTimeCode(uint8_t timecode) {
+	void gotTimeCode(u8 timecode) {
 		using namespace std;
 		if (timecodeaction != NULL) {
 			timecodeaction->doAction(timecode);
 		} else {
 			/*	cout << "SSDTPModule::gotTimeCode(): Got TimeCode : " << hex << setw(2) << setfill('0')
-			 << (uint32_t) timecode << dec << endl;*/
+			 << (u32) timecode << dec << endl;*/
 		}
 	}
 
 private:
-	void registerRead(uint32_t address) {
+	void registerRead(u32 address) {
 		throw SpaceWireSSDTPException(SpaceWireSSDTPException::NotImplemented);
 	}
 
 private:
-	void registerWrite(uint32_t address, std::vector<uint8_t> data) {
+	void registerWrite(u32 address, std::vector<u8> data) {
 		//send command
 		sendmutex.lock();
 		sendbuffer[0] = ControlFlag_RegisterAccess_WriteCommand;
@@ -554,11 +528,11 @@ public:
 	 * (i.e. open-source version of SpaceWire-to-GigabitEther running with the ZestET1 FPGA board).
 	 * @param[in] txdivcount link frequency will be 200/(txdivcount+1) MHz.
 	 */
-	void setTxDivCount(uint8_t txdivcount) {
+	void setTxDivCount(u8 txdivcount) {
 		sendmutex.lock();
 		sendbuffer[0] = SpaceWireSSDTPModule::ControlFlag_ChangeTxSpeed;
 		sendbuffer[1] = 0x00; //Reserved
-		for (uint32_t i = 0; i < LengthOfSizePart - 1; i++) {
+		for (u32 i = 0; i < LengthOfSizePart - 1; i++) {
 			sendbuffer[i + 2] = 0x00;
 		}
 		sendbuffer[11] = 0x02; //2bytes = 1byte txdivcount + 1byte reserved
@@ -581,7 +555,7 @@ public:
 	/** Sends raw byte array via the socket.
 	 * @attention Users should not use this method.
 	 */
-	void sendRawData(uint8_t* data, size_t length) throw (SpaceWireSSDTPException) {
+	void sendRawData(u8* data, size_t length) throw (SpaceWireSSDTPException) {
 		sendmutex.lock();
 		try {
 			datasocket->send(data, length);
@@ -617,22 +591,18 @@ private:
 
 public:
 	/* for SSDTP2 */
-	static const uint8_t DataFlag_Complete_EOP = 0x00;
-	static const uint8_t DataFlag_Complete_EEP = 0x01;
-	static const uint8_t DataFlag_Flagmented = 0x02;
-	static const uint8_t ControlFlag_SendTimeCode = 0x30;
-	static const uint8_t ControlFlag_GotTimeCode = 0x31;
-	static const uint8_t ControlFlag_ChangeTxSpeed = 0x38;
-	static const uint8_t ControlFlag_RegisterAccess_ReadCommand = 0x40;
-	static const uint8_t ControlFlag_RegisterAccess_ReadReply = 0x41;
-	static const uint8_t ControlFlag_RegisterAccess_WriteCommand = 0x50;
-	static const uint8_t ControlFlag_RegisterAccess_WriteReply = 0x51;
-	static const uint32_t LengthOfSizePart = 10;
+	static const u8 DataFlag_Complete_EOP = 0x00;
+	static const u8 DataFlag_Complete_EEP = 0x01;
+	static const u8 DataFlag_Flagmented = 0x02;
+	static const u8 ControlFlag_SendTimeCode = 0x30;
+	static const u8 ControlFlag_GotTimeCode = 0x31;
+	static const u8 ControlFlag_ChangeTxSpeed = 0x38;
+	static const u8 ControlFlag_RegisterAccess_ReadCommand = 0x40;
+	static const u8 ControlFlag_RegisterAccess_ReadReply = 0x41;
+	static const u8 ControlFlag_RegisterAccess_WriteCommand = 0x50;
+	static const u8 ControlFlag_RegisterAccess_WriteReply = 0x51;
+	static const u32 LengthOfSizePart = 10;
 };
 
-#endif /*SPACEWIRESSDTPMODULE_HH_*/
+#endif
 
-/** History
- * 2008-06-xx file created (Takayuki Yuasa)
- * 2008-12-17 TimeCode implemented (Takayuki Yuasa)
- */

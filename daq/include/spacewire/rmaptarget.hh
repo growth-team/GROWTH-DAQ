@@ -1,71 +1,38 @@
-/* 
-============================================================================
-SpaceWire/RMAP Library is provided under the MIT License.
-============================================================================
-
-Copyright (c) 2006-2013 Takayuki Yuasa and The Open-source SpaceWire Project
-
-Permission is hereby granted, free of charge, to any person obtaining a 
-copy of this software and associated documentation files (the 
-"Software"), to deal in the Software without restriction, including 
-without limitation the rights to use, copy, modify, merge, publish, 
-distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject to 
-the following conditions:
-
-The above copyright notice and this permission notice shall be included 
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
-*/
-/*
- * RMAPTarget.hh
- *
- *  Created on: Aug 2, 2011
- *      Author: yuasa
- */
-
-#ifndef RMAPTARGET_HH_
-#define RMAPTARGET_HH_
+#ifndef SPACEWIRE_RMAPTARGET_HH_
+#define SPACEWIRE_RMAPTARGET_HH_
 
 #include "RMAPTransaction.hh"
 
 class RMAPAddressRange {
 public:
-	uint32_t addressFrom;
-	uint32_t addressTo;
+	u32 addressFrom;
+	u32 addressTo;
 
 public:
-	uint32_t getAddressFrom() const {
+	u32 getAddressFrom() const {
 		return addressFrom;
 	}
 
-	uint32_t getAddressTo() const {
+	u32 getAddressTo() const {
 		return addressTo;
 	}
 
-	void setAddressFrom(uint32_t addressFrom) {
+	void setAddressFrom(u32 addressFrom) {
 		this->addressFrom = addressFrom;
 	}
 
-	void setAddressTo(uint32_t addressTo) {
+	void setAddressTo(u32 addressTo) {
 		this->addressTo = addressTo;
 	}
 
 public:
-	void setByLength(uint32_t addressFrom, uint32_t lengthInBytes) {
+	void setByLength(u32 addressFrom, u32 lengthInBytes) {
 		this->addressFrom = addressFrom;
 		this->addressTo = addressFrom + lengthInBytes;
 	}
 
 public:
-	RMAPAddressRange(uint32_t addressFrom, uint32_t addressTo) :
+	RMAPAddressRange(u32 addressFrom, u32 addressTo) :
 			addressFrom(addressFrom), addressTo(addressTo) {
 
 	}
@@ -122,12 +89,12 @@ public:
 	}
 
 public:
-	void setReplyWithDataWithStatus(RMAPTransaction* rmapTransaction, std::vector<uint8_t>* data, uint8_t status) {
+	void setReplyWithDataWithStatus(RMAPTransaction* rmapTransaction, std::vector<u8>* data, u8 status) {
 		rmapTransaction->replyPacket = RMAPPacket::constructReplyForCommand(rmapTransaction->commandPacket, status);
 		rmapTransaction->replyPacket->setData(*data);
 	}
 
-	void setReplyWithStatus(RMAPTransaction* rmapTransaction, uint8_t status) {
+	void setReplyWithStatus(RMAPTransaction* rmapTransaction, u8 status) {
 		rmapTransaction->replyPacket = RMAPPacket::constructReplyForCommand(rmapTransaction->commandPacket, status);
 		rmapTransaction->replyPacket->clearData();
 	}
@@ -180,8 +147,8 @@ public:
 	}
 
 	bool doesAcceptTransaction(RMAPTransaction* rmapTransaction) {
-		uint32_t addressFrom = rmapTransaction->commandPacket->getAddress();
-		uint32_t addressTo = addressFrom + rmapTransaction->commandPacket->getLength();
+		u32 addressFrom = rmapTransaction->commandPacket->getAddress();
+		u32 addressTo = addressFrom + rmapTransaction->commandPacket->getLength();
 		RMAPAddressRange addressRange(addressFrom, addressTo);
 		for (size_t i = 0; i < addressRanges.size(); i++) {
 			if (addressRanges[i]->contains(addressRange) == true) {
@@ -192,8 +159,8 @@ public:
 	}
 
 	void processTransaction(RMAPTransaction* rmapTransaction) throw (RMAPTargetException) {
-		uint32_t addressFrom = rmapTransaction->commandPacket->getAddress();
-		uint32_t addressTo = addressFrom + rmapTransaction->commandPacket->getLength();
+		u32 addressFrom = rmapTransaction->commandPacket->getAddress();
+		u32 addressTo = addressFrom + rmapTransaction->commandPacket->getLength();
 		RMAPAddressRange addressRange(addressFrom, addressTo);
 		for (size_t i = 0; i < addressRanges.size(); i++) {
 			if (addressRanges[i]->contains(addressRange) == true) {
@@ -211,8 +178,8 @@ public:
 	/** Can return NULL. */
 	RMAPTargetAccessAction* getCorrespondingRMAPTargetAccessAction(RMAPTransaction* rmapTransaction) {
 		using namespace std;
-		uint32_t addressFrom = rmapTransaction->commandPacket->getAddress();
-		uint32_t addressTo = addressFrom + rmapTransaction->commandPacket->getLength() - 1;
+		u32 addressFrom = rmapTransaction->commandPacket->getAddress();
+		u32 addressTo = addressFrom + rmapTransaction->commandPacket->getLength() - 1;
 		RMAPAddressRange addressRange(addressFrom, addressTo);
 		for (size_t i = 0; i < addressRanges.size(); i++) {
 			if (addressRanges[i]->contains(addressRange) == true) {
@@ -224,4 +191,4 @@ public:
 
 };
 
-#endif /* RMAPTARGET_HH_ */
+#endif
