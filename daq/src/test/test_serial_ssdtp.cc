@@ -5,9 +5,9 @@
  *      Author: yuasa
  */
 
+#include "../serialport.hh"
+#include "../spacewiressdtpmoduleuart.hh"
 #include "CxxUtilities/CxxUtilities.hh"
-#include "SerialPort.hh"
-#include "SpaceWireSSDTPModuleUART.hh"
 
 class ReceiveThread : public CxxUtilities::StoppableThread {
  private:

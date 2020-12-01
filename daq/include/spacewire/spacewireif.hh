@@ -5,33 +5,9 @@
 
 class SpaceWireIF;
 
-/** An abstract super class for SpaceWireIF-related actions.
- */
-class SpaceWireIFAction {
+class SpaceWireIFException : public std::runtime_error {
  public:
-  virtual ~SpaceWireIFAction() = default;
-};
-
-/** An abstract class which includes a method invoked when
- * Timecode is received.
- */
-class SpaceWireIFActionTimecodeScynchronizedAction : public SpaceWireIFAction {
- public:
-  /** Performs action.
-   * @param[in] timecodeValue time code value
-   */
-  virtual void doAction(u8 timecodeValue) = 0;
-};
-
-/** An abstract class which includes a method invoked when
- * a SpaceWire interface is closed.
- */
-class SpaceWireIFActionCloseAction : public SpaceWireIFAction {
- public:
-  /** Performs action.
-   * @param[in] spwif parent SpaceWireIF instance
-   */
-  virtual void doAction(SpaceWireIF* spwif) = 0;
+  SpaceWireIFException(const std::string& message) : std::runtime_error(message) {}
 };
 
 /** An abstract class for encapsulation of a SpaceWire interface.
@@ -41,28 +17,16 @@ class SpaceWireIFActionCloseAction : public SpaceWireIFAction {
  *  by inheriting this class.
  */
 class SpaceWireIF {
-  using TimecodeScynchronizedActionPtr = std::shared_ptr<SpaceWireIFActionTimecodeScynchronizedAction>;
-  using CloseActionPtr = std::shared_ptr<SpaceWireIFActionCloseAction>;
-
  public:
-  enum OpenCloseState { Closed, Opened };
+  SpaceWireIF() = default;
+  virtual ~SpaceWireIF() = default;
 
- protected:
-  enum OpenCloseState state;
+  virtual bool open() = 0;
+  bool isOpen() const { return isOpen_; }
 
- public:
-  SpaceWireIF() { state = Closed; }
-
-  virtual ~SpaceWireIF() {}
-
-  enum OpenCloseState getState() { return state; }
-
-  virtual void open() = 0;
-
-  virtual void close() { invokespacewireIFCloseActions(); }
+  virtual void close() = 0;
 
   virtual void send(u8* data, size_t length, EOPType eopType = EOPType::EOP) = 0;
-
   virtual void receive(u8* buffer, EOPType& eopType, size_t maxLength, size_t& length) {
     std::vector<u8>* packet = this->receive();
     size_t packetSize = packet->size();
@@ -75,7 +39,7 @@ class SpaceWireIF {
       } else {
         memcpy(buffer, &(packet->at(0)), maxLength);
         delete packet;
-        throw SpaceWireIFException(SpaceWireIFException::ReceiveBufferTooSmall);
+        throw SpaceWireIFException("receive buffer too small");
       }
     }
     delete packet;
@@ -90,62 +54,14 @@ class SpaceWireIF {
       throw e;
     }
   }
-
   virtual void receive(std::vector<u8>* buffer) = 0;
-
-  virtual void emitTimecode(u8 timeIn, u8 controlFlagIn = 0x00) = 0;
-
-  virtual void setTxLinkRate(u32 linkRateMHz) = 0;
-
-  virtual u32 getTxLinkRate() = 0;
-
+  virtual void cancelReceive() = 0;
   virtual void setTimeoutDuration(f64 microsecond) = 0;
 
-  f64 getTimeoutDurationInMicroSec() { return timeoutDurationInMicroSec_; }
-
-  /** A method sets (adds) an action against getting Timecode.
-   */
-  void addTimecodeAction(TimecodeScynchronizedActionPtr action) {
-    for (size_t i = 0; i < timecodeSynchronizedActions_.size(); i++) {
-      if (action == timecodeSynchronizedActions_[i]) {
-        return;  // already registered
-      }
-    }
-    timecodeSynchronizedActions_.push_back(action);
-  }
-
-  void clearTimecodeSynchronizedActions() { timecodeSynchronizedActions_.clear(); }
-
-  void invokeTimecodeSynchronizedActions(u8 tickOutValue) {
-    for (const auto& action : timecodeSynchronizedActions_) {
-      action->doAction(tickOutValue);
-    }
-  }
-
-  void addCloseAction(CloseActionPtr action) {
-    const auto contains = std::find(closeActions_.begin(), closeActions_.end(), action);
-    if (!contains) {
-      closeActions_.push_back(action);
-    }
-  }
-
-  void clearspacewireIFCloseActions_() { closeActions_.clear(); }
-
-  /** Cancels ongoing receive() method if any exist.
-   */
-  virtual void cancelReceive() = 0;
+  f64 getTimeoutDurationInMicroSec() const { return timeoutDurationInMicroSec_; }
 
  protected:
-  void invokespacewireIFCloseActions() {
-    for (const auto& action : closeActions_) {
-      action->doAction(this);
-    }
-  }
-
+  bool isOpen_ = false;
   f64 timeoutDurationInMicroSec_{1e6};
-
- private:
-  std::vector<TimecodeScynchronizedActionPtr> timecodeSynchronizedActions_;
-  std::vector<CloseActionPtr> closeActions_;
 };
 #endif /* SPACEWIREIF_HH_ */

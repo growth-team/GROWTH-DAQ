@@ -5,7 +5,7 @@
  *      Author: yuasa
  */
 
-#include "SpaceWireIFOverUART.hh"
+#include "../spacewireifoveruart.hh"
 #include "SpaceWireRMAPLibrary/RMAP.hh"
 #include "SpaceWireRMAPLibrary/SpaceWire.hh"
 

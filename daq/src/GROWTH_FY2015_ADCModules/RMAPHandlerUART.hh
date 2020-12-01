@@ -1,8 +1,8 @@
 #ifndef RMAPHandlerUART_HH_
 #define RMAPHandlerUART_HH_
 
-#include "SpaceWireIFOverUART.hh"
-#include "SpaceWireRMAPLibrary/RMAP.hh"
+#include "spacewire/rmapinitiator.hh"
+#include "spacewire/spacewireifoveruart.hh"
 #include "types.h"
 
 #include <chrono>
@@ -10,6 +10,8 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+
+#include "../spacewireifoveruart.hh"
 class RMAPHandlerUART {
  public:
   RMAPHandlerUART(const std::string& deviceName) : deviceName_(deviceName) {

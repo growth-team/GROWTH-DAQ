@@ -10,7 +10,7 @@ static const size_t DEFAULT_BYTES_PER_LINE = 8;
 /** Dumps packet content to an output stream instance.
  * @param[in] output stream to which dump is performed.
  */
-void dumpPacket(std::ostream* ofs, u8* data, size_t length, size_t wordwidth = 16, size_t bytesPerLine = DEFAULT_BYTES_PER_LINE) {
+void dumpPacket(std::ostream* ofs, const u8* data, size_t length, size_t wordwidth = 16, size_t bytesPerLine = DEFAULT_BYTES_PER_LINE) {
   const auto flags = ofs->flags();
   size_t v{};
   assert(wordwidth != 0);
@@ -31,7 +31,7 @@ void dumpPacket(std::ostream* ofs, u8* data, size_t length, size_t wordwidth = 1
 }
 
 /** Converts a packet content to std::string. */
-std::string packetToString(u8* data, size_t length, size_t nBytesDisplayed = 16) {
+std::string packetToString(const u8* data, size_t length, size_t nBytesDisplayed = 16) {
   const size_t dumpLength = std::min(nBytesDisplayed, length);
   if (length == 0) {
     return "(empty packet)";
@@ -51,7 +51,7 @@ std::string packetToString(u8* data, size_t length, size_t nBytesDisplayed = 16)
  * @param address initial address.
  * @param data packet content to be dumped.
  */
-void printVectorWithAddress(u32 address, std::vector<u8>* data) {
+void printVectorWithAddress(u32 address, const std::vector<u8>* data) {
   using namespace std;
   const auto flags = cout.flags();
   cout << "Address    Data" << endl;
@@ -69,7 +69,7 @@ void printVectorWithAddress(u32 address, std::vector<u8>* data) {
  * @param address initial address.
  * @param data packet content to be dumped.
  */
-void printVectorWithAddress2bytes(u32 address, std::vector<u8>* data) {
+void printVectorWithAddress2bytes(u32 address, const std::vector<u8>* data) {
   using namespace std;
   const auto flags = cout.flags();
 

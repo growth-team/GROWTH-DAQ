@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "spacewire/types.hh"
+#include "spacewire/spacewireprotocol.hh"
 
 class SpaceWirePacket {
  public:
@@ -14,12 +15,10 @@ class SpaceWirePacket {
   EOPType getEOPType() { return eopType_; }
   void setEOPType(EOPType eopType) { eopType_ = eopType; }
 
-  static const u8 DefaultLogicalAddress = 0xFE;
-  static const u8 DefaultProtocolID = 0x00;
   std::vector<u8> data{};
 
  protected:
-  u8 protocolID_ = DefaultProtocolID;
+  u8 protocolID_ = SpaceWireProtocol::DefaultProtocolID;
   EOPType eopType_ = EOPType::EOP;
 };
 

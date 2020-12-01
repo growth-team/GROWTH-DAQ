@@ -1,11 +1,12 @@
-#ifndef SPACEWIREIFOVERUART_HH_
-#define SPACEWIREIFOVERUART_HH_
+#ifndef SPACEWIRE_SPACEWIREIFOVERUART_HH_
+#define SPACEWIRE_SPACEWIREIFOVERUART_HH_
 
 #include <chrono>
 #include <thread>
 
 #include "spacewire/spacewireif.hh"
-#include "SpaceWireSSDTPModuleUART.hh"
+#include "spacewire/types.hh"
+#include "spacewiressdtpmoduleuart.hh"
 #include "types.h"
 
 /** SpaceWire IF class which transfers data over UART.
@@ -15,70 +16,57 @@ class SpaceWireIFOverUART : public SpaceWireIF {
   static constexpr i32 BAUD_RATE = 230400;
 
   SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
-
   ~SpaceWireIFOverUART() override = default;
 
-  void open() override {
+  bool open() override {
     try {
       serial_ = std::make_unique<SerialPort>(deviceName_, BAUD_RATE);
       setTimeoutDuration(500000);
     } catch (...) {
-      throw SpaceWireIFException(SpaceWireIFException::OpeningConnectionFailed);
+      return false;
     }
 
     ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(serial_.get());
-    state = Opened;
+    isOpen_ = true;
+    return isOpen_;
   }
 
   void close() override {
     ssdtp_->cancelReceive();
     serial_->close();
-    state = Closed;
+    isOpen_ = false;
   }
 
-  void send(u8* data, size_t length,
-            SpaceWireEOPMarker::EOPType eopType = SpaceWireEOPMarker::EOP) override {
-    using namespace std;
+  void send(const u8* data, size_t length, EOPType eopType = EOPType::EOP) override {
     assert(!ssdtp_);
     try {
       ssdtp_->send(data, length, eopType);
-    } catch (SpaceWireSSDTPException& e) {
-      if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
-        throw SpaceWireIFException(SpaceWireIFException::Timeout);
-      } else {
-        throw SpaceWireIFException(SpaceWireIFException::Disconnected);
-      }
+    } catch (const SpaceWireSSDTPException& e) {
+      throw SpaceWireIFException(e.what());
     }
   }
 
   void receive(std::vector<u8>* buffer) override {
     assert(!ssdtp_);
     try {
-      u32 eopType{};
+      EOPType eopType{};
       ssdtp_->receive(buffer, eopType);
-      if (eopType == SpaceWireEOPMarker::EEP) {
-        this->setReceivedPacketEOPMarkerType(SpaceWireIF::EEP);
+      if (eopType == EOPType::EEP) {
+        this->setReceivedPacketEOPMarkerType(EOPType::EEP);
         if (this->eepShouldBeReportedAsAnException_) {
-          throw SpaceWireIFException(SpaceWireIFException::EEP);
+          throw SpaceWireIFException("eep received");
         }
       } else {
-        this->setReceivedPacketEOPMarkerType(SpaceWireIF::EOP);
+        this->setReceivedPacketEOPMarkerType(EOPType::EOP);
       }
     } catch (SpaceWireSSDTPException& e) {
-      if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
-        throw SpaceWireIFException(SpaceWireIFException::Timeout);
-      }
-      using namespace std;
-      throw SpaceWireIFException(SpaceWireIFException::Disconnected);
+      throw SpaceWireIFException("timeout");
     } catch (SerialPortTimeoutException& e) {
-      throw SpaceWireIFException(SpaceWireIFException::Timeout);
+      throw SpaceWireIFException("timeout");
     }
   }
 
-  void setTimeoutDuration(f64 microsecond) override {
-    serial_->setTimeout(microsecond / 1000.);
-    timeoutDurationInMicroSec = microsecond;
-  }
+  void setTimeoutDuration(f64 microsecond) override {}
 
   /** Cancels ongoing receive() method if any exist.
    */
@@ -95,4 +83,4 @@ class SpaceWireIFOverUART : public SpaceWireIF {
   std::unique_ptr<SerialPort> serial_;
 };
 
-#endif /* SPACEWIREIFOVERUART_HH_ */
+#endif

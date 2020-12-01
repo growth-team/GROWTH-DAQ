@@ -6,65 +6,18 @@
 #include "spacewire/rmaptargetnode.hh"
 #include "spacewire/rmaputilities.hh"
 #include "spacewire/spacewirepacket.hh"
-#include "spacewire/spacewireprotocol.hh"
 #include "spacewire/spacewireutilities.hh"
 
-class RMAPPacketException {
+class RMAPPacketException : public std::runtime_error {
  public:
-  enum {
-    ProtocolIDIsNotRMAP,
-    PacketInterpretationFailed,
-    InsufficientBufferSize,
-    InvalidHeaderCRC,
-    InvalidDataCRC,
-    DataLengthMismatch
-  };
-
- public:
-  RMAPPacketException(u32 status) : CxxUtilities::Exception(status) {}
-
- public:
-  virtual ~RMAPPacketException() = default;
-
- public:
-  virtual std::string toString() {
-    // return ClassInformation::demangle(typeid(*this).name());
-    using namespace std;
-    stringstream ss;
-    switch (status) {
-      case ProtocolIDIsNotRMAP:
-        ss << "ProtocolIDIsNotRMAP";
-        break;
-      case PacketInterpretationFailed:
-        ss << "PacketInterpretationFailed";
-        break;
-      case InsufficientBufferSize:
-        ss << "InsufficientBufferSize";
-        break;
-      case InvalidHeaderCRC:
-        ss << "InvalidHeaderCRC";
-        break;
-      case InvalidDataCRC:
-        ss << "InvalidDataCRC";
-        break;
-      case DataLengthMismatch:
-        ss << "DataLengthMismatch";
-        break;
-      default:
-        ss << "Undefined exception";
-        break;
-    }
-    return ss.str();
-  }
+  RMAPPacketException(const std::string& message) : std::runtime_error(message) {}
 };
 
 class RMAPPacket : public SpaceWirePacket {
  public:
-  RMAPPacket() : protocolId_(RMAPProtocol::ProtocolIdentifier) {}
+  RMAPPacket() : protocolID_(RMAPProtocol::ProtocolIdentifier) {}
 
   void constructHeader() {
-    using namespace std;
-
     header.clear();
     if (isCommand()) {
       // if command packet
@@ -110,7 +63,7 @@ class RMAPPacket : public SpaceWirePacket {
     }
 
     if (headerCRCMode == RMAPPacket::AutoCRC) {
-      headerCRC = RMAPUtilities::calculateCRC(header);
+      headerCRC = RMAPUtilities::calculateCRC(header.data(), header.size());
     }
     header.push_back(headerCRC);
   }
@@ -118,16 +71,16 @@ class RMAPPacket : public SpaceWirePacket {
   void constructPacket() {
     constructHeader();
     if (dataCRCMode == RMAPPacket::AutoCRC) {
-      dataCRC = RMAPUtilities::calculateCRC(data);
+      dataCRC = RMAPUtilities::calculateCRC(data.data(), data.size());
     }
     wholePacket.clear();
     if (isCommand()) {
-      SpaceWireUtilities::concatenateTo(wholePacket, targetSpaceWireAddress);
+      wholePacket.insert(wholePacket.end(), targetSpaceWireAddress.begin(), targetSpaceWireAddress.end());
     } else {
-      SpaceWireUtilities::concatenateTo(wholePacket, replyAddress);
+      wholePacket.insert(wholePacket.end(), replyAddress.begin(), replyAddress.end());
     }
-    SpaceWireUtilities::concatenateTo(wholePacket, header);
-    SpaceWireUtilities::concatenateTo(wholePacket, data);
+    wholePacket.insert(wholePacket.end(), header.begin(), header.end());
+    wholePacket.insert(wholePacket.end(), data.begin(), data.end());
     if (hasData()) {
       wholePacket.push_back(dataCRC);
     }
@@ -135,7 +88,7 @@ class RMAPPacket : public SpaceWirePacket {
 
   void interpretAsAnRMAPPacket(const u8* packet, size_t length) {
     if (length < 8) {
-      throw(RMAPPacketException(RMAPPacketException::PacketInterpretationFailed));
+      throw(RMAPPacketException("packet interpretation failed"));
     }
     std::vector<u8> temporaryPathAddress{};
     try {
@@ -148,15 +101,14 @@ class RMAPPacket : public SpaceWirePacket {
         temporaryPathAddress.push_back(packet[i]);
         i++;
         if (i >= length) {
-          throw(RMAPPacketException(RMAPPacketException::PacketInterpretationFailed));
+          throw(RMAPPacketException("packet interpretation failed"));
         }
       }
 
       rmapIndex = i;
       if (packet[rmapIndex + 1] != RMAPProtocol::ProtocolIdentifier) {
-        throw(RMAPPacketException(RMAPPacketException::ProtocolIDIsNotRMAP));
+        throw(RMAPPacketException("non-rmap protocol id"));
       }
-      using namespace std;
 
       instruction = packet[rmapIndex + 2];
       u8 replyPathAddressLength = getReplyPathAddressLength();
@@ -165,39 +117,38 @@ class RMAPPacket : public SpaceWirePacket {
         setTargetSpaceWireAddress(temporaryPathAddress);
         setTargetLogicalAddress(packet[rmapIndex]);
         setKey(packet[rmapIndex + 3]);
-        vector<u8> temporaryReplyAddress;
+        std::vector<u8> temporaryReplyAddress{};
         for (u8 i = 0; i < replyPathAddressLength * 4; i++) {
           temporaryReplyAddress.push_back(packet[rmapIndex + 4 + i]);
         }
         setReplyAddress(temporaryReplyAddress);
         rmapIndexAfterSourcePathAddress = rmapIndex + 4 + replyPathAddressLength * 4;
         setInitiatorLogicalAddress(packet[rmapIndexAfterSourcePathAddress + 0]);
-        u8 uppertid, lowertid;
-        uppertid = packet[rmapIndexAfterSourcePathAddress + 1];
-        lowertid = packet[rmapIndexAfterSourcePathAddress + 2];
-        setTransactionID((u32)(((uppertid * 0x100 + lowertid))));
+
+        const u16 uppertid = packet[rmapIndexAfterSourcePathAddress + 1];
+        const u16 lowertid = packet[rmapIndexAfterSourcePathAddress + 2];
+        const auto tid = (uppertid << 8) + lowertid;
+        setTransactionID(tid);
         setExtendedAddress(packet[rmapIndexAfterSourcePathAddress + 3]);
-        u8 address_3, address_2, address_1, address_0;
-        address_3 = packet[rmapIndexAfterSourcePathAddress + 4];
-        address_2 = packet[rmapIndexAfterSourcePathAddress + 5];
-        address_1 = packet[rmapIndexAfterSourcePathAddress + 6];
-        address_0 = packet[rmapIndexAfterSourcePathAddress + 7];
-        setAddress(address_3 * 0x01000000 + address_2 * 0x00010000 + address_1 * 0x00000100 + address_0 * 0x00000001);
-        u8 length_2, length_1, length_0;
-        u32 lengthSpecifiedInPacket;
-        length_2 = packet[rmapIndexAfterSourcePathAddress + 8];
-        length_1 = packet[rmapIndexAfterSourcePathAddress + 9];
-        length_0 = packet[rmapIndexAfterSourcePathAddress + 10];
-        lengthSpecifiedInPacket = length_2 * 0x010000 + length_1 * 0x000100 + length_0 * 0x000001;
+        const u32 address_3 = packet[rmapIndexAfterSourcePathAddress + 4];
+        const u32 address_2 = packet[rmapIndexAfterSourcePathAddress + 5];
+        const u32 address_1 = packet[rmapIndexAfterSourcePathAddress + 6];
+        const u32 address_0 = packet[rmapIndexAfterSourcePathAddress + 7];
+        const auto addresss = (address_3 << 24) + (address_2 << 16) + (address_1 << 8) + address_0;
+        setAddress(address);
+        const u32 length_2 = packet[rmapIndexAfterSourcePathAddress + 8];
+        const u32 length_1 = packet[rmapIndexAfterSourcePathAddress + 9];
+        const u32 length_0 = packet[rmapIndexAfterSourcePathAddress + 10];
+        const auto lengthSpecifiedInPacket = (length_2 << 16) + (length_1 << 8) + length_0;
         setDataLength(lengthSpecifiedInPacket);
-        u8 temporaryHeaderCRC = packet[rmapIndexAfterSourcePathAddress + 11];
-        if (headerCRCIsChecked == true) {
-          u32 headerCRCMode_original = headerCRCMode;
+        const u8 temporaryHeaderCRC = packet[rmapIndexAfterSourcePathAddress + 11];
+        if (headerCRCIsChecked) {
+          const u32 headerCRCMode_original = headerCRCMode;
           headerCRCMode = RMAPPacket::AutoCRC;
           constructHeader();
           headerCRCMode = headerCRCMode_original;
           if (headerCRC != temporaryHeaderCRC) {
-            throw(RMAPPacketException(RMAPPacketException::InvalidHeaderCRC));
+            throw(RMAPPacketException("invalid header crc"));
           }
         } else {
           headerCRC = temporaryHeaderCRC;
@@ -209,7 +160,7 @@ class RMAPPacket : public SpaceWirePacket {
             if ((dataIndex + i) < (length - 1)) {
               data.push_back(packet[dataIndex + i]);
             } else {
-              throw(RMAPPacketException(RMAPPacketException::DataLengthMismatch));
+              throw(RMAPPacketException("data length mismatch"));
             }
           }
 
@@ -218,12 +169,12 @@ class RMAPPacket : public SpaceWirePacket {
           if ((dataIndex + lengthSpecifiedInPacket) == (length - 1)) {
             temporaryDataCRC = packet[dataIndex + lengthSpecifiedInPacket];
           } else {
-            throw(RMAPPacketException(RMAPPacketException::DataLengthMismatch));
+            throw(RMAPPacketException("data length mismatch"));
           }
-          dataCRC = RMAPUtilities::calculateCRC(data);
-          if (dataCRCIsChecked == true) {
+          dataCRC = RMAPUtilities::calculateCRC(data.data(), data.size());
+          if (dataCRCIsChecked) {
             if (dataCRC != temporaryDataCRC) {
-              throw(RMAPPacketException(RMAPPacketException::InvalidDataCRC));
+              throw(RMAPPacketException("invalid data crc"));
             }
           } else {
             dataCRC = temporaryDataCRC;
@@ -236,36 +187,34 @@ class RMAPPacket : public SpaceWirePacket {
         setInitiatorLogicalAddress(packet[rmapIndex]);
         setStatus(packet[rmapIndex + 3]);
         setTargetLogicalAddress(packet[rmapIndex + 4]);
-        u8 uppertid, lowertid;
-        uppertid = packet[rmapIndex + 5];
-        lowertid = packet[rmapIndex + 6];
-        setTransactionID((u32)(((uppertid * 0x100 + lowertid))));
+        const u16 uppertid = packet[rmapIndex + 5];
+        const u16 lowertid = packet[rmapIndex + 6];
+        const u16 tid = (uppertid << 8) + lowertid;
+        setTransactionID(tid);
         if (isWrite()) {
-          u8 temporaryHeaderCRC = packet[rmapIndex + 7];
+          const u8 temporaryHeaderCRC = packet[rmapIndex + 7];
           u32 headerCRCMode_original = headerCRCMode;
           headerCRCMode = RMAPPacket::AutoCRC;
           constructHeader();
           headerCRCMode = headerCRCMode_original;
-          if (headerCRCIsChecked == true) {
+          if (headerCRCIsChecked) {
             if (headerCRC != temporaryHeaderCRC) {
-              throw(RMAPPacketException(RMAPPacketException::InvalidHeaderCRC));
+              throw(RMAPPacketException("invalid header crc"));
             }
           } else {
             headerCRC = temporaryHeaderCRC;
           }
         } else {
-          u8 length_2, length_1, length_0;
-          u32 lengthSpecifiedInPacket;
-          length_2 = packet[rmapIndex + 8];
-          length_1 = packet[rmapIndex + 9];
-          length_0 = packet[rmapIndex + 10];
-          lengthSpecifiedInPacket = length_2 * 0x010000 + length_1 * 0x000100 + length_0 * 0x000001;
+          const u32 length_2 = packet[rmapIndex + 8];
+          const u32 length_1 = packet[rmapIndex + 9];
+          const u32 length_0 = packet[rmapIndex + 10];
+          const auto lengthSpecifiedInPacket = (length_2 << 16) + (length_1 << 8) + length_0;
           setDataLength(lengthSpecifiedInPacket);
-          u8 temporaryHeaderCRC = packet[rmapIndex + 11];
+          const u8 temporaryHeaderCRC = packet[rmapIndex + 11];
           constructHeader();
-          if (headerCRCIsChecked == true) {
+          if (headerCRCIsChecked) {
             if (headerCRC != temporaryHeaderCRC) {
-              throw(RMAPPacketException(RMAPPacketException::InvalidHeaderCRC));
+              throw(RMAPPacketException("invalid header crc"));
             }
           } else {
             headerCRC = temporaryHeaderCRC;
@@ -277,7 +226,7 @@ class RMAPPacket : public SpaceWirePacket {
               data.push_back(packet[dataIndex + i]);
             } else {
               dataCRC = 0x00;  // initialized
-              throw(RMAPPacketException(RMAPPacketException::DataLengthMismatch));
+              throw(RMAPPacketException("data length mismatch"));
             }
           }
 
@@ -286,12 +235,12 @@ class RMAPPacket : public SpaceWirePacket {
           if ((dataIndex + lengthSpecifiedInPacket) == (length - 1)) {
             temporaryDataCRC = packet[dataIndex + lengthSpecifiedInPacket];
           } else {
-            throw(RMAPPacketException(RMAPPacketException::DataLengthMismatch));
+            throw(RMAPPacketException("data length mismatch"));
           }
-          dataCRC = RMAPUtilities::calculateCRC(data);
-          if (dataCRCIsChecked == true) {
+          dataCRC = RMAPUtilities::calculateCRC(data.data(), data.size());
+          if (dataCRCIsChecked) {
             if (dataCRC != temporaryDataCRC) {
-              throw(RMAPPacketException(RMAPPacketException::InvalidDataCRC));
+              throw(RMAPPacketException("invalid data crc"));
             }
           } else {
             dataCRC = temporaryDataCRC;
@@ -299,11 +248,11 @@ class RMAPPacket : public SpaceWirePacket {
         }
       }
 
-    } catch (exception& e) {
-      throw(RMAPPacketException(RMAPPacketException::PacketInterpretationFailed));
+    } catch (std::exception& e) {
+      throw(RMAPPacketException("packet interpretation failed"));
     }
-    u32 previousHeaderCRCMode = headerCRCMode;
-    u32 previousDataCRCMode = dataCRCMode;
+    const u32 previousHeaderCRCMode = headerCRCMode;
+    const u32 previousDataCRCMode = dataCRCMode;
     headerCRCMode = RMAPPacket::ManualCRC;
     dataCRCMode = RMAPPacket::ManualCRC;
     constructPacket();
@@ -313,22 +262,19 @@ class RMAPPacket : public SpaceWirePacket {
 
   void interpretAsAnRMAPPacket(const std::vector<u8>* data) {
     if (data->empty()) {
-      throw RMAPPacketException(RMAPPacketException::PacketInterpretationFailed);
+      throw(RMAPPacketException("packet interpretation failed"));
     }
     interpretAsAnRMAPPacket(data->data(), data->size());
   }
 
-  void setRMAPTargetInformation(RMAPTargetNode* rmapTargetNode) {
+  void setRMAPTargetInformation(const RMAPTargetNode* rmapTargetNode) {
     setTargetLogicalAddress(rmapTargetNode->getTargetLogicalAddress());
     setReplyAddress(rmapTargetNode->getReplyAddress());
     setTargetSpaceWireAddress(rmapTargetNode->getTargetSpaceWireAddress());
     setKey(rmapTargetNode->getDefaultKey());
-    if (rmapTargetNode->isInitiatorLogicalAddressSet()) {
-      setInitiatorLogicalAddress(rmapTargetNode->getInitiatorLogicalAddress());
-    }
+    setInitiatorLogicalAddress(rmapTargetNode->getInitiatorLogicalAddress());
   }
 
-  void setRMAPTargetInformation(RMAPTargetNode& rmapTargetNode) { setRMAPTargetInformation(&rmapTargetNode); }
   void setCommand() { instruction = instruction | RMAPPacket::BitMaskForCommandReply; }
   void setReply() { instruction = instruction & (~RMAPPacket::BitMaskForCommandReply); }
   void setWrite() { instruction = instruction | RMAPPacket::BitMaskForWriteRead; }
@@ -382,18 +328,17 @@ class RMAPPacket : public SpaceWirePacket {
   void getData(u8* buffer, size_t maxLength) {
     const auto length = data.size();
     if (maxLength < length) {
-      throw RMAPPacketException(RMAPPacketException::InsufficientBufferSize);
+      throw RMAPPacketException("insufficient buffer size");
     }
     for (size_t i = 0; i < length; i++) {
       buffer[i] = data[i];
     }
   }
 
-  void getData(std::vector<u8>* buffer) { *buffer = data; }
+  void getData(std::vector<u8>* buffer) const { *buffer = data; }
 
-  u8* getDataBufferAsArrayPointer() { return (data.size() != 0) ? (u8*)(&data[0]) : NULL; }
+  u8* getDataBufferAsArrayPointer() { return (!data.empty()) ? data.data() : nullptr; }
   std::vector<u8>* getDataBuffer() { return &data; }
-  std::vector<u8>* getDataBufferAsVectorPointer() { return &data; }
 
   u8 getDataCRC() const { return dataCRC; }
   u32 getDataLength() const { return dataLength; }
@@ -414,12 +359,7 @@ class RMAPPacket : public SpaceWirePacket {
 
   void setAddress(u32 address) { this->address = address; }
 
-  void setData(std::vector<u8>& data) {
-    this->data = data;
-    this->dataLength = data.size();
-  }
-
-  void setData(u8* data, size_t length) {
+  void setData(const u8* data, size_t length) {
     this->data.clear();
     for (size_t i = 0; i < length; i++) {
       this->data.push_back(data[i]);
@@ -436,10 +376,8 @@ class RMAPPacket : public SpaceWirePacket {
     this->initiatorLogicalAddress = initiatorLogicalAddress;
   }
   void setInstruction(u8 instruction) { this->instruction = instruction; }
-
   void setKey(u8 key) { this->key = key; }
-
-  void setReplyAddress(std::vector<u8> replyAddress,  //
+  void setReplyAddress(const std::vector<u8>& replyAddress,  //
                        bool automaticallySetPathAddressLengthToInstructionField = true) {
     this->replyAddress = replyAddress;
     if (automaticallySetPathAddressLengthToInstructionField) {
@@ -528,9 +466,9 @@ class RMAPPacket : public SpaceWirePacket {
     // Command
     ///////////////////////////////
     // Target SpaceWire Address
-    if (targetSpaceWireAddress.size() != 0) {
+    if (!targetSpaceWireAddress.empty()) {
       ss << "--------- Target SpaceWire Address ---------" << endl;
-      SpaceWireUtilities::dumpPacket(&ss, &targetSpaceWireAddress, 1, 128);
+      spacewire::util::dumpPacket(&ss, targetSpaceWireAddress.data(),targetSpaceWireAddress.size(), 1, 128);
     }
     // Header
     ss << "--------- RMAP Header Part ---------" << endl;
@@ -549,9 +487,9 @@ class RMAPPacket : public SpaceWirePacket {
     // Key
     ss << "Key                       : 0x" << setw(2) << setfill('0') << hex << (unsigned int)(key) << endl;
     // Reply Address
-    if (replyAddress.size() != 0) {
+    if (!replyAddress.empty()) {
       ss << "Reply Address             : ";
-      SpaceWireUtilities::dumpPacket(&ss, &replyAddress, 1, 128);
+      spacewire::util::dumpPacket(&ss, replyAddress.data(), replyAddress.size(), 1, 128);
     } else {
       ss << "Reply Address         : --none--" << endl;
     }
@@ -569,7 +507,7 @@ class RMAPPacket : public SpaceWirePacket {
     ss << "---------  RMAP Data Part  ---------" << endl;
     if (isWrite()) {
       ss << "[data size = " << dec << dataLength << "bytes]" << endl;
-      SpaceWireUtilities::dumpPacket(&ss, &data, 1, 16);
+      spacewire::util::dumpPacket(&ss, data.data(), data.size(), 1, 16);
       ss << "Data CRC                  : " << right << setw(2) << setfill('0') << hex << (unsigned int)(dataCRC)
          << endl;
     } else {
@@ -592,10 +530,10 @@ class RMAPPacket : public SpaceWirePacket {
     ///////////////////////////////
     ss << "RMAP Packet Dump" << endl;
     // Reply Address
-    if (replyAddress.size() != 0) {
+    if (!replyAddress.empty()) {
       ss << "--------- Reply Address ---------" << endl;
       ss << "Reply Address       : ";
-      SpaceWireUtilities::dumpPacket(&ss, &replyAddress, 1, 128);
+      spacewire::util::dumpPacket(&ss, replyAddress.data(), replyAddress.size(), 1, 128);
     }
     // Header
     ss << "--------- RMAP Header Part ---------" << endl;
@@ -668,7 +606,7 @@ class RMAPPacket : public SpaceWirePacket {
     ss << "---------  RMAP Data Part  ---------" << endl;
     if (isRead()) {
       ss << "[data size = " << dec << dataLength << "bytes]" << endl;
-      SpaceWireUtilities::dumpPacket(&ss, &data, 1, 128);
+      spacewire::util::dumpPacket(&ss, data.data(),data.size(), 1, 128);
       ss << "Data CRC    : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(dataCRC) << endl;
     } else {
       ss << "--- none ---" << endl;
@@ -708,25 +646,27 @@ class RMAPPacket : public SpaceWirePacket {
   }
 
   std::vector<u8> targetSpaceWireAddress{};
-  u8 targetLogicalAddress=SpaceWireProtocol::DefaultLogicalAddress;
+  u8 targetLogicalAddress = SpaceWireProtocol::DefaultLogicalAddress;
 
   u8 instruction{};
-  u8 key=RMAPProtocol::DefaultKey;
+  u8 key = RMAPProtocol::DefaultKey;
   std::vector<u8> replyAddress{};
-  u8 initiatorLogicalAddress=SpaceWireProtocol::DefaultLogicalAddress;
-  u8 extendedAddress=RMAPProtocol::DefaultExtendedAddress;
+  u8 initiatorLogicalAddress = SpaceWireProtocol::DefaultLogicalAddress;
+  u8 extendedAddress = RMAPProtocol::DefaultExtendedAddress;
   u32 address{};
   u32 dataLength{};
-  u8 status=RMAPProtocol::DefaultStatus;
+  u8 status = RMAPProtocol::DefaultStatus;
   u8 headerCRC{};
-  u16 transactionID=RMAPProtocol::DefaultTID;
+  u16 transactionID = RMAPProtocol::DefaultTID;
 
   std::vector<u8> header{};
   std::vector<u8> data{};
   u8 dataCRC{};
 
-  u32 headerCRCMode= RMAPPacket::AutoCRC;
-  u32 dataCRCMode= RMAPPacket::AutoCRC;
+  std::vector<u8> wholePacket{};
+
+  u32 headerCRCMode = RMAPPacket::AutoCRC;
+  u32 dataCRCMode = RMAPPacket::AutoCRC;
 
   bool headerCRCIsChecked{};
   bool dataCRCIsChecked{};

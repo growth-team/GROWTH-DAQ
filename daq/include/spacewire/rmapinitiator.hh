@@ -4,7 +4,6 @@
 #include "spacewire/rmapengine.hh"
 #include "spacewire/rmappacket.hh"
 #include "spacewire/rmapprotocol.hh"
-#include "spacewire/rmapreplyexception.hh"
 #include "spacewire/rmapreplystatus.hh"
 #include "spacewire/rmaptargetnode.hh"
 #include "spacewire/rmaptransaction.hh"
@@ -63,20 +62,16 @@ class RMAPInitiator {
     replyPacket.reset(new RMAPPacket());
   }
 
-  void read(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer,
+  void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer,
             f64 timeoutDuration = DefaultTimeoutDuration) {
     std::lock_guard<std::mutex> guard(transactionLock_);
     replyPacket.reset();
     commandPacket->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
     commandPacket->setRead();
     commandPacket->setCommand();
-    if (incrementMode) {
-      commandPacket->setIncrementMode();
-    } else {
-      commandPacket->setNoIncrementMode();
-    }
-    commandPacket->setNoVerifyMode();
-    commandPacket->setReplyMode();
+    commandPacket->setIncrementFlag(incrementMode);
+    commandPacket->setVerifyFlag(false);
+    commandPacket->setReplyFlag(true);
     commandPacket->setExtendedAddress(0x00);
     commandPacket->setAddress(memoryAddress);
     commandPacket->setDataLength(length);
@@ -85,7 +80,7 @@ class RMAPInitiator {
     commandPacket->setRMAPTargetInformation(rmapTargetNode);
     transaction.commandPacket = commandPacket.get();
     try {
-      rmapEngine_->initiateTransaction(transaction);
+      rmapEngine_->initiateTransaction(&transaction);
     } catch (RMAPEngineException& e) {
       transaction.state = RMAPTransaction::NotInitiated;
       throw RMAPInitiatorException(RMAPInitiatorException::RMAPTransactionCouldNotBeInitiated);
@@ -96,7 +91,7 @@ class RMAPInitiator {
     transaction.condition.wait(timeoutDuration);
     if (transaction.state == RMAPTransaction::ReplyReceived) {
       replyPacket = transaction.replyPacket;
-      transaction.replyPacket = NULL;
+      transaction.replyPacket = nullptr;
       if (replyPacket->getStatus() != RMAPReplyStatus::CommandExcecutedSuccessfully) {
         const u8 replyStatus = replyPacket->getStatus();
         transaction.state = RMAPTransaction::NotInitiated;
@@ -118,28 +113,16 @@ class RMAPInitiator {
     }
   }
 
-  void write(RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u8* data, u32 length,
+  void write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, const u8* data, u32 length,
              f64 timeoutDuration = DefaultTimeoutDuration) {
     std::lock_guard<std::mutex> guard(transactionLock_);
     replyPacket.reset();
     commandPacket->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
     commandPacket->setWrite();
     commandPacket->setCommand();
-    if (incrementMode) {
-      commandPacket->setIncrementMode();
-    } else {
-      commandPacket->setNoIncrementMode();
-    }
-    if (verifyMode) {
-      commandPacket->setVerifyMode();
-    } else {
-      commandPacket->setNoVerifyMode();
-    }
-    if (replyMode) {
-      commandPacket->setReplyMode();
-    } else {
-      commandPacket->setNoReplyMode();
-    }
+    commandPacket->setIncrementFlag(incrementMode);
+    commandPacket->setVerifyFlag(verifyMode);
+    commandPacket->setReplyFlag(replyMode);
     commandPacket->setExtendedAddress(0x00);
     commandPacket->setAddress(memoryAddress);
     commandPacket->setDataLength(length);
@@ -147,7 +130,7 @@ class RMAPInitiator {
     commandPacket->setData(data, length);
     transaction.commandPacket = commandPacket.get();
     setRMAPTransactionOptions(transaction);
-    rmapEngine_->initiateTransaction(transaction);
+    rmapEngine_->initiateTransaction(&transaction);
 
     if (!replyMode) {  // if reply is not expected
       if (transaction.state == RMAPTransaction::Initiated) {

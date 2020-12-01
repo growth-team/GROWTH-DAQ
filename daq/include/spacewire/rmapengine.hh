@@ -5,10 +5,9 @@
 #include <chrono>
 #include <thread>
 
-#include "RMAPTarget.hh"
-#include "RMAPTransaction.hh"
-#include "SpaceWireIF.hh"
-#include "SpaceWireUtilities.hh"
+#include "spacewire/rmaptransaction.hh"
+#include "spacewire/spacewireif.hh"
+#include "spacewire/spacewireutilities.hh"
 
 class RMAPEngineException : public CxxUtilities::Exception {
  public:
@@ -28,16 +27,16 @@ class RMAPEngineException : public CxxUtilities::Exception {
     causeIsRegistered = false;
   }
 
-  virtual ~RMAPEngineException() = default;
+  virtual ~RMAPEngineException() override = default;
 
   RMAPEngineException(u32 status, RMAPPacket* packetCausedThisException) : CxxUtilities::Exception(status) {
     this->rmapPacketCausedThisException = packetCausedThisException;
     causeIsRegistered = true;
   }
 
-  RMAPPacket* getRMAPPacketCausedThisException() { return rmapPacketCausedThisException; }
+  const RMAPPacket* getRMAPPacketCausedThisException() const { return rmapPacketCausedThisException; }
 
-  bool isRMAPPacketCausedThisExceptionRegistered() { return causeIsRegistered; }
+  bool isRMAPPacketCausedThisExceptionRegistered() const { return causeIsRegistered; }
 
   std::string toString() {
     std::string result;
@@ -81,7 +80,7 @@ class RMAPEngine : public CxxUtilities::Thread {
     initialize();
     this->spwif = spwif;
   }
-  ~RMAPEngine() = default;
+  ~RMAPEngine() override = default;
 
   void run() {
     stopped = false;
@@ -91,18 +90,18 @@ class RMAPEngine : public CxxUtilities::Thread {
     while (!stopped) {
       try {
         RMAPPacket* rmapPacket = receivePacket();
-        if (rmapPacket == NULL) {
-          // do nothing
-        } else if (rmapPacket->isCommand()) {
-          nDiscardedReceivedCommandPackets++;
-        } else {
-          rmapReplyPacketReceived(rmapPacket);
+        if (rmapPacket) {
+          if (rmapPacket->isCommand()) {
+            nDiscardedReceivedCommandPackets++;
+          } else {
+            rmapReplyPacketReceived(rmapPacket);
+          }
         }
       } catch (RMAPPacketException& e) {
-        cerr << "RMAPEngine::run() got RMAPPacketException " << e.toString() << endl;
+        std::cerr << "RMAPEngine::run() got RMAPPacketException " << e.toString() << std::endl;
         break;
       } catch (RMAPEngineException& e) {
-        cerr << "RMAPEngine::run() got RMAPEngineException " << e.toString() << endl;
+        std::cerr << "RMAPEngine::run() got RMAPEngineException " << e.toString() << std::endl;
         break;
       }
     }
@@ -123,6 +122,9 @@ class RMAPEngine : public CxxUtilities::Thread {
   }
 
   void initiateTransaction(RMAPTransaction* transaction) {
+    if (!isStarted()) {
+      throw RMAPEngineException(RMAPEngineException::RMAPEngineIsNotStarted);
+    }
     transaction->state = RMAPTransaction::NotInitiated;
     RMAPPacket* commandPacket = transaction->getCommandPacket();
     const auto transactionID = getNextAvailableTransactionID();
@@ -133,21 +135,14 @@ class RMAPEngine : public CxxUtilities::Thread {
       transactions[transactionID] = transaction;
     } else {
       // otherwise put back transaction Id to available id list
-      pushBackUtilizedTransactionID(transactionID);
+      returnTransactionID(transactionID);
     }
     // send a command packet
     commandPacket->setTransactionID(transactionID);
     commandPacket->constructPacket();
-    if (isStarted()) {
-      sendPacket(commandPacket->getPacketBufferPointer());
-      {
-        std::lock_guard<std::mutex> stateGuard(transaction->stateMutex);
-        sendPacket(commandPacket->getPacketBufferPointer());
-        transaction->state = RMAPTransaction::Initiated;
-      }
-    } else {
-      throw RMAPEngineException(RMAPEngineException::RMAPEngineIsNotStarted);
-    }
+    std::lock_guard<std::mutex> stateGuard(transaction->stateMutex);
+    spwif->send(commandPacket->getPacketBufferPointer());
+    transaction->state = RMAPTransaction::Initiated;
   }
 
   void deleteTransactionIDFromDB(u16 transactionID) {
@@ -157,7 +152,7 @@ class RMAPEngine : public CxxUtilities::Thread {
     if (it != transactions.end()) {
       transactions.erase(it);
       // put back the transaction id to the available list
-      pushBackUtilizedTransactionID(transactionID);
+      returnTransactionID(transactionID);
     }
   }
 
@@ -166,8 +161,6 @@ class RMAPEngine : public CxxUtilities::Thread {
     const auto transactionID = commandPacket->getTransactionID();
     deleteTransactionIDFromDB(transactionID);
   }
-
-  void sendPacket(std::vector<u8>* bytes) { spwif->send(bytes); }
 
   bool isStarted() const { return !stopped; }
 
@@ -191,20 +184,12 @@ class RMAPEngine : public CxxUtilities::Thread {
     for (size_t i = 0; i < MaximumTIDNumber; i++) {
       availableTransactionIDList.push_back(i);
     }
-    stopped = true;
-
-    nDiscardedReceivedCommandPackets = 0;
-    nDiscardedReceivedPackets = 0;
-    nErrorneousReplyPackets = 0;
-    nErrorneousCommandPackets = 0;
-    nTransactionsAbortedWhenReplying = 0;
-    nErrorInRMAPReplyPacketProcessing = 0;
   }
 
   u16 getNextAvailableTransactionID() {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
-    if (availableTransactionIDList.size() != 0) {
-      unsigned int tid = *(availableTransactionIDList.begin());
+    if (!availableTransactionIDList.empty()) {
+      const auto tid = availableTransactionIDList.front();
       availableTransactionIDList.pop_front();
       return tid;
     } else {
@@ -212,13 +197,12 @@ class RMAPEngine : public CxxUtilities::Thread {
     }
   }
 
-  void pushBackUtilizedTransactionID(u16 transactionID) {
+  void returnTransactionID(u16 transactionID) {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
     availableTransactionIDList.push_back(transactionID);
   }
 
   RMAPPacket* receivePacket() {
-    using namespace std;
     std::vector<u8>* buffer = new std::vector<u8>;
     try {
       spwif->receive(buffer);
@@ -251,8 +235,8 @@ class RMAPEngine : public CxxUtilities::Thread {
 
   RMAPTransaction* resolveTransaction(RMAPPacket* packet) {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
-    u16 transactionID = packet->getTransactionID();
-    if (isTransactionIDAvailable(transactionID) == true) {  // if tid is not in use
+    const auto transactionID = packet->getTransactionID();
+    if (isTransactionIDAvailable(transactionID)) {  // if tid is not in use
       throw RMAPEngineException(RMAPEngineException::UnexpectedRMAPReplyPacketWasReceived, packet);
     } else {  // if tid is registered to tid db
       // resolve transaction
@@ -265,7 +249,6 @@ class RMAPEngine : public CxxUtilities::Thread {
   }
 
   void rmapReplyPacketReceived(RMAPPacket* packet) {
-    using namespace std;
     try {
       // find a corresponding command packet
       RMAPTransaction* transaction;
@@ -283,9 +266,7 @@ class RMAPEngine : public CxxUtilities::Thread {
         std::lock_guard<std::mutex> stateGuard(transaction->stateMutex);
         transaction->setState(RMAPTransaction::ReplyReceived);
       }
-      if (!transaction->isNonblockingMode) {
-        transaction->getCondition()->signal();
-      }
+      transaction->getCondition()->signal();
     } catch (CxxUtilities::MutexException& e) {
       std::cerr << "Fatal error in RMAPEngine::rmapReplyPacketReceived()... :-(" << std::endl;
       std::cerr << "RMAPEngine tries to recover normal operation, but may fail continuously." << std::endl;

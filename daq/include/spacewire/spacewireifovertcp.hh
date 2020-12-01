@@ -3,9 +3,9 @@
 
 #include "CxxUtilities/CxxUtilities.hh"
 
-#include "SpaceWireIF.hh"
-#include "SpaceWireUtilities.hh"
-#include "SpaceWireSSDTPModule.hh"
+#include "spacewire/spacewireif.hh"
+#include "spacewire/spacewireutilities.hh"
+#include "spacewire/spacewiressdtpmodule.hh"
 
 class SpaceWireIFOverTCP: public SpaceWireIF, public SpaceWireIFActionTimecodeScynchronizedAction {
 private:
@@ -63,7 +63,7 @@ public:
 	}
 
 public:
-	void open() throw (SpaceWireIFException) {
+	void open()  {
 		using namespace std;
 		using namespace std;
 		using namespace CxxUtilities;
@@ -100,7 +100,7 @@ public:
 		state = Opened;
 	}
 
-	void close() throw (SpaceWireIFException) {
+	void close()  {
 		using namespace CxxUtilities;
 		using namespace std;
 		if (state == Closed) {
@@ -133,8 +133,8 @@ public:
 	}
 
 public:
-	void send(u8* data, size_t length, SpaceWireEOPMarker::EOPType eopType = SpaceWireEOPMarker::EOP)
-			throw (SpaceWireIFException) {
+	void send(u8* data, size_t length, EOPType eopType = EOP)
+			 {
 		using namespace std;
 		if (ssdtp == NULL) {
 			throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened);
@@ -151,14 +151,14 @@ public:
 	}
 
 public:
-	void receive(std::vector<u8>* buffer) throw (SpaceWireIFException) {
+	void receive(std::vector<u8>* buffer)  {
 		if (ssdtp == NULL) {
 			throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened);
 		}
 		try {
 			u32 eopType;
 			ssdtp->receive(buffer, eopType);
-			if (eopType == SpaceWireEOPMarker::EEP) {
+			if (eopType == EEP) {
 				this->setReceivedPacketEOPMarkerType(SpaceWireIF::EEP);
 				if (this->eepShouldBeReportedAsAnException_) {
 					throw SpaceWireIFException(SpaceWireIFException::EEP);
@@ -182,7 +182,7 @@ public:
 	}
 
 public:
-	void emitTimecode(u8 timeIn, u8 controlFlagIn = 0x00) throw (SpaceWireIFException) {
+	void emitTimecode(u8 timeIn, u8 controlFlagIn = 0x00)  {
 		using namespace std;
 		if (ssdtp == NULL) {
 			throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened);
@@ -203,26 +203,25 @@ public:
 			throw SpaceWireIFException(SpaceWireIFException::Disconnected);
 		}
 		//invoke timecode synchronized action
-		if (timecodeSynchronizedActions.size() != 0) {
+		if (!timecodeSynchronizedActions.empty()) {
 			this->invokeTimecodeSynchronizedActions(timeIn);
 		}
 	}
 
 public:
-	virtual void setTxLinkRate(u32 linkRateType) throw (SpaceWireIFException) {
+	virtual void setTxLinkRate(u32 linkRateType)  {
 		using namespace std;
 		cerr << "SpaceWireIFOverIPClient::setTxLinkRate() is not implemented." << endl;
 		cerr << "Please use SpaceWireIFOverIPClient::setTxDivCount() instead." << endl;
 		throw SpaceWireIFException(SpaceWireIFException::FunctionNotImplemented);
 	}
 
-	virtual u32 getTxLinkRateType() throw (SpaceWireIFException) {
+	virtual u32 getTxLinkRateType()  {
 		using namespace std;
 		cerr << "SpaceWireIFOverIPClient::getTxLinkRate() is not implemented." << endl;
 		throw SpaceWireIFException(SpaceWireIFException::FunctionNotImplemented);
 	}
 
-public:
 	void setTxDivCount(u8 txdivcount) {
 		if (ssdtp == NULL) {
 			throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened);
@@ -242,14 +241,13 @@ public:
 		}
 	}
 
-public:
-	void setTimeoutDuration(double microsecond) throw (SpaceWireIFException) {
+	void setTimeoutDuration(double microsecond)  {
 		datasocket->setTimeout(microsecond / 1000.);
 		timeoutDurationInMicroSec = microsecond;
 	}
 
 public:
-	u8 getTimeCode() throw (SpaceWireIFException) {
+	u8 getTimeCode()  {
 		if (ssdtp == NULL) {
 			throw SpaceWireIFException(SpaceWireIFException::LinkIsNotOpened);
 		}

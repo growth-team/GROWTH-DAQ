@@ -1,8 +1,7 @@
-#include "SerialPort.hh"
-
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include "spacewire/serialport.hh"
 
 SerialPort::SerialPort(const std::string& deviceName, size_t baudRate) {
   serial::Timeout timeout(10, 10, 10, 10, 10);

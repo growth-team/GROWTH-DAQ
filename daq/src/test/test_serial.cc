@@ -1,5 +1,5 @@
+#include "../serialport.hh"
 #include "CxxUtilities/CxxUtilities.hh"
-#include "SerialPort.hh"
 
 class ReceiveThread : public CxxUtilities::StoppableThread {
  private:
