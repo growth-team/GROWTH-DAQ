@@ -7,12 +7,8 @@
 
 #include "spacewire/serialport.hh"
 #include "spacewire/spacewireif.hh"
+#include "spacewire/spacewiressdtpmodule.hh"
 #include "types.h"
-
-class SpaceWireSSDTPException : public std::runtime_error {
- public:
-  SpaceWireSSDTPException(const std::string& message) : std::runtime_error(message) {}
-};
 
 /** A class that performs synchronous data transfer via
  * UART using "Simple- Synchronous- Data Transfer Protocol".
@@ -20,9 +16,7 @@ class SpaceWireSSDTPException : public std::runtime_error {
 class SpaceWireSSDTPModuleUART {
  public:
   SpaceWireSSDTPModuleUART(SerialPort* serialPort)
-      : serialPort_(serialPort),
-        sendBuffer_(SpaceWireSSDTPModule::BufferSize, 0),
-        receiveBuffer_(SpaceWireSSDTPModule::BufferSize, 0) {}
+      : serialPort_(serialPort), sendBuffer_(BufferSize), receiveBuffer_(BufferSize) {}
 
   ~SpaceWireSSDTPModuleUART() = default;
 
@@ -31,11 +25,11 @@ class SpaceWireSSDTPModuleUART {
     if (closed_) {
       return;
     }
-    if (eopType == SpaceWireEOPMarker::EOP) {
+    if (eopType == EOPType::EOP) {
       sheader_[0] = DataFlag_Complete_EOP;
-    } else if (eopType == SpaceWireEOPMarker::EEP) {
+    } else if (eopType == EOPType::EEP) {
       sheader_[0] = DataFlag_Complete_EEP;
-    } else if (eopType == SpaceWireEOPMarker::Continued) {
+    } else if (eopType == EOPType::Continued) {
       sheader_[0] = DataFlag_Flagmented;
     }
     sheader_[1] = 0x00;
@@ -48,7 +42,7 @@ class SpaceWireSSDTPModuleUART {
       serialPort_->send(sheader_.data(), 12);
       serialPort_->send(data, length);
     } catch (...) {
-      throw SpaceWireSSDTPException("Disconnected");
+      throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
     }
   }
 
@@ -72,7 +66,7 @@ class SpaceWireSSDTPModuleUART {
         try {
           while (hsize != 12) {
             if (closed_) {
-              throw SpaceWireSSDTPException("disconnected");
+              throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
             }
             if (receiveCanceled_) {
               receiveCanceled_ = false;
@@ -81,10 +75,10 @@ class SpaceWireSSDTPModuleUART {
             const size_t result = serialPort_->receive(rheader_.data() + hsize, 12 - hsize);
             hsize += result;
           }
-        } catch (SerialPortTimeoutException& e) {
-          throw SpaceWireSSDTPException("timeout");
+        } catch (const SerialPortTimeoutException& e) {
+          throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
         } catch (...) {
-          throw SpaceWireSSDTPException("disconnected");
+          throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
         }
         u8* data_pointer = receiveBuffer_.data();
 
@@ -92,12 +86,12 @@ class SpaceWireSSDTPModuleUART {
         if (rheader_[0] == DataFlag_Complete_EOP || rheader_[0] == DataFlag_Complete_EEP ||
             rheader_[0] == DataFlag_Flagmented) {
           // data
-          for (u32 i = 2; i < 12; i++) {
+          for (size_t i = 2; i < 12; i++) {
             flagment_size = flagment_size * 0x100 + rheader_[i];
           }
           // verify fragment size
           if (flagment_size > BufferSize) {
-            throw SpaceWireSSDTPException("fragment size too large");
+            throw SpaceWireSSDTPException(SpaceWireSSDTPException::DataSizeTooLarge);
           }
 
           while (received_size != flagment_size) {
@@ -110,7 +104,7 @@ class SpaceWireSSDTPModuleUART {
             try {
               result = serialPort_->receive(data_pointer + size + received_size, flagment_size - received_size);
             } catch (const SerialPortTimeoutException& e) {
-              SpaceWireSSDTPException("data receive failed");
+              throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
             }
             received_size += result;
           }
@@ -124,10 +118,10 @@ class SpaceWireSSDTPModuleUART {
               receivedSize += result;
             }
           } catch (const SerialPortTimeoutException& e) {
-            SpaceWireSSDTPException("timecode receive failed");
+            throw SpaceWireSSDTPException(SpaceWireSSDTPException::TimecodeReceiveError);
           }
         } else {
-          throw SpaceWireSSDTPException("receive failed");
+          throw SpaceWireSSDTPException(SpaceWireSSDTPException::ReceiveFailed);
         }
       }
       data->resize(size);
@@ -148,7 +142,7 @@ class SpaceWireSSDTPModuleUART {
     } catch (const SpaceWireSSDTPException& e) {
       throw e;
     } catch (const SerialPortTimeoutException& e) {
-      throw SpaceWireSSDTPException("receive timeout");
+      throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
     }
   }
 
@@ -157,7 +151,7 @@ class SpaceWireSSDTPModuleUART {
     try {
       serialPort_->send(data, length);
     } catch (const SerialPortTimeoutException& e) {
-      throw SpaceWireSSDTPException("send timeout");
+      throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
     }
   }
   void close() { closed_ = true; }
@@ -165,8 +159,8 @@ class SpaceWireSSDTPModuleUART {
 
  private:
   std::shared_ptr<SerialPort> serialPort_;
-  std::vector<u8> sendBuffer_;
-  std::vector<u8> receiveBuffer_;
+  std::vector<u8> sendBuffer_{};
+  std::vector<u8> receiveBuffer_{};
   u8 internalTimecode_{};
   u32 latestSendSize_{};
   std::mutex sendMutex_;

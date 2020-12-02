@@ -5,9 +5,56 @@
 
 class SpaceWireIF;
 
-class SpaceWireIFException : public std::runtime_error {
+class SpaceWireIFException : public Exception {
  public:
-  SpaceWireIFException(const std::string& message) : std::runtime_error(message) {}
+  enum {
+    OpeningConnectionFailed,
+    Disconnected,
+	ReceiveFailed,
+	SendFailed,
+    Timeout,
+    EEP,
+    ReceiveBufferTooSmall,
+    FunctionNotImplemented,
+    LinkIsNotOpened
+  };
+  SpaceWireIFException(u32 status) : Exception(status) {}
+  std::string toString() const override {
+    std::string result;
+    switch (status) {
+      case OpeningConnectionFailed:
+        result = "OpeningConnectionFailed";
+        break;
+      case Disconnected:
+        result = "Disconnected";
+        break;
+      case ReceiveFailed:
+        result = ReceiveFailed;
+        break;
+      case SendFailed:
+        result = "SendFailed";
+        break;
+      case Timeout:
+        result = "Timeout";
+        break;
+      case EEP:
+        result = "EEP";
+        break;
+      case ReceiveBufferTooSmall:
+        result = "ReceiveBufferTooSmall";
+        break;
+      case FunctionNotImplemented:
+        result = "FunctionNotImplemented";
+        break;
+      case LinkIsNotOpened:
+        result = "LinkIsNotOpened";
+        break;
+      default:
+        result = "Undefined status";
+        break;
+    }
+    return result;
+  }
 };
 
 /** An abstract class for encapsulation of a SpaceWire interface.
@@ -29,7 +76,7 @@ class SpaceWireIF {
   virtual void send(u8* data, size_t length, EOPType eopType = EOPType::EOP) = 0;
   virtual void receive(u8* buffer, EOPType& eopType, size_t maxLength, size_t& length) {
     std::vector<u8>* packet = this->receive();
-    size_t packetSize = packet->size();
+    const size_t packetSize = packet->size();
     if (packetSize == 0) {
       length = 0;
     } else {
@@ -39,7 +86,7 @@ class SpaceWireIF {
       } else {
         memcpy(buffer, &(packet->at(0)), maxLength);
         delete packet;
-        throw SpaceWireIFException("receive buffer too small");
+        throw SpaceWireIFException(SpaceWireIFException::ReceiveBufferTooSmall);
       }
     }
     delete packet;

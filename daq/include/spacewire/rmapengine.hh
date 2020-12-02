@@ -280,7 +280,7 @@ class RMAPEngine : public CxxUtilities::Thread {
   static const size_t MaximumTIDNumber = 65536;
   static constexpr double DefaultReceiveTimeoutDurationInMicroSec = 200000;  // 200ms
 
-  std::atomic<bool> stopped = true;
+  std::atomic<bool> stopped{true};
   std::atomic<bool> hasStopped{};
 
   size_t nDiscardedReceivedCommandPackets{};

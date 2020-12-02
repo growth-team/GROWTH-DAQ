@@ -33,7 +33,6 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 include_directories(SYSTEM
   include
   include/picojson
-  include/SpaceWireRMAPLibrary/includes/SpaceWireRMAPLibrary
   include/XMLUtilities/include
   include/CxxUtilities/includes
   external/serial/include

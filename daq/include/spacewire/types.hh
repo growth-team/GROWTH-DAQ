@@ -20,4 +20,15 @@ class RMAPEngine;
 class RMAPPacket;
 using RMAPEnginePtr = std::shared_ptr<RMAPEngine>;
 using RMAPPacketPtr = std::unique_ptr<RMAPPacket>;
+
+class Exception {
+ public:
+  Exception(u32 status) : status_(status) {}
+  virtual ~Exception() = default;
+  virtual std::string toString() const = 0;
+  u32 getStatus() const { return status_; }
+
+ protected:
+  u32 status_{};
+};
 #endif

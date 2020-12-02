@@ -42,7 +42,11 @@ class SpaceWireIFOverUART : public SpaceWireIF {
     try {
       ssdtp_->send(data, length, eopType);
     } catch (const SpaceWireSSDTPException& e) {
-      throw SpaceWireIFException(e.what());
+      if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
+        throw SpaceWireIFException(SpaceWireIFException::Timeout);
+      } else {
+        throw SpaceWireIFException(SpaceWireIFException::SendFailed);
+      }
     }
   }
 
@@ -53,16 +57,20 @@ class SpaceWireIFOverUART : public SpaceWireIF {
       ssdtp_->receive(buffer, eopType);
       if (eopType == EOPType::EEP) {
         this->setReceivedPacketEOPMarkerType(EOPType::EEP);
-        if (this->eepShouldBeReportedAsAnException_) {
-          throw SpaceWireIFException("eep received");
+        if (eepShouldBeReportedAsAnException_) {
+          throw SpaceWireIFException(SpaceWireIFException::EEP);
         }
       } else {
         this->setReceivedPacketEOPMarkerType(EOPType::EOP);
       }
-    } catch (SpaceWireSSDTPException& e) {
-      throw SpaceWireIFException("timeout");
-    } catch (SerialPortTimeoutException& e) {
-      throw SpaceWireIFException("timeout");
+    } catch (const SpaceWireSSDTPException& e) {
+      if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
+        throw SpaceWireIFException(SpaceWireIFException::Timeout);
+      } else {
+        throw SpaceWireIFException(SpaceWireIFException::SendFailed);
+      }
+    } catch (const SerialPortTimeoutException& e) {
+      throw SpaceWireIFException(SpaceWireIFException::Timeout);
     }
   }
 
