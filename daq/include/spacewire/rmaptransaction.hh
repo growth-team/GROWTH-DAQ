@@ -34,10 +34,25 @@ class RMAPTransaction {
   RMAPPacket* commandPacket{};
   RMAPPacket* replyPacket{};
 
+
+  void signal() {
+
+  }
+  void wait(u32 millis=1000) {
+	  std::unique_lock<std::mutex> conditionLock(conditionMutex);
+	  condition.wait_for(conditionLock, __d)
+
+  }
+
   void setStateWithLock(State newState) {
     std::lock_guard<std::mutex> guard(stateMutex);
     state = newState;
   }
+
+ private:
+  std::mutex conditionMutex;
+  std::unique_lock<std::mutex> conditionLock;
+  std::condition_variable condition;
 
 };
 

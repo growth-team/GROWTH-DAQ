@@ -8,7 +8,7 @@
 #include "spacewire/rmaptargetnode.hh"
 #include "spacewire/rmaptransaction.hh"
 
-class RMAPInitiatorException : public CxxUtilities::Exception {
+class RMAPInitiatorException : public Exception {
  public:
   enum {
     Timeout = 0x100,
@@ -19,16 +19,11 @@ class RMAPInitiatorException : public CxxUtilities::Exception {
     RMAPTransactionCouldNotBeInitiated,
   };
 
- public:
-  RMAPInitiatorException(u32 status) : CxxUtilities::Exception(status) {}
-
- public:
-  virtual ~RMAPInitiatorException() {}
-
- public:
-  std::string toString() {
+  RMAPInitiatorException(u32 status) : Exception(status) {}
+  virtual ~RMAPInitiatorException() = default;
+  std::string toString() const override{
     std::string result;
-    switch (status) {
+    switch (status_) {
       case Timeout:
         result = "Timeout";
         break;
@@ -81,7 +76,7 @@ class RMAPInitiator {
     transaction.commandPacket = commandPacket.get();
     try {
       rmapEngine_->initiateTransaction(&transaction);
-    } catch (RMAPEngineException& e) {
+    } catch (const RMAPEngineException& e) {
       transaction.state = RMAPTransaction::NotInitiated;
       throw RMAPInitiatorException(RMAPInitiatorException::RMAPTransactionCouldNotBeInitiated);
     } catch (...) {

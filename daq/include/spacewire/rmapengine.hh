@@ -8,8 +8,9 @@
 #include "spacewire/rmaptransaction.hh"
 #include "spacewire/spacewireif.hh"
 #include "spacewire/spacewireutilities.hh"
+#include "spacewire/types.hh"
 
-class RMAPEngineException : public CxxUtilities::Exception {
+class RMAPEngineException : public Exception {
  public:
   enum {
     RMAPEngineIsNotStarted,
@@ -21,26 +22,11 @@ class RMAPEngineException : public CxxUtilities::Exception {
     UnexpectedRMAPReplyPacketWasReceived
   };
 
- public:
-  RMAPEngineException(u32 status) : CxxUtilities::Exception(status) {
-    rmapPacketCausedThisException = NULL;
-    causeIsRegistered = false;
-  }
-
+  RMAPEngineException(u32 status) : Exception(status) {}
   virtual ~RMAPEngineException() override = default;
-
-  RMAPEngineException(u32 status, RMAPPacket* packetCausedThisException) : CxxUtilities::Exception(status) {
-    this->rmapPacketCausedThisException = packetCausedThisException;
-    causeIsRegistered = true;
-  }
-
-  const RMAPPacket* getRMAPPacketCausedThisException() const { return rmapPacketCausedThisException; }
-
-  bool isRMAPPacketCausedThisExceptionRegistered() const { return causeIsRegistered; }
-
-  std::string toString() {
+  std::string toString() const override {
     std::string result;
-    switch (status) {
+    switch (status_) {
       case RMAPEngineIsNotStarted:
         result = "RMAPEngineIsNotStarted";
         break;
@@ -68,19 +54,19 @@ class RMAPEngineException : public CxxUtilities::Exception {
     }
     return result;
   }
-
- private:
-  RMAPPacket* rmapPacketCausedThisException;
-  bool causeIsRegistered;
 };
 
-class RMAPEngine : public CxxUtilities::Thread {
+class RMAPEngine {
  public:
-  RMAPEngine(SpaceWireIF* spwif) {
-    initialize();
-    this->spwif = spwif;
+  RMAPEngine(SpaceWireIF* spwif) : spwif(spwif) { initialize(); }
+  ~RMAPEngine() {
+    stopped = true;
+    if (runThread.joinable()) {
+      runThread.join();
+    }
   }
-  ~RMAPEngine() override = default;
+
+  void start() { runThread = std::thread(&RMAPEngine::run, this); }
 
   void run() {
     stopped = false;
@@ -97,11 +83,9 @@ class RMAPEngine : public CxxUtilities::Thread {
             rmapReplyPacketReceived(rmapPacket);
           }
         }
-      } catch (RMAPPacketException& e) {
-        std::cerr << "RMAPEngine::run() got RMAPPacketException " << e.toString() << std::endl;
+      } catch (const RMAPPacketException& e) {
         break;
-      } catch (RMAPEngineException& e) {
-        std::cerr << "RMAPEngine::run() got RMAPEngineException " << e.toString() << std::endl;
+      } catch (const RMAPEngineException& e) {
         break;
       }
     }
@@ -126,11 +110,11 @@ class RMAPEngine : public CxxUtilities::Thread {
       throw RMAPEngineException(RMAPEngineException::RMAPEngineIsNotStarted);
     }
     transaction->state = RMAPTransaction::NotInitiated;
-    RMAPPacket* commandPacket = transaction->getCommandPacket();
+    RMAPPacket* commandPacket = transaction->commandPacket;
     const auto transactionID = getNextAvailableTransactionID();
     // register the transaction to management list
     // if Reply is required
-    if (transaction->commandPacket->isReplyFlagSet()) {
+    if (commandPacket->isReplyFlagSet()) {
       std::lock_guard<std::mutex> guard(transactionIDMutex);
       transactions[transactionID] = transaction;
     } else {
@@ -141,7 +125,8 @@ class RMAPEngine : public CxxUtilities::Thread {
     commandPacket->setTransactionID(transactionID);
     commandPacket->constructPacket();
     std::lock_guard<std::mutex> stateGuard(transaction->stateMutex);
-    spwif->send(commandPacket->getPacketBufferPointer());
+    const auto packet = commandPacket->getPacketBufferPointer();
+    spwif->send(packet->data(), packet->size());
     transaction->state = RMAPTransaction::Initiated;
   }
 
@@ -157,7 +142,7 @@ class RMAPEngine : public CxxUtilities::Thread {
   }
 
   void cancelTransaction(RMAPTransaction* transaction) {
-    RMAPPacket* commandPacket = transaction->getCommandPacket();
+    const RMAPPacket* commandPacket = transaction->commandPacket;
     const auto transactionID = commandPacket->getTransactionID();
     deleteTransactionIDFromDB(transactionID);
   }
@@ -206,13 +191,13 @@ class RMAPEngine : public CxxUtilities::Thread {
     std::vector<u8>* buffer = new std::vector<u8>;
     try {
       spwif->receive(buffer);
-    } catch (SpaceWireIFException& e) {
+    } catch (const SpaceWireIFException& e) {
       delete buffer;
-      if (e.status == SpaceWireIFException::Disconnected) {
+      if (e.getStatus() == SpaceWireIFException::Disconnected) {
         // tell run() that SpaceWireIF is disconnected
         throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
       } else {
-        if (e.status == SpaceWireIFException::Timeout) {
+        if (e.getStatus() == SpaceWireIFException::Timeout) {
           return NULL;
         } else {
           // tell run() that SpaceWireIF is disconnected
@@ -237,7 +222,7 @@ class RMAPEngine : public CxxUtilities::Thread {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
     const auto transactionID = packet->getTransactionID();
     if (isTransactionIDAvailable(transactionID)) {  // if tid is not in use
-      throw RMAPEngineException(RMAPEngineException::UnexpectedRMAPReplyPacketWasReceived, packet);
+      throw RMAPEngineException(RMAPEngineException::UnexpectedRMAPReplyPacketWasReceived);
     } else {  // if tid is registered to tid db
       // resolve transaction
       RMAPTransaction* transaction = transactions[transactionID];
@@ -251,29 +236,16 @@ class RMAPEngine : public CxxUtilities::Thread {
   void rmapReplyPacketReceived(RMAPPacket* packet) {
     try {
       // find a corresponding command packet
-      RMAPTransaction* transaction;
-      try {
-        transaction = this->resolveTransaction(packet);
-      } catch (RMAPEngineException& e) {
-        // if not found, increment error counter
-        nErrorneousReplyPackets++;
-        return;
-      }
+      auto transaction = this->resolveTransaction(packet);
       // register reply packet to the resolved transaction
       transaction->replyPacket = packet;
       // update transaction state
-      {
-        std::lock_guard<std::mutex> stateGuard(transaction->stateMutex);
-        transaction->setState(RMAPTransaction::ReplyReceived);
-      }
-      transaction->getCondition()->signal();
-    } catch (CxxUtilities::MutexException& e) {
-      std::cerr << "Fatal error in RMAPEngine::rmapReplyPacketReceived()... :-(" << std::endl;
-      std::cerr << "RMAPEngine tries to recover normal operation, but may fail continuously." << std::endl;
-      nErrorInRMAPReplyPacketProcessing++;
-    } catch (...) {
-      std::cerr << "Fatal error in RMAPEngine::rmapReplyPacketReceived()... :-(" << std::endl;
-      std::cerr << "RMAPEngine tries to recover normal operation, but may fail continuously." << std::endl;
+      transaction->setStateWithLock(RMAPTransaction::ReplyReceived);
+      transaction->signal();
+    } catch (RMAPEngineException& e) {
+      // if not found, increment error counter
+      nErrorneousReplyPackets++;
+      return;
     }
   }
 
@@ -296,6 +268,7 @@ class RMAPEngine : public CxxUtilities::Thread {
   u16 latestAssignedTransactionID;
 
   SpaceWireIF* spwif;
+  std::thread runThread{};
 };
 
 #endif
