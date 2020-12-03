@@ -31,4 +31,16 @@ class Exception {
  protected:
   u32 status_{};
 };
+
+class RMAPReplyException : public Exception {
+public:
+  RMAPReplyException(u32 status) : Exception(status) {}
+  std::string toString() const override {
+    std::stringstream ss;
+    ss << "Reply Status " << status_;
+    return ss.str();
+  }
+};
+
+using TransactionID = u16;
 #endif

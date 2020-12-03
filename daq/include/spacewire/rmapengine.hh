@@ -3,9 +3,12 @@
 
 #include <atomic>
 #include <chrono>
+#include <functional>
+#include <queue>
 #include <thread>
 
-#include "spacewire/rmaptransaction.hh"
+#include "spacewire/rmapinitiator.hh"
+#include "spacewire/rmappacket.hh"
 #include "spacewire/spacewireif.hh"
 #include "spacewire/spacewireutilities.hh"
 #include "spacewire/types.hh"
@@ -75,12 +78,12 @@ class RMAPEngine {
     spwif->setTimeoutDuration(DefaultReceiveTimeoutDurationInMicroSec);
     while (!stopped) {
       try {
-        RMAPPacket* rmapPacket = receivePacket();
+        std::unique_ptr<RMAPPacket> rmapPacket = receivePacket();
         if (rmapPacket) {
           if (rmapPacket->isCommand()) {
             nDiscardedReceivedCommandPackets++;
           } else {
-            rmapReplyPacketReceived(rmapPacket);
+            rmapReplyPacketReceived(std::move(rmapPacket));
           }
         }
       } catch (const RMAPPacketException& e) {
@@ -105,53 +108,39 @@ class RMAPEngine {
     }
   }
 
-  void initiateTransaction(RMAPTransaction* transaction) {
+  TransactionID initiateTransaction(RMAPPacket* commandPacket, RMAPInitiator* rmapInitiator) {
     if (!isStarted()) {
       throw RMAPEngineException(RMAPEngineException::RMAPEngineIsNotStarted);
     }
-    transaction->state = RMAPTransaction::NotInitiated;
-    RMAPPacket* commandPacket = transaction->commandPacket;
     const auto transactionID = getNextAvailableTransactionID();
-    // register the transaction to management list
-    // if Reply is required
+    // register the transaction to management list if Reply is required
     if (commandPacket->isReplyFlagSet()) {
       std::lock_guard<std::mutex> guard(transactionIDMutex);
-      transactions[transactionID] = transaction;
+      transactions[transactionID] = rmapInitiator;
     } else {
       // otherwise put back transaction Id to available id list
-      returnTransactionID(transactionID);
+      releaseTransactionID(transactionID);
     }
     // send a command packet
     commandPacket->setTransactionID(transactionID);
     commandPacket->constructPacket();
-    std::lock_guard<std::mutex> stateGuard(transaction->stateMutex);
     const auto packet = commandPacket->getPacketBufferPointer();
     spwif->send(packet->data(), packet->size());
-    transaction->state = RMAPTransaction::Initiated;
+    return transactionID;
   }
 
-  void deleteTransactionIDFromDB(u16 transactionID) {
-    // remove tid from management list
-    std::lock_guard<std::mutex> guard(transactionIDMutex);
-    const auto& it = transactions.find(transactionID);
-    if (it != transactions.end()) {
-      transactions.erase(it);
-      // put back the transaction id to the available list
-      returnTransactionID(transactionID);
-    }
-  }
-
-  void cancelTransaction(RMAPTransaction* transaction) {
-    const RMAPPacket* commandPacket = transaction->commandPacket;
-    const auto transactionID = commandPacket->getTransactionID();
-    deleteTransactionIDFromDB(transactionID);
-  }
+  void cancelTransaction(TransactionID transactionID) { deleteTransactionIDFromDB(transactionID); }
 
   bool isStarted() const { return !stopped; }
 
   bool isTransactionIDAvailable(u16 transactionID) {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
     return transactions.find(transactionID) == transactions.end();
+  }
+
+  void putBackRMAPPacketInstnce(RMAPPacketPtr&& packet) {
+    std::lock_guard<std::mutex> guard(freeRMAPPacketListMutex_);
+    freeRMAPPacketList_.push_back(packet);
   }
 
   size_t getNTransactions() const { return transactions.size(); }
@@ -182,70 +171,81 @@ class RMAPEngine {
     }
   }
 
-  void returnTransactionID(u16 transactionID) {
+  void deleteTransactionIDFromDB(TransactionID transactionID) {
+    std::lock_guard<std::mutex> guard(transactionIDMutex);
+    const auto& it = transactions.find(transactionID);
+    if (it != transactions.end()) {
+      transactions.erase(it);
+      releaseTransactionID(transactionID);
+    }
+  }
+
+  void releaseTransactionID(u16 transactionID) {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
     availableTransactionIDList.push_back(transactionID);
   }
-
-  RMAPPacket* receivePacket() {
-    std::vector<u8>* buffer = new std::vector<u8>;
+  std::unique_ptr<RMAPPacket> receivePacket() {
     try {
-      spwif->receive(buffer);
+      spwif->receive(&receivePacketBuffer_);
     } catch (const SpaceWireIFException& e) {
-      delete buffer;
       if (e.getStatus() == SpaceWireIFException::Disconnected) {
         // tell run() that SpaceWireIF is disconnected
         throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
       } else {
         if (e.getStatus() == SpaceWireIFException::Timeout) {
-          return NULL;
+          return nullptr;
         } else {
           // tell run() that SpaceWireIF is disconnected
           throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
         }
       }
     }
-    RMAPPacket* packet = new RMAPPacket();
+    std::unique_ptr<RMAPPacket> packet = reuseOrCreateRMAPPacket();
     try {
-      packet->interpretAsAnRMAPPacket(buffer);
-    } catch (RMAPPacketException& e) {
-      delete packet;
-      delete buffer;
+      packet->interpretAsAnRMAPPacket(&receivePacketBuffer_);
+    } catch (const RMAPPacketException& e) {
       nDiscardedReceivedPackets++;
-      return NULL;
+      return nullptr;
     }
-    delete buffer;
     return packet;
   }
 
-  RMAPTransaction* resolveTransaction(RMAPPacket* packet) {
+  RMAPInitiator* resolveTransaction(const RMAPPacket* packet) {
     std::lock_guard<std::mutex> guard(transactionIDMutex);
     const auto transactionID = packet->getTransactionID();
     if (isTransactionIDAvailable(transactionID)) {  // if tid is not in use
       throw RMAPEngineException(RMAPEngineException::UnexpectedRMAPReplyPacketWasReceived);
     } else {  // if tid is registered to tid db
       // resolve transaction
-      RMAPTransaction* transaction = transactions[transactionID];
+      RMAPInitiator* rmapInitiator = transactions[transactionID];
       // delete registered tid
       deleteTransactionIDFromDB(transactionID);
       // return resolved transaction
-      return transaction;
+      return rmapInitiator;
     }
   }
 
-  void rmapReplyPacketReceived(RMAPPacket* packet) {
+  void rmapReplyPacketReceived(std::unique_ptr<RMAPPacket> packet) {
     try {
       // find a corresponding command packet
-      auto transaction = this->resolveTransaction(packet);
+      auto rmapInitiator = resolveTransaction(packet.get());
       // register reply packet to the resolved transaction
-      transaction->replyPacket = packet;
-      // update transaction state
-      transaction->setStateWithLock(RMAPTransaction::ReplyReceived);
-      transaction->signal();
-    } catch (RMAPEngineException& e) {
+      rmapInitiator->replyReceived(std::move(packet));
+    } catch (const RMAPEngineException& e) {
       // if not found, increment error counter
       nErrorneousReplyPackets++;
       return;
+    }
+  }
+
+  RMAPPacketPtr reuseOrCreateRMAPPacket() {
+    std::lock_guard<std::mutex> guard(freeRMAPPacketListMutex_);
+    if (!freeRMAPPacketList_.empty()) {
+      RMAPPacketPtr packet{freeRMAPPacketList_.back()};
+      freeRMAPPacketList_.pop_back();
+      return packet;
+    } else {
+      return RMAPPacketPtr(new RMAPPacket);
     }
   }
 
@@ -262,13 +262,18 @@ class RMAPEngine {
   size_t nTransactionsAbortedWhenReplying{};
   size_t nErrorInRMAPReplyPacketProcessing{};
 
-  std::map<u16, RMAPTransaction*> transactions;
+  std::map<u16, RMAPInitiator*> transactions;
   std::mutex transactionIDMutex;
   std::list<u16> availableTransactionIDList;
   u16 latestAssignedTransactionID;
 
   SpaceWireIF* spwif;
   std::thread runThread{};
+
+  std::deque<RMAPPacketPtr> freeRMAPPacketList_;
+  std::mutex freeRMAPPacketListMutex_;
+
+  std::vector<u8> receivePacketBuffer_;
 };
 
 #endif

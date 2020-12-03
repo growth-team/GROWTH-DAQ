@@ -1,6 +1,8 @@
 #ifndef SPACEWIRE_RMAPUTILITIES_HH_
 #define SPACEWIRE_RMAPUTILITIES_HH_
 
+#include "spacewire/types.hh"
+
 class RMAPUtilities {
 public:
 	/** Calculates a CRC code for an array of bytes.

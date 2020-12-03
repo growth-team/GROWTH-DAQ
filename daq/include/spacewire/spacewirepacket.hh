@@ -3,12 +3,13 @@
 
 #include <vector>
 
-#include "spacewire/types.hh"
 #include "spacewire/spacewireprotocol.hh"
+#include "spacewire/types.hh"
 
 class SpaceWirePacket {
  public:
   SpaceWirePacket() = default;
+  SpaceWirePacket(u8 protocolID) : protocolID_(protocolID) {}
   virtual ~SpaceWirePacket() = default;
   void setProtocolID(u8 protocolID) { protocolID_ = protocolID; }
   u8 getProtocolID() const { return protocolID_; }

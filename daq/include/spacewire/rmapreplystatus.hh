@@ -1,6 +1,12 @@
 #ifndef SPACEWIRE_RMAPREPLYSTATUS_HH_
 #define SPACEWIRE_RMAPREPLYSTATUS_HH_
 
+#include <iomanip>
+#include <iostream>
+#include <string>
+
+#include "spacewire/types.hh"
+
 class RMAPReplyStatus {
  public:
   enum {
@@ -17,11 +23,8 @@ class RMAPReplyStatus {
     RMWDataLengthError = 0x0b,
     InvalidTargetLogicalAddress = 0x0c
   };
-  static std::string replyStatusToString(u8 status) const {
-    using namespace std;
-    // Status
+  static std::string replyStatusToString(u8 status) {
     std::string statusstring;
-    stringstream ss;
     switch (status) {
       case 0x00:
         statusstring = "Successfully Executed (0x00)";
@@ -59,20 +62,20 @@ class RMAPReplyStatus {
       case 0x0b:
         statusstring = "Invalid Target Logical Address (0x0b)";
         break;
-      default:
+      default: {
+        std::stringstream ss;
         ss << "Reserved ("
-           << "0x" << hex << right << setw(2) << setfill('0') << (u32)status << ")";
+           << "0x" << std::hex << std::right << std::setw(2) << std::setfill('0') << static_cast<u32>(status) << ")";
         statusstring = ss.str();
         break;
+      }
     }
     return statusstring;
   }
 
   static std::string replyStatusToStringWithoutCodeValue(u8 status) {
-    using namespace std;
-    // Status
     std::string statusstring;
-    stringstream ss;
+
     switch (status) {
       case 0x00:
         statusstring = "Successfully Executed";
@@ -113,11 +116,13 @@ class RMAPReplyStatus {
       case 0x0c:
         statusstring = "Invalid Target Logical Address";
         break;
-      default:
+      default: {
+        std::stringstream ss;
         ss << "Reserved ("
-           << "0x" << hex << right << setw(2) << setfill('0') << (u32)status << ")";
+           << "0x" << std::hex << std::right << std::setw(2) << std::setfill('0') << static_cast<u32>(status) << ")";
         statusstring = ss.str();
         break;
+      }
     }
     return statusstring;
   }

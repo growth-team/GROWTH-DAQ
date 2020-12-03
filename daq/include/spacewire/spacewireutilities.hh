@@ -2,6 +2,8 @@
 #define SPACEWIRE_SPACEWIREUTILITIES_HH_
 
 #include <cmath>
+#include <iostream>
+#include <iomanip>
 
 namespace spacewire::util {
 

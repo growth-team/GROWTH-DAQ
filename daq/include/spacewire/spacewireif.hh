@@ -21,7 +21,7 @@ class SpaceWireIFException : public Exception {
   SpaceWireIFException(u32 status) : Exception(status) {}
   std::string toString() const override {
     std::string result;
-    switch (status) {
+    switch (status_) {
       case OpeningConnectionFailed:
         result = "OpeningConnectionFailed";
         break;

@@ -15,7 +15,9 @@ class RMAPPacketException : public std::runtime_error {
 
 class RMAPPacket : public SpaceWirePacket {
  public:
-  RMAPPacket() : protocolID_(RMAPProtocol::ProtocolIdentifier) {}
+  RMAPPacket():SpaceWirePacket(RMAPProtocol::ProtocolIdentifier) {
+	  //protocolID_ =RMAPProtocol::ProtocolIdentifier;
+  }
 
   void constructHeader() {
     header.clear();
@@ -468,7 +470,7 @@ class RMAPPacket : public SpaceWirePacket {
     // Target SpaceWire Address
     if (!targetSpaceWireAddress.empty()) {
       ss << "--------- Target SpaceWire Address ---------" << endl;
-      spacewire::util::dumpPacket(&ss, targetSpaceWireAddress.data(),targetSpaceWireAddress.size(), 1, 128);
+      spacewire::util::dumpPacket(&ss, targetSpaceWireAddress.data(), targetSpaceWireAddress.size(), 1, 128);
     }
     // Header
     ss << "--------- RMAP Header Part ---------" << endl;
@@ -606,7 +608,7 @@ class RMAPPacket : public SpaceWirePacket {
     ss << "---------  RMAP Data Part  ---------" << endl;
     if (isRead()) {
       ss << "[data size = " << dec << dataLength << "bytes]" << endl;
-      spacewire::util::dumpPacket(&ss, data.data(),data.size(), 1, 128);
+      spacewire::util::dumpPacket(&ss, data.data(), data.size(), 1, 128);
       ss << "Data CRC    : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(dataCRC) << endl;
     } else {
       ss << "--- none ---" << endl;
