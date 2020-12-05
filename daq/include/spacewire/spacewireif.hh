@@ -73,7 +73,7 @@ class SpaceWireIF {
 
   virtual void close() = 0;
 
-  virtual void send(u8* data, size_t length, EOPType eopType = EOPType::EOP) = 0;
+  virtual void send(const u8* data, size_t length, EOPType eopType = EOPType::EOP) = 0;
   virtual void receive(u8* buffer, EOPType& eopType, size_t maxLength, size_t& length) {
     std::vector<u8>* packet = this->receive();
     const size_t packetSize = packet->size();

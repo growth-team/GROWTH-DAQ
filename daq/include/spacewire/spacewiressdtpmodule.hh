@@ -90,14 +90,14 @@ class SpaceWireSSDTPModule {
   /** Sends a SpaceWire packet via the SpaceWire interface.
    * This is a blocking method.
    * @param[in] data packet content.
-   * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
+   * @param[in] eopType End-of-Packet marker. EOPType::EOP or EOPType::EEP.
    */
   void send(std::vector<u8>* data, EOPType eopType = EOPType::EOP) {
     std::lock_guard<std::mutex> guard(sendmutex);
     if (this->closed) {
       return;
     }
-    const size_t size = data->size();
+    size_t size = data->size();
     if (eopType == EOPType ::EOP) {
       sheader[0] = DataFlag_Complete_EOP;
     } else if (eopType == EOPType ::EEP) {
@@ -122,18 +122,18 @@ class SpaceWireSSDTPModule {
    * This is a blocking method.
    * @param[in] data packet content.
    * @param[in] the length length of the packet.
-   * @param[in] eopType End-of-Packet marker. SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP.
+   * @param[in] eopType End-of-Packet marker. EOPType::EOP or EOPType::EEP.
    */
   void send(const u8* data, size_t length, EOPType eopType = EOPType::EOP) {
     std::lock_guard<std::mutex> guard(sendmutex);
     if (this->closed) {
       return;
     }
-    if (eopType == SpaceWireEOPMarker::EOP) {
+    if (eopType == EOPType::EOP) {
       sheader[0] = DataFlag_Complete_EOP;
-    } else if (eopType == SpaceWireEOPMarker::EEP) {
+    } else if (eopType == EOPType::EEP) {
       sheader[0] = DataFlag_Complete_EEP;
-    } else if (eopType == SpaceWireEOPMarker::Continued) {
+    } else if (eopType == EOPType::Continued) {
       sheader[0] = DataFlag_Flagmented;
     }
     sheader[1] = 0x00;
@@ -177,7 +177,7 @@ class SpaceWireSSDTPModule {
       return {};
     }
     std::vector<u8> data;
-    u32 eopType{};
+    EOPType eopType{};
     receive(&data, eopType);
     return data;
   }
@@ -202,9 +202,9 @@ class SpaceWireSSDTPModule {
    * }
    * @endcode
    * @param[out] data a vector instance which is used to store received data.
-   * @param[out] eopType contains an EOP marker type (SpaceWireEOPMarker::EOP or SpaceWireEOPMarker::EEP).
+   * @param[out] eopType contains an EOP marker type (EOPType::EOP or EOPType::EEP).
    */
-  size_t receive(std::vector<u8>* data, u32& eopType) {
+  size_t receive(std::vector<u8>* data, EOPType& eopType) {
     size_t size = 0;
     size_t hsize = 0;
     size_t flagment_size = 0;
@@ -291,11 +291,11 @@ class SpaceWireSSDTPModule {
         goto receive_header;
       }
       if (rheader[0] == DataFlag_Complete_EOP) {
-        eopType = SpaceWireEOPMarker::EOP;
+        eopType = EOPType::EOP;
       } else if (rheader[0] == DataFlag_Complete_EEP) {
-        eopType = SpaceWireEOPMarker::EEP;
+        eopType = EOPType::EEP;
       } else {
-        eopType = SpaceWireEOPMarker::Continued;
+        eopType = EOPType::Continued;
       }
 
       return size;

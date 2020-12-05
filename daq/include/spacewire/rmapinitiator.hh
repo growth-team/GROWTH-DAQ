@@ -80,7 +80,7 @@ class RMAPInitiator {
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
     const TransactionID assignedTransactionID = rmapEngine_->initiateTransaction(commandPacket.get(), this);
     const auto rel_time = std::chrono::milliseconds(timeoutDurationMillisec);
-    replyWaitCondition_.wait_for(lock, rel_time, [&]() { replyPacket; });
+    replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket); });
 
     if (replyPacket) {
       if (replyPacket->getStatus() != RMAPReplyStatus::CommandExcecutedSuccessfully) {
@@ -124,7 +124,7 @@ class RMAPInitiator {
       return;
     }
     const auto rel_time = std::chrono::milliseconds(timeoutDurationMillisec);
-    replyWaitCondition_.wait_for(lock, rel_time, [&]() { replyPacket; });
+    replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket); });
     if (replyPacket) {
       if (replyPacket->getStatus() == RMAPReplyStatus::CommandExcecutedSuccessfully) {
         return;

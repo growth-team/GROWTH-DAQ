@@ -85,6 +85,7 @@ add_library(cfitsio ${cfitsio_SRCS})
 # Executable source
 #---------------------------------------------
 add_executable(growth_daq
+  src/spacewire/rmapengine.cc
   src/growth_daq.cc
   src/EventListFileFITS.cc
   src/MessageServer.cc

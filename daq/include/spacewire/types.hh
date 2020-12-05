@@ -2,6 +2,7 @@
 #define SPACEWIRE_TYPES_HH_
 
 #include <memory>
+#include <sstream>
 
 using i8 = int8_t;
 using u8 = uint8_t;

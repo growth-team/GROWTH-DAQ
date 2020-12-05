@@ -11,7 +11,6 @@
 #include <thread>
 #include <vector>
 
-#include "../spacewireifoveruart.hh"
 class RMAPHandlerUART {
  public:
   RMAPHandlerUART(const std::string& deviceName) : deviceName_(deviceName) {
@@ -21,7 +20,7 @@ class RMAPHandlerUART {
     // start RMAPEngine
     rmapEngine_.reset(new RMAPEngine(spwif_.get()));
     rmapEngine_->start();
-    rmapInitiator_.reset(new RMAPInitiator(rmapEngine_.get()));
+    rmapInitiator_.reset(new RMAPInitiator(rmapEngine_));
     rmapInitiator_->setInitiatorLogicalAddress(0xFE);
     rmapInitiator_->setVerifyMode(true);
     rmapInitiator_->setReplyMode(true);
@@ -29,7 +28,7 @@ class RMAPHandlerUART {
 
   ~RMAPHandlerUART() {
     rmapEngine_->stop();
-    while (!rmapEngine_->hasStopped) {
+    while (!rmapEngine_->hasStopped()) {
       using namespace std::chrono_literals;
       std::this_thread::sleep_for(100ms);
     }

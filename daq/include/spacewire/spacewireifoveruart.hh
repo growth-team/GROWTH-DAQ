@@ -56,12 +56,7 @@ class SpaceWireIFOverUART : public SpaceWireIF {
       EOPType eopType{};
       ssdtp_->receive(buffer, eopType);
       if (eopType == EOPType::EEP) {
-        this->setReceivedPacketEOPMarkerType(EOPType::EEP);
-        if (eepShouldBeReportedAsAnException_) {
           throw SpaceWireIFException(SpaceWireIFException::EEP);
-        }
-      } else {
-        this->setReceivedPacketEOPMarkerType(EOPType::EOP);
       }
     } catch (const SpaceWireSSDTPException& e) {
       if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
