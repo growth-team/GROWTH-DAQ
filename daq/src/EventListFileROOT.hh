@@ -2,7 +2,7 @@
 #define EVENTLISTFILEROOT_HH_
 
 #include "types.h"
-#include "CxxUtilities/ROOTUtilities.hh"
+#include "rootutil.hh"
 #include "EventListFile.hh"
 #include "TCanvas.h"
 #include "TFile.h"

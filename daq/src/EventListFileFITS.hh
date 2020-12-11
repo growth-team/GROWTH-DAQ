@@ -5,7 +5,7 @@ extern "C" {
 #include "fitsio.h"
 }
 
-#include "CxxUtilities/FitsUtility.hh"
+#include "fitsutil.hh"
 #include "EventListFile.hh"
 #include "adcboard.hh"
 #include "types.h"

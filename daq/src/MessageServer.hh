@@ -2,7 +2,6 @@
 #define SRC_MESSAGESERVER_HH_
 
 #include "types.h"
-#include "CxxUtilities/CxxUtilities.hh"
 #include "picojson.h"
 
 #include <iomanip>

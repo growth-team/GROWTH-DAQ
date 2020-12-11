@@ -1,5 +1,7 @@
 #include "adcboard.hh"
 
+#include <chrono>
+
 #include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
 #include "GROWTH_FY2015_ADCModules/ChannelModule.hh"
 #include "GROWTH_FY2015_ADCModules/Constants.hh"
@@ -10,16 +12,15 @@
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
-
 #include "yaml-cpp/yaml.h"
 
 void GROWTH_FY2015_ADC::dumpThread() {
-  CxxUtilities::Condition c;
   size_t nReceivedEvents_previous = 0;
   size_t delta = 0;
   size_t nReceivedEvents_latch;
   while (!stopDumpThread_) {
-    c.wait(1000);  // ms
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1s);
     nReceivedEvents_latch = nReceivedEvents;
     delta = nReceivedEvents_latch - nReceivedEvents_previous;
     nReceivedEvents_previous = nReceivedEvents_latch;
@@ -33,7 +34,6 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
       rmapHandler(std::make_unique<RMAPHandlerUART>(deviceName)),
       rmapIniaitorForGPSRegisterAccess(std::make_unique<RMAPInitiator>(rmapHandler->getRMAPEngine().get())) {
   adcRMAPTargetNode = std::make_shared<RMAPTargetNode>();
-  adcRMAPTargetNode->setID("ADCBox");
   adcRMAPTargetNode->setDefaultKey(0x00);
   adcRMAPTargetNode->setReplyAddress({});
   adcRMAPTargetNode->setTargetSpaceWireAddress({});

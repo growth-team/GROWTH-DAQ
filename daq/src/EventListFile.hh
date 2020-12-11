@@ -2,7 +2,6 @@
 #define EVENTLISTFILE_HH_
 
 #include "types.h"
-#include "CxxUtilities/CxxUtilities.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 
 /** Represents an event list file.
