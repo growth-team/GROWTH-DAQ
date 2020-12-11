@@ -1,5 +1,7 @@
 #include "EventListFileFITS.hh"
 
+#include "timeutil.hh"
+#include "stringutil.hh"
 EventListFileFITS::EventListFileFITS(const std::string& fileName, const std::string& detectorID,
                                      const std::string& configurationYAMLFile, size_t nSamples, f64 exposureInSec,
                                      u32 fpgaType, u32 fpgaVersion)
@@ -17,7 +19,7 @@ EventListFileFITS::~EventListFileFITS() { close(); }
 
 void EventListFileFITS::createOutputFITSFile() {
   std::lock_guard<std::mutex> guard(fitsAccessMutex_);
-  using namespace std;
+
 
   rowIndex = 0;
   rowIndexGPS = 0;
@@ -75,9 +77,9 @@ void EventListFileFITS::writeHeader() {
    */
 
   char* n;  // keyword name
-  std::string fpgaTypeStr = CxxUtilities::String::toHexString(fpgaType, 8);
-  std::string fpgaVersionStr = CxxUtilities::String::toHexString(fpgaVersion, 8);
-  std::string creationDate = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS();
+  std::string fpgaTypeStr = stringutil::toHexString(fpgaType, 8);
+  std::string fpgaVersionStr = stringutil::toHexString(fpgaVersion, 8);
+  std::string creationDate = timeutil::getCurrentTimeYYYYMMDD_HHMMSS();
   long NSAMPLES = nSamples;
   // clang-format off
   if (
@@ -92,14 +94,20 @@ void EventListFileFITS::writeHeader() {
       fits_update_key_lng(outputFile, n = const_cast<char*>("PHA_MAX"),  GROWTH_FY2015_ADC::PHAMaximum, "PHA range maximum", &fitsStatus) ||
       fits_update_key_dbl(outputFile, n = const_cast<char*>("EXPOSURE"), exposureInSec, 2, "exposure specified via command line", &fitsStatus)
       ) {  // clang-format on
-    using namespace std;
-    cerr << "Error: while updating TTYPE comment for " << n << endl;
+
+    cerr << "Error: while updating TTYPE comment for " << n << std::endl;
     exit(-1);
   }
 
   // configurationYAML as HISTORY
   if (configurationYAMLFile != "") {
-    std::vector<std::string> lines = CxxUtilities::File::getAllLines(configurationYAMLFile);
+    std::vector<std::string> lines;
+    std::ifstream ifs(configurationYAMLFile);
+    while(!ifs.eof()){
+    	std::string line;
+    	std::getline(ifs, line);
+    	lines.push_back(line);
+    }
     for (auto line : lines) {
       line = "YAML-- " + line;
       fits_write_history(outputFile, const_cast<char*>(line.c_str()), &fitsStatus);
@@ -109,8 +117,7 @@ void EventListFileFITS::writeHeader() {
 
 void EventListFileFITS::reportErrorThenQuitIfError(int fitsStatus, const std::string& methodName) {
   if (fitsStatus) {  // if error
-    using namespace std;
-    cerr << "Error (" << methodName << "):";
+    std::cerr << "Error (" << methodName << "):";
     fits_report_error(stderr, fitsStatus);
     exit(-1);
   }
@@ -131,11 +138,12 @@ void EventListFileFITS::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
   rowIndexGPS++;
 
   // get unix time
-  u32 unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+  const u32 unixTime = timeutil::getUNIXTimeAsUInt64();
 
   // write
   fits_write_col(outputFile, TLONGLONG, Column_fpgaTimeTag, rowIndexGPS, firstElement, 1, &timeTag, &fitsStatus);
-  fits_write_col(outputFile, TLONG, Column_unixTime, rowIndexGPS, firstElement, 1, &unixTime, &fitsStatus);
+  fits_write_col(outputFile, TLONG, Column_unixTime, rowIndexGPS, firstElement, 1,
+		  const_cast<u32*>(&unixTime), &fitsStatus);
   fits_write_col(outputFile, TSTRING, Column_gpsTime, rowIndexGPS, firstElement, 1 /* YYMMDDHHMMSS */,
                  &gpsTimeRegisterBuffer, &fitsStatus);
 
@@ -168,7 +176,6 @@ void EventListFileFITS::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Eve
 }
 
 void EventListFileFITS::expandIfNecessary() {
-  using namespace std;
   int fitsStatus = 0;
   // check heap size, and expand row size if necessary (to avoid slow down of cfitsio)
   while (rowIndex > fitsNRows) {
@@ -182,7 +189,7 @@ void EventListFileFITS::expandIfNecessary() {
     fitsNRows = nRowsGot;
 
     rowExpansionStep = rowExpansionStep * 2;
-    cout << "Output FITS file was resized to " << dec << fitsNRows << " rows." << endl;
+    std::cout << "Output FITS file was resized to " << std::dec << fitsNRows << " rows." << std::endl;
   }
 }
 
@@ -190,31 +197,30 @@ void EventListFileFITS::close() {
   if (outputFileIsOpen) {
     std::lock_guard<std::mutex> guard(fitsAccessMutex_);
     outputFileIsOpen = false;
-    using namespace std;
     int fitsStatus = 0;
 
     u32 nUnusedRow = fitsNRows - rowIndex;
-    cout << "Closing the current output file." << endl;
-    cout << " rowIndex    = " << dec << rowIndex << " (number of filled rows)" << endl;
-    cout << " fitsNRows   = " << dec << fitsNRows << " (allocated row number)" << endl;
-    cout << " unused rows = " << dec << nUnusedRow << endl;
+    std::cout << "Closing the current output file." << std::endl;
+    std::cout << " rowIndex    = " << std::dec << rowIndex << " (number of filled rows)" << std::endl;
+    std::cout << " fitsNRows   = " << std::dec << fitsNRows << " (allocated row number)" << std::endl;
+    std::cout << " unused rows = " << std::dec << nUnusedRow << std::endl;
 
     /* Delete unfilled rows. */
     fits_flush_file(outputFile, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
     if (fitsNRows != rowIndex) {
-      cout << "Deleting unused " << nUnusedRow << " rows." << endl;
+      std::cout << "Deleting unused " << nUnusedRow << " rows." << std::endl;
       fits_delete_rows(outputFile, rowIndex + 1, nUnusedRow, &fitsStatus);
       reportErrorThenQuitIfError(fitsStatus, __func__);
     }
 
     /* Recover unused heap. */
-    cout << "Recovering unused heap." << endl;
+    std::cout << "Recovering unused heap." << std::endl;
     fits_compress_heap(outputFile, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
 
     /* Write date. */
-    cout << "Writing data to file." << endl;
+    std::cout << "Writing data to file." << std::endl;
     fits_write_date(outputFile, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
 
@@ -223,18 +229,18 @@ void EventListFileFITS::close() {
       fits_update_key(outputFile, TULONG, const_cast<char*>("NAXIS2"), reinterpret_cast<void*>(&rowIndex),
                       const_cast<char*>("number of rows in table"), &fitsStatus);
       reportErrorThenQuitIfError(fitsStatus, __func__);
-      cout << "This HDU has 0 row." << endl;
+      std::cout << "This HDU has 0 row." << std::endl;
     }
 
     /* Update checksum. */
-    cout << "Updating checksum." << endl;
+    std::cout << "Updating checksum." << std::endl;
     fits_write_chksum(outputFile, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
 
     /* Close FITS File */
-    cout << "Closing file." << endl;
+    std::cout << "Closing file." << std::endl;
     fits_close_file(outputFile, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
-    cout << "Output FITS file closed." << endl;
+    std::cout << "Output FITS file closed." << std::endl;
   }
 }

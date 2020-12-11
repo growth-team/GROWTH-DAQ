@@ -1,7 +1,8 @@
+#include "MessageServer.hh"
+
 #include <iostream>
 
 #include "MainThread.hh"
-#include "MessageServer.hh"
 
 MessageServer::MessageServer(std::shared_ptr<MainThread> mainThread)
     :  //
@@ -14,16 +15,14 @@ MessageServer::MessageServer(std::shared_ptr<MainThread> mainThread)
   socket_.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
   socket_.bind(ss.str().c_str());
   // Show message
-  using namespace std;
-  cout << "MessageServer has started to accept IPC commands." << endl;
+  std::cout << "MessageServer has started to accept IPC commands." << std::endl;
 }
 
-MessageServer::~MessageServer() {}
+MessageServer::~MessageServer() = default;
 
 void MessageServer::run() {
-  using namespace std;
-  while (!stopped) {
-    zmq::message_t request;
+  while (!stopped_) {
+    zmq::message_t request{};
     //  Wait for next request from client
     if (socket_.recv(&request)) {
 #ifdef DEBUG_MESSAGESERVER
@@ -31,11 +30,11 @@ void MessageServer::run() {
 #endif
     } else {
       if (errno != EAGAIN) {
-        cerr << "Error: MessageServer::run(): receive failed." << endl;
+        std::cerr << "Error: MessageServer::run(): receive failed." << std::endl;
         ::exit(-1);
       } else {
 #ifdef DEBUG_MESSAGESERVER
-        cout << "MessageServer::run(): timed out. continue." << endl;
+        std::cout << "MessageServer::run(): timed out. continue." << std::endl;
 #endif
         continue;
       }
@@ -45,13 +44,13 @@ void MessageServer::run() {
     std::string messagePayload{};
     messagePayload.assign(static_cast<char*>(request.data()), request.size());
 #ifdef DEBUG_MESSAGESERVER
-    cout << "MessageServer::run(): received message" << endl;
-    cout << messagePayload << endl;
-    cout << endl;
+    std::cout << "MessageServer::run(): received message" << std::endl;
+    std::cout << messagePayload << std::endl;
+    std::cout << std::endl;
 #endif
 
     // Process received message
-    picojson::object replyJSON = processMessage(messagePayload);
+    const auto replyJSON = processMessage(messagePayload);
 
     // Reply
     std::string replyMessageString = picojson::value(replyJSON).serialize();
@@ -60,16 +59,15 @@ void MessageServer::run() {
 }
 
 picojson::object MessageServer::processMessage(const std::string& messagePayload) {
-  using namespace std;
   picojson::value v;
   picojson::parse(v, messagePayload);
   if (v.is<picojson::object>()) {
 #ifdef DEBUG_MESSAGESERVER
-    cout << "MessageServer::processMessage(): received object is: {" << endl;
+    std::cout << "MessageServer::processMessage(): received object is: {" << std::endl;
 #endif
     for (auto& it : v.get<picojson::object>()) {
 #ifdef DEBUG_MESSAGESERVER
-      cout << it.first << ": " << it.second.to_str() << endl;
+      std::cout << it.first << ": " << it.second.to_str() << std::endl;
 #endif
       if (it.first == "command") {
         if (it.second.to_str() == "ping") {
@@ -88,84 +86,83 @@ picojson::object MessageServer::processMessage(const std::string& messagePayload
       }
     }
 #ifdef DEBUG_MESSAGESERVER
-    cout << "}";
+    std::cout << "}";
 #endif
   }
   // Return error message if the received command is invalid
-  picojson::object errorMessage;
+  picojson::object errorMessage{};
   errorMessage["status"] = picojson::value("error");
-  errorMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  errorMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   errorMessage["message"] = picojson::value("invalid command");
   return errorMessage;
 }
 
 picojson::object MessageServer::processPingCommand() {
 #ifdef DEBUG_MESSAGESERVER
-  cout << "MessageServer::processMessage(): ping command received." << endl;
+  std::cout << "MessageServer::processMessage(): ping command received." << std::endl;
 #endif
   // Construct reply message
-  picojson::object replyMessage;
+  picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   return replyMessage;
 }
 
 picojson::object MessageServer::processStopCommand() {
 #ifdef DEBUG_MESSAGESERVER
-  cout << "MessageServer::processMessage(): stop command received." << endl;
+  std::cout << "MessageServer::processMessage(): stop command received." << std::endl;
 #endif
   // Stop target thread and self
-  if (mainThread_ != nullptr) {
+  if (mainThread_) {
     mainThread_->stop();
   }
   this->stop();
   // Construct reply message
-  picojson::object replyMessage;
+  picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   return replyMessage;
 }
 
 picojson::object MessageServer::processPauseCommand() {
 #ifdef DEBUG_MESSAGESERVER
-  cout << "MessageServer::processMessage(): pause command received." << endl;
+  std::cout << "MessageServer::processMessage(): pause command received." << std::endl;
 #endif
   // Stop target thread and self
-  if (mainThread_ != nullptr) {
+  if (mainThread_) {
     mainThread_->stop();
   }
   // Construct reply message
   picojson::object replyMessage;
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   return replyMessage;
 }
 
 picojson::object MessageServer::processResumeCommand() {
 #ifdef DEBUG_MESSAGESERVER
-  cout << "MessageServer::processMessage(): resume command received." << endl;
+  std::cout << "MessageServer::processMessage(): resume command received." << std::endl;
 #endif
-  // Stop target thread and self
-  if (mainThread_ != nullptr) {
+  if (mainThread_) {
     if (mainThread_->getDAQStatus() == DAQStatus::Paused) {
       mainThread_->start();
     }
   }
   // Construct reply message
-  picojson::object replyMessage;
+  picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   return replyMessage;
 }
 
 picojson::object MessageServer::processGetStatusCommand() {
 #ifdef DEBUG_MESSAGESERVER
-  cout << "MessageServer::processMessage(): getStatus command received." << endl;
+  std::cout << "MessageServer::processMessage(): getStatus command received." << std::endl;
 #endif
   // Construct reply message
-  picojson::object replyMessage;
+  picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   if (mainThread_->getDAQStatus() == DAQStatus::Running) {
     replyMessage["daqStatus"] = picojson::value("Running");
   } else {
@@ -186,8 +183,8 @@ picojson::object MessageServer::processStartNewOutputFileCommand() {
   mainThread_->startNewOutputFile();
 
   // Construct reply message
-  picojson::object replyMessage;
+  picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
-  replyMessage["unixTime"] = picojson::value(static_cast<f64>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
   return replyMessage;
 }

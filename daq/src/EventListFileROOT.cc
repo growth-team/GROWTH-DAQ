@@ -3,7 +3,7 @@
 EventListFileROOT::EventListFileROOT(std::string fileName, std::string detectorID = "empty",
                                      std::string configurationYAMLFile = "")
     : EventListFile(fileName), detectorID_(detectorID), configurationYAMLFile_(configurationYAMLFile) {
-  eventEntry_.waveform = new u16[SpaceFibreADC::MaxWaveformLength];
+  eventEntry_.waveform = new u16[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
   createOutputRootFile();
 }
 
@@ -13,7 +13,7 @@ EventListFileROOT::~EventListFileROOT() {
 }
 
 void EventListFileROOT::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
-  unixTime_ = CxxUtilities::Time::getUNIXTimeAsUInt32();
+  unixTime_ = timeutil::getUNIXTimeAsUInt64();
   for (auto& event : events) {
     copyEventData(event, &eventEntry_);
     eventTree_->Fill();
@@ -84,10 +84,11 @@ void EventListFileROOT::copyEventData(GROWTH_FY2015_ADC_Type::Event* from, GROWT
 }
 
 void EventListFileROOT::writeHeader() {
-  CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate", CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS());
+  CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate", timeutil::getCurrentTimeYYYYMMDD_HHMMSS());
   CxxUtilities::ROOTUtilities::writeObjString("detectorID", detectorID_);
   if (configurationYAMLFile_ != "") {
-    std::string configurationYAML = CxxUtilities::File::getAllLinesAsString(configurationYAMLFile_);
+	  std::ifstream ifs(configurationYAMLFile_);
+	  const std::string configurationYAML(std::istreambuf_iterator<char>{ifs}, {});
     CxxUtilities::ROOTUtilities::writeObjString("configurationYAML", configurationYAML);
   }
 }
