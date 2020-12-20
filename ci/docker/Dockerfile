@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.10
 
 RUN apt update
 RUN apt install -y \
