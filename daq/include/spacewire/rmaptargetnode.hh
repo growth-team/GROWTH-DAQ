@@ -2,7 +2,7 @@
 #define SPACEWIRE_RMAPTARGETNODE_HH_
 
 #include "spacewire/types.hh"
-#include "spacewire/spacewireutilities.hh"
+#include "spacewire/spacewireutil.hh"
 
 class RMAPTargetNode {
  public:

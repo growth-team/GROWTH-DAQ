@@ -10,7 +10,7 @@
 #include <list>
 #include "spacewire/rmappacket.hh"
 #include "spacewire/spacewireif.hh"
-#include "spacewire/spacewireutilities.hh"
+#include "spacewire/spacewireutil.hh"
 #include "spacewire/types.hh"
 
 class RMAPInitiator;

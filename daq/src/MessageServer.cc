@@ -169,10 +169,10 @@ picojson::object MessageServer::processGetStatusCommand() {
     replyMessage["daqStatus"] = picojson::value("Paused");
   }
   replyMessage["outputFileName"] = picojson::value(mainThread_->getOutputFileName());
-  replyMessage["elapsedTime"] = picojson::value(static_cast<f64>(mainThread_->getElapsedTime()));
+  replyMessage["elapsedTime"] = picojson::value(static_cast<f64>(mainThread_->getElapsedTime().count()));
   replyMessage["nEvents"] = picojson::value(static_cast<f64>(mainThread_->getNEvents()));
   replyMessage["elapsedTimeOfCurrentOutputFile"] =  //
-      picojson::value(static_cast<f64>(mainThread_->getElapsedTimeOfCurrentOutputFile()));
+      picojson::value(static_cast<f64>(mainThread_->getElapsedTimeOfCurrentOutputFile().count()));
   replyMessage["nEventsOfCurrentOutputFile"] =  //
       picojson::value(static_cast<f64>(mainThread_->getNEventsOfCurrentOutputFile()));
   return replyMessage;

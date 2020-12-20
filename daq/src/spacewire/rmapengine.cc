@@ -2,7 +2,7 @@
 
 #include "spacewire/rmapinitiator.hh"
 #include "spacewire/spacewireif.hh"
-#include "spacewire/spacewireutilities.hh"
+#include "spacewire/spacewireutil.hh"
 #include "spacewire/types.hh"
 
 

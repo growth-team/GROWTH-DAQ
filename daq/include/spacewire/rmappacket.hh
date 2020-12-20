@@ -6,7 +6,7 @@
 #include "spacewire/rmaptargetnode.hh"
 #include "spacewire/rmaputilities.hh"
 #include "spacewire/spacewirepacket.hh"
-#include "spacewire/spacewireutilities.hh"
+#include "spacewire/spacewireutil.hh"
 
 class RMAPPacketException : public std::runtime_error {
  public:

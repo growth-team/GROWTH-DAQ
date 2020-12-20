@@ -3,7 +3,7 @@
 
 #include "spacewire/spacewireif.hh"
 #include "spacewire/spacewiressdtpmodule.hh"
-#include "spacewire/spacewireutilities.hh"
+#include "spacewire/spacewireutil.hh"
 #include "spacewire/tcpsocket.hh"
 #include "spacewire/types.hh"
 

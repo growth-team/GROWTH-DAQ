@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include <memory>
+#include <thread>
 
 // ZeroMQ
 #include <unistd.h>

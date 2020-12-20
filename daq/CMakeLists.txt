@@ -33,7 +33,6 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 include_directories(SYSTEM
   include
   include/picojson
-  include/XMLUtilities/include
   include/CxxUtilities/includes
   external/serial/include
   external/libzmq/include
@@ -47,8 +46,10 @@ include_directories(
   src
 )
 
+SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
+
 add_subdirectory(external/serial)
-add_subdirectory(external/libzmq EXCLUDE_FROM_ALL)
+add_subdirectory(external/libzmq)
 add_subdirectory(external/yaml-cpp)
 add_subdirectory(external/) # For cfitsio
 
@@ -69,11 +70,14 @@ link_directories(
 #---------------------------------------------
 add_executable(growth_daq
   src/spacewire/rmapengine.cc
+  src/spacewire/spacewireutil.cc
   src/growth_daq.cc
   src/EventListFileFITS.cc
   src/MessageServer.cc
   src/SerialPort.cc
   src/adcboard.cc
+  src/timeutil.cc
+  src/stringutil.cc
 )
 
 #---------------------------------------------
@@ -82,10 +86,11 @@ add_executable(growth_daq
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
-  zmq
-  xerces-c
+  libzmq
+  serial
   ${ROOT_LIBRARIES}
   pthread
+  z
 )
 
 #=============================================

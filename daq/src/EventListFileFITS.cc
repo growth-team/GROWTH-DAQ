@@ -95,7 +95,7 @@ void EventListFileFITS::writeHeader() {
       fits_update_key_dbl(outputFile, n = const_cast<char*>("EXPOSURE"), exposureInSec, 2, "exposure specified via command line", &fitsStatus)
       ) {  // clang-format on
 
-    cerr << "Error: while updating TTYPE comment for " << n << std::endl;
+    std::cerr << "Error: while updating TTYPE comment for " << n << std::endl;
     exit(-1);
   }
 

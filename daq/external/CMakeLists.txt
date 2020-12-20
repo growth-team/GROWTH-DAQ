@@ -12,6 +12,7 @@ include_directories(
   cfitsio
 )
 
+set(CMAKE_CFLAGS -DHAVE_UNISTD_H)
 set(cfitsio_SRCS
     buffers.c cfileio.c checksum.c
     drvrfile.c drvrmem.c drvrnet.c

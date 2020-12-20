@@ -14,6 +14,7 @@
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "yaml-cpp/yaml.h"
 
+#include "stringutil.hh"
 void GROWTH_FY2015_ADC::dumpThread() {
   size_t nReceivedEvents_previous = 0;
   size_t delta = 0;
@@ -32,7 +33,7 @@ void GROWTH_FY2015_ADC::dumpThread() {
 GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
     : eventDecoder(new EventDecoder),
       rmapHandler(std::make_unique<RMAPHandlerUART>(deviceName)),
-      rmapIniaitorForGPSRegisterAccess(std::make_unique<RMAPInitiator>(rmapHandler->getRMAPEngine().get())) {
+      rmapIniaitorForGPSRegisterAccess(std::make_unique<RMAPInitiator>(rmapHandler->getRMAPEngine())) {
   adcRMAPTargetNode = std::make_shared<RMAPTargetNode>();
   adcRMAPTargetNode->setDefaultKey(0x00);
   adcRMAPTargetNode->setReplyAddress({});
@@ -308,15 +309,15 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
     for (const auto mode : this->TriggerModes) {
       triggerModeInt.push_back(static_cast<size_t>(mode));
     }
-    cout << CxxUtilities::String::join(triggerModeInt, ", ") << "]" << endl;
+    cout << stringutil::join(triggerModeInt, ", ") << "]" << endl;
   }
   cout << "SamplesInEventPacket              : " << this->SamplesInEventPacket << endl;
   cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
-  cout << "ChannelEnable                     : [" << CxxUtilities::String::join(this->ChannelEnable, ", ") << "]"
+  cout << "ChannelEnable                     : [" << stringutil::join(this->ChannelEnable, ", ") << "]"
        << endl;
-  cout << "TriggerThresholds                 : [" << CxxUtilities::String::join(this->TriggerThresholds, ", ") << "]"
+  cout << "TriggerThresholds                 : [" << stringutil::join(this->TriggerThresholds, ", ") << "]"
        << endl;
-  cout << "TriggerCloseThresholds            : [" << CxxUtilities::String::join(this->TriggerCloseThresholds, ", ")
+  cout << "TriggerCloseThresholds            : [" << stringutil::join(this->TriggerCloseThresholds, ", ")
        << "]" << endl;
   cout << endl;
 
