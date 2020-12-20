@@ -2,7 +2,7 @@
 # Definition of project
 #=============================================
 project( GROWTH_DAQ CXX)
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 set (CMAKE_CXX_STANDARD 17)
 if( CMAKE_SIZEOF_VOID_P EQUAL 4 )
     add_definitions(-DRASPBERRY_PI)
@@ -73,7 +73,7 @@ add_executable(growth_daq
   src/growth_daq.cc
   src/EventListFileFITS.cc
   src/MessageServer.cc
-  src/SerialPort.cc
+  src/serialport.cc
   src/adcboard.cc
   src/timeutil.cc
   src/stringutil.cc
