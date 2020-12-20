@@ -48,10 +48,9 @@ include_directories(
 
 SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
 
-add_subdirectory(external/serial)
 add_subdirectory(external/libzmq)
 add_subdirectory(external/yaml-cpp)
-add_subdirectory(external/) # For cfitsio
+add_subdirectory(external) # For cfitsio and serial
 
 
 #=============================================

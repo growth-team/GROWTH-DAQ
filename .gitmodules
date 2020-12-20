@@ -1,15 +1,6 @@
 [submodule "daq/include/picojson"]
 	path = daq/include/picojson
 	url = https://github.com/kazuho/picojson
-[submodule "daq/include/SpaceWireRMAPLibrary"]
-	path = daq/include/SpaceWireRMAPLibrary
-	url = https://github.com/yuasatakayuki/SpaceWireRMAPLibrary.git
-[submodule "daq/include/CxxUtilities"]
-	path = daq/include/CxxUtilities
-	url = https://github.com/yuasatakayuki/CxxUtilities.git
-[submodule "daq/include/XMLUtilities"]
-	path = daq/include/XMLUtilities
-	url = https://github.com/sakuraisoki/XMLUtilities.git
 [submodule "lib/Adafruit_Python_SSD1306"]
 	path = lib/Adafruit_Python_SSD1306
 	url = https://github.com/adafruit/Adafruit_Python_SSD1306
