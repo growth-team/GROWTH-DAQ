@@ -2,7 +2,7 @@
 # Definition of project
 #=============================================
 project( GROWTH_DAQ CXX)
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 set (CMAKE_CXX_STANDARD 17)
 if( CMAKE_SIZEOF_VOID_P EQUAL 4 )
     add_definitions(-DRASPBERRY_PI)
