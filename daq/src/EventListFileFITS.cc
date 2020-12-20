@@ -1,5 +1,6 @@
 #include "EventListFileFITS.hh"
 
+#include <fstream>
 #include "timeutil.hh"
 #include "stringutil.hh"
 EventListFileFITS::EventListFileFITS(const std::string& fileName, const std::string& detectorID,

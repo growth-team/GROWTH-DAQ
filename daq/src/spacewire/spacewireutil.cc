@@ -1,5 +1,6 @@
 #include "spacewire/spacewireutil.hh"
 
+#include <cassert>
 namespace spacewire::util {
 
 /** Dumps packet content to an output stream instance.

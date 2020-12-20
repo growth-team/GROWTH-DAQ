@@ -5,6 +5,7 @@
 #include "types.h"
 
 #include <deque>
+#include <cassert>
 
 /** Decodes event data received from the GROWTH ADC Board.
  * Decoded event instances will be stored in a queue.

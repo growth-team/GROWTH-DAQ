@@ -4,6 +4,8 @@
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 
+#include <cassert>
+
 class RMAPHandlerUART;
 
 /** A class which represents ConsumerManager module in the VHDL logic.

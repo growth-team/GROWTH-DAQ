@@ -1,6 +1,7 @@
 #include "adcboard.hh"
 
 #include <chrono>
+#include <cassert>
 
 #include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
 #include "GROWTH_FY2015_ADCModules/ChannelModule.hh"

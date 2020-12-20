@@ -2,6 +2,8 @@
 #define SPACEWIRE_RMAPINITIATOR_HH_
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 
 #include "spacewire/rmapengine.hh"
 #include "spacewire/rmappacket.hh"

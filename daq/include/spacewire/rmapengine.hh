@@ -8,6 +8,8 @@
 #include <thread>
 #include <map>
 #include <list>
+#include <mutex>
+
 #include "spacewire/rmappacket.hh"
 #include "spacewire/spacewireif.hh"
 #include "spacewire/spacewireutil.hh"

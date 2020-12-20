@@ -8,6 +8,7 @@
 #include <sstream>
 #include <memory>
 #include <thread>
+#include <atomic>
 
 // ZeroMQ
 #include <unistd.h>
