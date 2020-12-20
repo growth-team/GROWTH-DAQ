@@ -1,4 +1,6 @@
-FROM ubuntu:20.10
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update
 RUN apt install -y \
@@ -26,13 +28,10 @@ RUN apt install -y \
   libyaml-cpp-dev \
   libzmq3-dev \
   python-dev \
-  python-smbus \
-  python-zmq \
   ruby \
   ruby-dev \
   ruby-ffi \
   swig \
   texinfo \
   wget \
-  wicd-curses \
   zlib1g-dev
