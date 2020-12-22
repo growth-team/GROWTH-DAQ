@@ -1,5 +1,5 @@
-#ifndef CONSUMERMANAGEREVENTFIFO_HH_
-#define CONSUMERMANAGEREVENTFIFO_HH_
+#ifndef GROWTHDAQ_CONSUMERMANAGEREVENTFIFO_HH_
+#define GROWTHDAQ_CONSUMERMANAGEREVENTFIFO_HH_
 
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 
@@ -63,12 +63,12 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
     }
 
     // return result
-    receivedBytes += receiveBuffer_.size();
+    receivedBytes_ += receiveBuffer_.size();
     return receiveBuffer_;
   }
 
   /** Sets EventPacket_NumberOfWaveform_Register
-   * @param numberofsamples number of data points to be recorded in an event packet
+   * @param nSamples number of data points to be recorded in an event packet
    */
   void setEventPacket_NumberOfWaveform(u16 nSamples) {
     write(AddressOf_EventPacket_NumberOfWaveform_Register, nSamples);
@@ -105,7 +105,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr size_t EventFIFOSizeInBytes = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
   std::vector<u8> receiveBuffer_{};
-  size_t receivedBytes = 0;
+  size_t receivedBytes_ = 0;
 };
 
 #endif

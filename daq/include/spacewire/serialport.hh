@@ -1,5 +1,5 @@
-#ifndef DAQ_SERIALPORT_HH_
-#define DAQ_SERIALPORT_HH_
+#ifndef GROWTHDAQ_SERIALPORT_HH_
+#define GROWTHDAQ_SERIALPORT_HH_
 
 #include "types.h"
 
@@ -42,4 +42,4 @@ struct SerialPort {
   std::mutex mutex_{};
 };
 
-#endif /* DAQ_SERIALPORT_HH_ */
+#endif

@@ -1,5 +1,5 @@
-#ifndef EVENTDECODER_HH_
-#define EVENTDECODER_HH_
+#ifndef GROWTHDAQ_EVENTDECODER_HH_
+#define GROWTHDAQ_EVENTDECODER_HH_
 
 #include <cassert>
 #include <deque>

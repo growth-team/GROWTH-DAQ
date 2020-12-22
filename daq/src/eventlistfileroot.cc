@@ -1,4 +1,4 @@
-#include "EventListFileROOT.hh"
+#include "eventlistfileroot.hh"
 
 EventListFileROOT::EventListFileROOT(std::string fileName, std::string detectorID = "empty",
                                      std::string configurationYAMLFile = "")
@@ -23,8 +23,7 @@ void EventListFileROOT::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Eve
 size_t EventListFileROOT::getEntries() const { return eventTree_->GetEntries(); }
 
 void EventListFileROOT::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
-	// "GPS time vs local clock" table is not implemented in the ROOT file format.
-
+  // "GPS time vs local clock" table is not implemented in the ROOT file format.
 }
 
 void EventListFileROOT::close() {
@@ -69,17 +68,17 @@ void EventListFileROOT::createOutputRootFile() {
 }
 
 void EventListFileROOT::copyEventData(GROWTH_FY2015_ADC_Type::Event* from, GROWTH_FY2015_ADC_Type::Event* to) {
-  to->ch            = from->ch;
-  to->timeTag       = from->timeTag;
-  to->triggerCount  = from->triggerCount;
-  to->phaMax        = from->phaMax;
-  to->phaMaxTime    = from->phaMaxTime;
-  to->phaMin        = from->phaMin;
-  to->phaFirst      = from->phaFirst;
-  to->phaLast       = from->phaLast;
+  to->ch = from->ch;
+  to->timeTag = from->timeTag;
+  to->triggerCount = from->triggerCount;
+  to->phaMax = from->phaMax;
+  to->phaMaxTime = from->phaMaxTime;
+  to->phaMin = from->phaMin;
+  to->phaFirst = from->phaFirst;
+  to->phaLast = from->phaLast;
   to->maxDerivative = from->maxDerivative;
-  to->baseline      = from->baseline;
-  to->nSamples      = from->nSamples;
+  to->baseline = from->baseline;
+  to->nSamples = from->nSamples;
   memcpy(to->waveform, from->waveform, sizeof(u16) * from->nSamples);
 }
 
@@ -87,8 +86,8 @@ void EventListFileROOT::writeHeader() {
   CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate", timeutil::getCurrentTimeYYYYMMDD_HHMMSS());
   CxxUtilities::ROOTUtilities::writeObjString("detectorID", detectorID_);
   if (configurationYAMLFile_ != "") {
-	  std::ifstream ifs(configurationYAMLFile_);
-	  const std::string configurationYAML(std::istreambuf_iterator<char>{ifs}, {});
+    std::ifstream ifs(configurationYAMLFile_);
+    const std::string configurationYAML(std::istreambuf_iterator<char>{ifs}, {});
     CxxUtilities::ROOTUtilities::writeObjString("configurationYAML", configurationYAML);
   }
 }

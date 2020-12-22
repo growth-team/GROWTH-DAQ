@@ -648,12 +648,12 @@ class RMAPPacket : public SpaceWirePacket {
   }
 
   std::vector<u8> targetSpaceWireAddress{};
-  u8 targetLogicalAddress = SpaceWireProtocol::DefaultLogicalAddress;
+  u8 targetLogicalAddress = SpaceWireProtocol::DEFAULT_LOGICAL_ADDRESS;
 
   u8 instruction{};
   u8 key = RMAPProtocol::DefaultKey;
   std::vector<u8> replyAddress{};
-  u8 initiatorLogicalAddress = SpaceWireProtocol::DefaultLogicalAddress;
+  u8 initiatorLogicalAddress = SpaceWireProtocol::DEFAULT_LOGICAL_ADDRESS;
   u8 extendedAddress = RMAPProtocol::DefaultExtendedAddress;
   u32 address{};
   u32 dataLength{};

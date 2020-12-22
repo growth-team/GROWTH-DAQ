@@ -1,15 +1,14 @@
-#ifndef RMAPHandlerUART_HH_
-#define RMAPHandlerUART_HH_
+#ifndef GROWTHDAQ_RMAP_HANDLER_UART_HH_
+#define GROWTHDAQ_RMAP_HANDLER_UART_HH_
+
+#include "spacewire/rmapinitiator.hh"
+#include "spacewire/spacewireifoveruart.hh"
 
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <thread>
 #include <vector>
-
-#include "spacewire/rmapinitiator.hh"
-#include "spacewire/spacewireifoveruart.hh"
-#include "types.h"
 
 class RMAPHandlerUART {
  public:
@@ -83,7 +82,7 @@ class RMAPHandlerUART {
   std::shared_ptr<RMAPEngine> getRMAPEngine() const { return rmapEngine_; }
 
  private:
-  std::string deviceName_{};
+  const std::string deviceName_{};
   std::shared_ptr<SpaceWireIFOverUART> spwif_{};
   std::shared_ptr<RMAPEngine> rmapEngine_{};
   std::shared_ptr<RMAPInitiator> rmapInitiator_{};

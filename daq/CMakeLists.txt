@@ -14,6 +14,7 @@ if(USE_ROOT)
 endif(USE_ROOT)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
 if(APPLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics -g")
 endif(APPLE)
@@ -71,15 +72,16 @@ link_directories(
 # Executable source
 #---------------------------------------------
 add_executable(growth_daq
+  src/adcboard.cc
+  src/eventlistfilefits.cc
+  src/growth_daq.cc
+  src/mainthread.cc
+  src/messageserver.cc
+  src/serialport.cc
   src/spacewire/rmapengine.cc
   src/spacewire/spacewireutil.cc
-  src/growth_daq.cc
-  src/EventListFileFITS.cc
-  src/MessageServer.cc
-  src/serialport.cc
-  src/adcboard.cc
-  src/timeutil.cc
   src/stringutil.cc
+  src/timeutil.cc
 )
 
 #---------------------------------------------

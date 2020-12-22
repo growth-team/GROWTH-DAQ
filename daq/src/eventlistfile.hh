@@ -1,11 +1,13 @@
-#ifndef EVENTLISTFILE_HH_
-#define EVENTLISTFILE_HH_
+#ifndef GROWTHDAQ_EVENTLISTFILE_HH_
+#define GROWTHDAQ_EVENTLISTFILE_HH_
 
 #include "types.h"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 
-/** Represents an event list file.
- */
+#include <string>
+#include <vector>
+
+/// Represents an event list file.
 class EventListFile {
  public:
   EventListFile(std::string fileName) : fileName_(std::move(fileName)) {}
@@ -15,9 +17,8 @@ class EventListFile {
   virtual size_t getEntries() const = 0;
   virtual void close() = 0;
 
-
  protected:
   std::string fileName_{};
 };
 
-#endif /* EVENTLISTFILE_HH_ */
+#endif

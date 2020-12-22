@@ -1,13 +1,9 @@
 #include "adcboard.hh"
 
-#include <cassert>
-#include <chrono>
-
 #include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
 #include "GROWTH_FY2015_ADCModules/ChannelModule.hh"
 #include "GROWTH_FY2015_ADCModules/Constants.hh"
 #include "GROWTH_FY2015_ADCModules/ConsumerManagerEventFIFO.hh"
-#include "GROWTH_FY2015_ADCModules/Debug.hh"
 #include "GROWTH_FY2015_ADCModules/EventDecoder.hh"
 #include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
@@ -15,6 +11,10 @@
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "stringutil.hh"
 #include "yaml-cpp/yaml.h"
+
+#include <cassert>
+#include <chrono>
+
 void GROWTH_FY2015_ADC::dumpThread() {
   size_t nReceivedEvents_previous = 0;
   size_t delta = 0;

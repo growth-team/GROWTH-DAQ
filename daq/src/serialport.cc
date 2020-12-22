@@ -34,7 +34,7 @@ _SerialPort_receive_loop:  //
     throw std::runtime_error("Too large data received");
   }
 
-  if (waitUntilSpecifiedLengthCompletes == false) {
+  if (!waitUntilSpecifiedLengthCompletes) {
     return nReceivedBytes;
   } else {
     remainingLength = remainingLength - nReceivedBytes;

@@ -4,3 +4,4 @@ AlwaysBreakTemplateDeclarations: true
 ColumnLimit: 120
 DerivePointerBinding: false
 PointerBindsToType: true
+SortIncludes: false

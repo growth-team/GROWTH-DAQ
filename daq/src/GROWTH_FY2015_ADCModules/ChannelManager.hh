@@ -1,5 +1,5 @@
-#ifndef CHANNELMANAGER_HH_
-#define CHANNELMANAGER_HH_
+#ifndef GROWTHDAQ_CHANNELMANAGER_HH_
+#define GROWTHDAQ_CHANNELMANAGER_HH_
 
 #include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"

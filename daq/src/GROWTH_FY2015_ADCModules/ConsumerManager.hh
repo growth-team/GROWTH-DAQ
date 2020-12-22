@@ -41,7 +41,7 @@ class ConsumerManager : public RegisterAccessInterface {
    * @param nSamples number of data points to be recorded in an event packet
    */
   virtual void setEventPacket_NumberOfWaveform(size_t nSamples) {
-    vector<u8> writedata;
+    std::vector<u8> writedata;
     writedata.push_back(static_cast<u8>(nSamples << 24 >> 24));
     writedata.push_back(static_cast<u8>(nSamples << 16 >> 24));
     rmapHandler_->write(adcboxRMAPNode, AddressOf_EventPacket_NumberOfWaveform_Register, &writedata[0], 2);

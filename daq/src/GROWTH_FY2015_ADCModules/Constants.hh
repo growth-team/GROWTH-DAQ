@@ -1,5 +1,5 @@
-#ifndef GROWTH_FY2015_ADC_TYPE_CONSTANTS_HH_
-#define GROWTH_FY2015_ADC_TYPE_CONSTANTS_HH_
+#ifndef GROWTHDAQ_CONSTANTS_HH_
+#define GROWTHDAQ_CONSTANTS_HH_
 
 #include <cstddef>
 #include <cstdint>

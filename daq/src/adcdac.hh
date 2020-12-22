@@ -1,17 +1,12 @@
-/*
- * ADCDAC.hh
- * Controls ADC/DAC function of GROWTH-FY2015 ADC board.
- *  Created on: Jun 6, 2015
- *      Author: Takayuki Yuasa
- */
-
-#ifndef ADCDAC_HH_
-#define ADCDAC_HH_
+#ifndef GROWTHDAQ_ADCDAC_HH_
+#define GROWTHDAQ_ADCDAC_HH_
 
 #include "types.h"
 
-/** Represents ADC data.
- */
+#include <cstdint>
+#include <string>
+
+/// Represents ADC data.
 class ADCData {
  public:
   static const size_t nTemperatureSensors = 4;
@@ -30,8 +25,7 @@ class ADCData {
   ADCData();
 };
 
-/** Controls ADC/DAC function.
- */
+/// Controls ADC/DAC function.
 class ADCDAC {
  public:
   ADCDAC();
@@ -67,12 +61,12 @@ class ADCDAC {
    * @param[in] value DAC value (0-4095)
    * @return status (0=successfully set, -1=range error)
    */
-  int setDAC(size_t channel, u16 value);
+  i32 setDAC(size_t channel, u16 value);
   /** Disable DAC output.
    * @param[in] channel 0 or 1 for Channel 0 and 1
    * @return status
    */
-  int disableDAC(size_t channel);
+  i32 disableDAC(size_t channel);
   ADCData getADCData();
 
   static constexpr f32 LT6106_Rout   = 10e3;   // 10kOhm
@@ -81,7 +75,7 @@ class ADCDAC {
 
   // ADC (MCP3208)
   static const size_t NADCChannels          = 8;
-  static const int SPIChannelADC            = 0x00;
+  static const size_t SPIChannelADC            = 0x00;
   static const u16 ADCMax              = 4095;
   static constexpr f32 ADCVref            = 2.5;  // V
   static const size_t ADCChannel_Current5V  = 4;
@@ -89,16 +83,16 @@ class ADCDAC {
 
   // DAC
   static const size_t NDACChannels = 2;
-  static const int SPIChannelDAC   = 0x01;
+  static const size_t SPIChannelDAC   = 0x01;
   static const u16 DACMin     = 0;
   static const u16 DACMax     = 4095;
 
-  static const unsigned char DACChannelA    = 0x00;
-  static const unsigned char DACChannelB    = 0x80;
-  static const unsigned char DACGain1       = 0x20;
-  static const unsigned char DACGain2       = 0x00;
-  static const unsigned char DACShutdownYes = 0x00;
-  static const unsigned char DACShutdownNo  = 0x10;
+  static const u8 DACChannelA    = 0x00;
+  static const u8 DACChannelB    = 0x80;
+  static const u8 DACGain1       = 0x20;
+  static const u8 DACGain2       = 0x00;
+  static const u8 DACShutdownYes = 0x00;
+  static const u8 DACShutdownNo  = 0x10;
 
   // SPI
   static const int SPIClockFrequency = 500000;  // Hz

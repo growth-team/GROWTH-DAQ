@@ -1,5 +1,5 @@
-#ifndef EVENTLISTFILEROOT_HH_
-#define EVENTLISTFILEROOT_HH_
+#ifndef GROWTHDAQ_EVENTLISTFILEROOT_HH_
+#define GROWTHDAQ_EVENTLISTFILEROOT_HH_
 
 #include "types.h"
 #include "rootutil.hh"

@@ -1,5 +1,5 @@
-#ifndef DAQ_INCLUDE_TYPES_H_
-#define DAQ_INCLUDE_TYPES_H_
+#ifndef GROWTHDAQ_TYPES_H_
+#define GROWTHDAQ_TYPES_H_
 
 #include <cstdint>
 
@@ -14,4 +14,4 @@ using u64 = uint64_t;
 using f32 = float;
 using f64 = double;
 
-#endif /* DAQ_INCLUDE_TYPES_H_ */
+#endif

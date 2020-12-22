@@ -59,42 +59,42 @@ class RMAPInitiator {
     if (!rmapEngine_) {
       throw std::runtime_error("RMAPEngine instance must not be nullptr");
     }
-    commandPacket.reset(new RMAPPacket());
-    replyPacket.reset(new RMAPPacket());
+    commandPacket_.reset(new RMAPPacket());
+    replyPacket_.reset(new RMAPPacket());
   }
 
   void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer,
-            i32 timeoutDurationMillisec = DefaultTimeoutDurationMillisec) {
-    commandPacket->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
-    commandPacket->setRead();
-    commandPacket->setCommand();
-    commandPacket->setIncrementFlag(incrementMode);
-    commandPacket->setVerifyFlag(false);
-    commandPacket->setReplyFlag(true);
-    commandPacket->setExtendedAddress(0x00);
-    commandPacket->setAddress(memoryAddress);
-    commandPacket->setDataLength(length);
-    commandPacket->clearData();
+            i32 timeoutDurationMillisec = DDEFAULT_TIMEOUT_DURATION_MILLISEC) {
+    commandPacket_->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
+    commandPacket_->setRead();
+    commandPacket_->setCommand();
+    commandPacket_->setIncrementFlag(incrementMode_);
+    commandPacket_->setVerifyFlag(false);
+    commandPacket_->setReplyFlag(true);
+    commandPacket_->setExtendedAddress(0x00);
+    commandPacket_->setAddress(memoryAddress);
+    commandPacket_->setDataLength(length);
+    commandPacket_->clearData();
     // InitiatorLogicalAddress might be updated in commandPacket->setRMAPTargetInformation(rmapTargetNode) below.
-    commandPacket->setRMAPTargetInformation(rmapTargetNode);
+    commandPacket_->setRMAPTargetInformation(rmapTargetNode);
 
-    if (replyPacket) {
-      rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket));
+    if (replyPacket_) {
+      rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket_));
     }
 
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
-    const TransactionID assignedTransactionID = rmapEngine_->initiateTransaction(commandPacket.get(), this);
+    const TransactionID assignedTransactionID = rmapEngine_->initiateTransaction(commandPacket_.get(), this);
     const auto rel_time = std::chrono::milliseconds(timeoutDurationMillisec);
-    replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket); });
+    replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket_); });
 
-    if (replyPacket) {
-      if (replyPacket->getStatus() != RMAPReplyStatus::CommandExcecutedSuccessfully) {
-        throw RMAPReplyException(replyPacket->getStatus());
+    if (replyPacket_) {
+      if (replyPacket_->getStatus() != RMAPReplyStatus::CommandExcecutedSuccessfully) {
+        throw RMAPReplyException(replyPacket_->getStatus());
       }
-      if (length < replyPacket->getDataBuffer()->size()) {
+      if (length < replyPacket_->getDataBuffer()->size()) {
         throw RMAPInitiatorException(RMAPInitiatorException::ReadReplyWithInsufficientData);
       }
-      replyPacket->getData(buffer, length);
+      replyPacket_->getData(buffer, length);
       // when successful, replay packet is retained until next transaction for inspection by user application
       return;
     } else {
@@ -105,36 +105,36 @@ class RMAPInitiator {
   }
 
   void write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, const u8* data, u32 length,
-             i32 timeoutDurationMillisec = DefaultTimeoutDurationMillisec) {
-    commandPacket->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
-    commandPacket->setWrite();
-    commandPacket->setCommand();
-    commandPacket->setIncrementFlag(incrementMode);
-    commandPacket->setVerifyFlag(verifyMode);
-    commandPacket->setReplyFlag(replyMode);
-    commandPacket->setExtendedAddress(0x00);
-    commandPacket->setAddress(memoryAddress);
-    commandPacket->setDataLength(length);
-    commandPacket->setRMAPTargetInformation(rmapTargetNode);
-    commandPacket->setData(data, length);
+             i32 timeoutDurationMillisec = DDEFAULT_TIMEOUT_DURATION_MILLISEC) {
+    commandPacket_->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
+    commandPacket_->setWrite();
+    commandPacket_->setCommand();
+    commandPacket_->setIncrementFlag(incrementMode_);
+    commandPacket_->setVerifyFlag(verifyMode_);
+    commandPacket_->setReplyFlag(replyMode_);
+    commandPacket_->setExtendedAddress(0x00);
+    commandPacket_->setAddress(memoryAddress);
+    commandPacket_->setDataLength(length);
+    commandPacket_->setRMAPTargetInformation(rmapTargetNode);
+    commandPacket_->setData(data, length);
 
-    if (replyPacket) {
-      rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket));
+    if (replyPacket_) {
+      rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket_));
     }
 
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
-    const TransactionID assignedTransactionID = rmapEngine_->initiateTransaction(commandPacket.get(), this);
+    const TransactionID assignedTransactionID = rmapEngine_->initiateTransaction(commandPacket_.get(), this);
 
-    if (!replyMode) {  // if reply is not expected
+    if (!replyMode_) {  // if reply is not expected
       return;
     }
     const auto rel_time = std::chrono::milliseconds(timeoutDurationMillisec);
-    replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket); });
-    if (replyPacket) {
-      if (replyPacket->getStatus() == RMAPReplyStatus::CommandExcecutedSuccessfully) {
+    replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket_); });
+    if (replyPacket_) {
+      if (replyPacket_->getStatus() == RMAPReplyStatus::CommandExcecutedSuccessfully) {
         return;
       } else {
-        throw RMAPReplyException(replyPacket->getStatus());
+        throw RMAPReplyException(replyPacket_->getStatus());
       }
     } else {
       rmapEngine_->cancelTransaction(assignedTransactionID);
@@ -143,37 +143,37 @@ class RMAPInitiator {
   }
 
   void replyReceived(RMAPPacketPtr&& packet) {
-    replyPacket = std::move(packet);
+    replyPacket_ = std::move(packet);
     std::lock_guard<std::mutex> guard(replyWaitMutex_);
     replyWaitCondition_.notify_one();
   }
 
-  u8 getInitiatorLogicalAddress() const { return initiatorLogicalAddress; }
-  bool getReplyMode() const { return replyMode; }
-  bool getIncrementMode() const { return incrementMode; }
-  bool getVerifyMode() const { return verifyMode; }
+  u8 getInitiatorLogicalAddress() const { return initiatorLogicalAddress_; }
+  bool getReplyMode() const { return replyMode_; }
+  bool getIncrementMode() const { return incrementMode_; }
+  bool getVerifyMode() const { return verifyMode_; }
 
-  void setInitiatorLogicalAddress(u8 logicalAddress) { initiatorLogicalAddress = logicalAddress; }
-  void setReplyMode(bool replyMode) { this->replyMode = replyMode; }
-  void setIncrementMode(bool incrementMode) { this->incrementMode = incrementMode; }
-  void setVerifyMode(bool verifyMode) { this->verifyMode = verifyMode; }
+  void setInitiatorLogicalAddress(u8 logicalAddress) { initiatorLogicalAddress_ = logicalAddress; }
+  void setReplyMode(bool replyMode) { this->replyMode_ = replyMode; }
+  void setIncrementMode(bool incrementMode) { this->incrementMode_ = incrementMode; }
+  void setVerifyMode(bool verifyMode) { this->verifyMode_ = verifyMode; }
 
-  static constexpr i32 DefaultTimeoutDurationMillisec = 1000;
-  static const bool DefaultIncrementMode = true;
-  static const bool DefaultVerifyMode = true;
-  static const bool DefaultReplyMode = true;
+  static constexpr i32 DDEFAULT_TIMEOUT_DURATION_MILLISEC = 1000;
+  static const bool DEFAULT_INCREMENT_MODE = true;
+  static const bool DEFAULT_VERIFY_MODE = true;
+  static const bool DEFAULT_REPLY_MODE = true;
 
  private:
-  RMAPEnginePtr rmapEngine_;
-  RMAPPacketPtr commandPacket;
-  RMAPPacketPtr replyPacket;
+  RMAPEnginePtr rmapEngine_{};
+  RMAPPacketPtr commandPacket_{};
+  RMAPPacketPtr replyPacket_{};
 
-  u8 initiatorLogicalAddress = SpaceWireProtocol::DefaultLogicalAddress;
-  bool incrementMode = DefaultIncrementMode;
-  bool verifyMode = DefaultVerifyMode;
-  bool replyMode = DefaultReplyMode;
+  u8 initiatorLogicalAddress_ = SpaceWireProtocol::DEFAULT_LOGICAL_ADDRESS;
+  bool incrementMode_ = DEFAULT_INCREMENT_MODE;
+  bool verifyMode_ = DEFAULT_VERIFY_MODE;
+  bool replyMode_ = DEFAULT_REPLY_MODE;
 
-  std::condition_variable replyWaitCondition_;
-  std::mutex replyWaitMutex_;
+  std::condition_variable replyWaitCondition_{};
+  std::mutex replyWaitMutex_{};
 };
 #endif

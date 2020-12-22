@@ -9,8 +9,8 @@ class RMAPHandlerUART;
 /// A class which represents a ChannelModule on VHDL logic.
 class ChannelModule : public RegisterAccessInterface {
  public:
-  static const u32 InitialAddressOf_ChModule_0 = 0x01011000;
-  static const u32 AddressOffsetBetweenChannels = 0x100;
+  static constexpr u32 InitialAddressOf_ChModule_0 = 0x01011000;
+  static constexpr u32 AddressOffsetBetweenChannels = 0x100;
 
  public:
   /** Constructor.

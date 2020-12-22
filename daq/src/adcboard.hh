@@ -1,5 +1,5 @@
-#ifndef ADCBOARD_HH_
-#define ADCBOARD_HH_
+#ifndef GROWTHDAQ_ADCBOARD_HH_
+#define GROWTHDAQ_ADCBOARD_HH_
 
 #include <memory>
 #include <string>

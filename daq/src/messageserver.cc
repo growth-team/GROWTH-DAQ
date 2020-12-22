@@ -1,8 +1,7 @@
-#include "MessageServer.hh"
+#include "messageserver.hh"
+#include "mainthread.hh"
 
 #include <iostream>
-
-#include "MainThread.hh"
 
 MessageServer::MessageServer(std::shared_ptr<MainThread> mainThread)
     :  //

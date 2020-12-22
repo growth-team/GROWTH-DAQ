@@ -1,5 +1,5 @@
-#ifndef SRC_MESSAGESERVER_HH_
-#define SRC_MESSAGESERVER_HH_
+#ifndef GROWTHDAQ_MESSAGESERVER_HH_
+#define GROWTHDAQ_MESSAGESERVER_HH_
 
 #include "types.h"
 #include "picojson.h"

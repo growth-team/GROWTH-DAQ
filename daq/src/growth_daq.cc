@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include "MainThread.hh"
-#include "MessageServer.hh"
+#include "mainthread.hh"
+#include "messageserver.hh"
 
 int main(int argc, char* argv[]) {
   // Process arguments
