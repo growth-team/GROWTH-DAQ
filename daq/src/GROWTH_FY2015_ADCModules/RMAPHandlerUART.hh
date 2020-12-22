@@ -4,6 +4,7 @@
 #include "spacewire/rmapinitiator.hh"
 #include "spacewire/spacewireifoveruart.hh"
 
+#include <cassert>
 #include <chrono>
 #include <fstream>
 #include <iostream>

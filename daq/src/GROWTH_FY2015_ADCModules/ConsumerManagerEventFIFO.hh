@@ -5,6 +5,8 @@
 
 #include "types.h"
 
+#include <cassert>
+
 class RMAPHandlerUART;
 
 /** A class which represents ConsumerManager module in the VHDL logic.

@@ -1,14 +1,16 @@
 #ifndef SPACEWIRE_SPACEWIREIFOVERUART_HH_
 #define SPACEWIRE_SPACEWIREIFOVERUART_HH_
 
-#include <chrono>
-#include <thread>
-
+#include "types.h"
 #include "spacewire/spacewireif.hh"
 #include "spacewire/types.hh"
 #include "spacewiressdtpmoduleuart.hh"
 #include "stringutil.hh"
-#include "types.h"
+
+#include <chrono>
+#include <thread>
+#include <cassert>
+
 /** SpaceWire IF class which transfers data over UART.
  */
 class SpaceWireIFOverUART : public SpaceWireIF {
