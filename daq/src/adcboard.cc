@@ -22,50 +22,52 @@ void GROWTH_FY2015_ADC::dumpThread() {
   while (!stopDumpThread_) {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(1s);
-    nReceivedEvents_latch = nReceivedEvents;
+    nReceivedEvents_latch = nReceivedEvents_;
     delta = nReceivedEvents_latch - nReceivedEvents_previous;
     nReceivedEvents_previous = nReceivedEvents_latch;
     printf("Received %zu events (delta=%zu). Available Event instances=%zu\n", nReceivedEvents_latch, delta,
-           eventDecoder->getNAllocatedEventInstances());
+           eventDecoder_->getNAllocatedEventInstances());
   }
 }
 
 GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
-    : eventDecoder(new EventDecoder),
-      rmapHandler(std::make_unique<RMAPHandlerUART>(deviceName)),
-      rmapIniaitorForGPSRegisterAccess(std::make_unique<RMAPInitiator>(rmapHandler->getRMAPEngine())) {
-  adcRMAPTargetNode = std::make_shared<RMAPTargetNode>();
-  adcRMAPTargetNode->setDefaultKey(0x00);
-  adcRMAPTargetNode->setReplyAddress({});
-  adcRMAPTargetNode->setTargetSpaceWireAddress({});
-  adcRMAPTargetNode->setTargetLogicalAddress(0xFE);
-  adcRMAPTargetNode->setInitiatorLogicalAddress(0xFE);
+    : eventDecoder_(new EventDecoder),
+      rmapHandler_(std::make_unique<RMAPHandlerUART>(deviceName)),
+      rmapIniaitorForGPSRegisterAccess_(std::make_unique<RMAPInitiator>(rmapHandler_->getRMAPEngine())),
+      gpsDataFIFOReadBuffer_(new u8[GPS_DATA_FIFO_DEPTH_BYTES]) {
+  adcRMAPTargetNode_ = std::make_shared<RMAPTargetNode>();
+  adcRMAPTargetNode_->setDefaultKey(0x00);
+  adcRMAPTargetNode_->setReplyAddress({});
+  adcRMAPTargetNode_->setTargetSpaceWireAddress({});
+  adcRMAPTargetNode_->setTargetLogicalAddress(0xFE);
+  adcRMAPTargetNode_->setInitiatorLogicalAddress(0xFE);
 
-  channelManager = std::make_unique<ChannelManager>(rmapHandler, adcRMAPTargetNode);
-  consumerManager = std::make_unique<ConsumerManagerEventFIFO>(rmapHandler, adcRMAPTargetNode);
+  channelManager_ = std::make_unique<ChannelManager>(rmapHandler_, adcRMAPTargetNode_);
+  consumerManager_ = std::make_unique<ConsumerManagerEventFIFO>(rmapHandler_, adcRMAPTargetNode_);
 
   // create instances of ADCChannelRegister
   for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
-    channelModules.emplace_back(new ChannelModule(rmapHandler, adcRMAPTargetNode, i));
+    channelModules_.emplace_back(new ChannelModule(rmapHandler_, adcRMAPTargetNode_, i));
   }
 
-  reg = std::make_shared<RegisterAccessInterface>(rmapHandler, adcRMAPTargetNode);
+  reg_ = std::make_shared<RegisterAccessInterface>(rmapHandler_, adcRMAPTargetNode_);
 }
 
-GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() { delete gpsDataFIFOReadBuffer; }
+GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() = default;
 
-u32 GROWTH_FY2015_ADC::getFPGAType() { return reg->read32(AddressOfFPGATypeRegister_L); }
+u32 GROWTH_FY2015_ADC::getFPGAType() const { return reg_->read32(AddressOfFPGATypeRegister_L); }
 
-u32 GROWTH_FY2015_ADC::getFPGAVersion() { return reg->read32(AddressOfFPGAVersionRegister_L); }
+u32 GROWTH_FY2015_ADC::getFPGAVersion() const { return reg_->read32(AddressOfFPGAVersionRegister_L); }
 
-std::string GROWTH_FY2015_ADC::getGPSRegister() {
-  reg->read(AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister.data());
+std::string GROWTH_FY2015_ADC::getGPSRegister() const {
+  std::array<u8, GPS_TIME_REG_SIZE_BYTES + 1> gpsTimeRegister{};
+  reg_->read(AddressOfGPSTimeRegister, GPS_TIME_REG_SIZE_BYTES, gpsTimeRegister.data());
   std::stringstream ss;
-  for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
+  for (size_t i = 0; i < GPS_TIME_REG_SIZE_BYTES; i++) {
     if (i < 14) {
       ss << gpsTimeRegister.at(i);
     } else {
-      ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint32_t>(gpsTimeRegister.at(i));
+      ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<u32>(gpsTimeRegister.at(i));
     }
     if (i == 13) {
       ss << " ";
@@ -74,171 +76,165 @@ std::string GROWTH_FY2015_ADC::getGPSRegister() {
   return ss.str();
 }
 
-u8* GROWTH_FY2015_ADC::getGPSRegisterUInt8() {
-  reg->read(AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister.data());
-  gpsTimeRegister[LengthOfGPSTimeRegister] = 0x00;
-  return gpsTimeRegister.data();
+std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1> GROWTH_FY2015_ADC::getGPSRegisterUInt8() const {
+  std::array<u8, GPS_TIME_REG_SIZE_BYTES + 1> gpsTimeRegister{};
+  reg_->read(AddressOfGPSTimeRegister, GPS_TIME_REG_SIZE_BYTES, gpsTimeRegister.data());
+  gpsTimeRegister.at(GPS_TIME_REG_SIZE_BYTES) = 0x00;
+  return gpsTimeRegister;
 }
 
 void GROWTH_FY2015_ADC::clearGPSDataFIFO() {
   u8 dummy[2];
-  reg->read(AddressOfGPSDataFIFOResetRegister, 2, dummy);
+  reg_->read(AddressOfGPSDataFIFOResetRegister, 2, dummy);
 }
 
 std::vector<u8> GROWTH_FY2015_ADC::readGPSDataFIFO() {
-  if (gpsDataFIFOData.size() != GPSDataFIFODepthInBytes) {
-    gpsDataFIFOData.resize(GPSDataFIFODepthInBytes);
+  if (gpsDataFIFOData_.size() != GPS_DATA_FIFO_DEPTH_BYTES) {
+    gpsDataFIFOData_.resize(GPS_DATA_FIFO_DEPTH_BYTES);
   }
-  if (gpsDataFIFOReadBuffer == NULL) {
-    gpsDataFIFOReadBuffer = new u8[GPSDataFIFODepthInBytes];
-  }
-  reg->read(AddressOfGPSDataFIFOResetRegister, GPSDataFIFODepthInBytes, gpsDataFIFOReadBuffer);
-  memcpy(&(gpsDataFIFOData[0]), gpsDataFIFOReadBuffer, GPSDataFIFODepthInBytes);
-  return gpsDataFIFOData;
+  reg_->read(AddressOfGPSDataFIFOResetRegister, GPS_DATA_FIFO_DEPTH_BYTES, gpsDataFIFOReadBuffer_.get());
+  memcpy(gpsDataFIFOData_.data(), gpsDataFIFOReadBuffer_.get(), GPS_DATA_FIFO_DEPTH_BYTES);
+  return gpsDataFIFOData_;
 }
 
 void GROWTH_FY2015_ADC::reset() {
-  channelManager->reset();
-  consumerManager->reset();
+  channelManager_->reset();
+  consumerManager_->reset();
 }
 
 std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
-  events.clear();
-  const std::vector<u8> data = consumerManager->getEventData();
+  events_.clear();
+  const std::vector<u8> data = consumerManager_->getEventData();
   if (!data.empty()) {
-    eventDecoder->decodeEvent(&data);
-    events = eventDecoder->getDecodedEvents();
+    eventDecoder_->decodeEvent(&data);
+    events_ = eventDecoder_->getDecodedEvents();
   }
-  nReceivedEvents += events.size();
-  return events;
+  nReceivedEvents_ += events_.size();
+  return events_;
 }
 
-void GROWTH_FY2015_ADC::freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventDecoder->freeEvent(event); }
+void GROWTH_FY2015_ADC::freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventDecoder_->freeEvent(event); }
 
 void GROWTH_FY2015_ADC::freeEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
   for (auto event : events) {
-    eventDecoder->freeEvent(event);
+    eventDecoder_->freeEvent(event);
   }
 }
 
 void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, TriggerMode triggerMode) {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  channelModules[chNumber]->setTriggerMode(triggerMode);
+  channelModules_[chNumber]->setTriggerMode(triggerMode);
 }
 
 void GROWTH_FY2015_ADC::setNumberOfSamples(u16 nSamples) {
   for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
-    channelModules[i]->setNumberOfSamples(nSamples);
+    channelModules_[i]->setNumberOfSamples(nSamples);
   }
   setNumberOfSamplesInEventPacket(nSamples);
 }
 
 void GROWTH_FY2015_ADC::setNumberOfSamplesInEventPacket(u16 nSamples) {
-  consumerManager->setEventPacket_NumberOfWaveform(nSamples);
+  consumerManager_->setEventPacket_NumberOfWaveform(nSamples);
 }
 
 void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, u32 threshold) {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  channelModules[chNumber]->setStartingThreshold(threshold);
+  channelModules_[chNumber]->setStartingThreshold(threshold);
 }
 
 void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, u32 threshold) {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  channelModules[chNumber]->setClosingThreshold(threshold);
+  channelModules_[chNumber]->setClosingThreshold(threshold);
 }
 
 void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, u32 depthOfDelay) {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  channelModules[chNumber]->setDepthOfDelay(depthOfDelay);
+  channelModules_[chNumber]->setDepthOfDelay(depthOfDelay);
 }
 
-u32 GROWTH_FY2015_ADC::getLivetime(size_t chNumber) {
+u32 GROWTH_FY2015_ADC::getLivetime(size_t chNumber) const {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  return channelModules[chNumber]->getLivetime();
+  return channelModules_[chNumber]->getLivetime();
 }
 
-u32 GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) {
+u32 GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) const {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  return channelModules[chNumber]->getCurrentADCValue();
+  return channelModules_[chNumber]->getCurrentADCValue();
 }
 
 void GROWTH_FY2015_ADC::turnOnADCPower(size_t chNumber) {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  channelModules[chNumber]->turnADCPower(true);
+  channelModules_[chNumber]->turnADCPower(true);
 }
 
 void GROWTH_FY2015_ADC::turnOffADCPower(size_t chNumber) {
   assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
-  channelModules[chNumber]->turnADCPower(false);
+  channelModules_[chNumber]->turnADCPower(false);
 }
 
 void GROWTH_FY2015_ADC::startAcquisition(std::vector<bool> channelsToBeStarted) {
-  consumerManager->reset();  // reset EventFIFO
-  channelManager->startAcquisition(channelsToBeStarted);
+  consumerManager_->reset();  // reset EventFIFO
+  channelManager_->startAcquisition(channelsToBeStarted);
 }
 
-void GROWTH_FY2015_ADC::startAcquisition() { channelManager->startAcquisition(this->ChannelEnable); }
+void GROWTH_FY2015_ADC::startAcquisition() { channelManager_->startAcquisition(this->ChannelEnable); }
 
-bool GROWTH_FY2015_ADC::isAcquisitionCompleted() { return channelManager->isAcquisitionCompleted(); }
+bool GROWTH_FY2015_ADC::isAcquisitionCompleted() const { return channelManager_->isAcquisitionCompleted(); }
 
-bool GROWTH_FY2015_ADC::isAcquisitionCompleted(size_t chNumber) {
-  return channelManager->isAcquisitionCompleted(chNumber);
+bool GROWTH_FY2015_ADC::isAcquisitionCompleted(size_t chNumber) const {
+  return channelManager_->isAcquisitionCompleted(chNumber);
 }
 
-void GROWTH_FY2015_ADC::stopAcquisition() { channelManager->stopAcquisition(); }
+void GROWTH_FY2015_ADC::stopAcquisition() { channelManager_->stopAcquisition(); }
 
 void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
   if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
-    channelModules[chNumber]->sendCPUTrigger();
+    channelModules_[chNumber]->sendCPUTrigger();
   } else {
-    using namespace std;
-    cerr << "Error in sendCPUTrigger(): invalid channel number " << chNumber << endl;
     throw SpaceFibreADCException::InvalidChannelNumber;
   }
 }
 
 void GROWTH_FY2015_ADC::sendCPUTrigger() {
-  using namespace std;
   for (size_t chNumber = 0; chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels; chNumber++) {
-    if (this->ChannelEnable[chNumber] == true) {  // if enabled
-      cout << "CPU Trigger to Channel " << chNumber << endl;
-      channelModules[chNumber]->sendCPUTrigger();
+    if (this->ChannelEnable[chNumber]) {  // if enabled
+      std::cout << "CPU Trigger to Channel " << chNumber << std::endl;
+      channelModules_[chNumber]->sendCPUTrigger();
     }
   }
 }
 
 void GROWTH_FY2015_ADC::setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetMode) {
-  channelManager->setPresetMode(presetMode);
+  channelManager_->setPresetMode(presetMode);
 }
 
 void GROWTH_FY2015_ADC::setPresetLivetime(u32 livetimeIn10msUnit) {
-  channelManager->setPresetLivetime(livetimeIn10msUnit);
+  channelManager_->setPresetLivetime(livetimeIn10msUnit);
 }
 
-void GROWTH_FY2015_ADC::setPresetnEvents(u32 nEvents) { channelManager->setPresetnEvents(nEvents); }
+void GROWTH_FY2015_ADC::setPresetnEvents(u32 nEvents) { channelManager_->setPresetnEvents(nEvents); }
 
-f64 GROWTH_FY2015_ADC::getRealtime() { return channelManager->getRealtime(); }
+f64 GROWTH_FY2015_ADC::getRealtime() const { return channelManager_->getRealtime(); }
 
 void GROWTH_FY2015_ADC::setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency) {
-  channelManager->setAdcClock(adcClockFrequency);
+  channelManager_->setAdcClock(adcClockFrequency);
 }
 
-GROWTH_FY2015_ADC_Type::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() {
-  GROWTH_FY2015_ADC_Type::HouseKeepingData hkData;
-  // realtime
-  hkData.realtime = channelManager->getRealtime();
+GROWTH_FY2015_ADC_Type::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() const {
+  GROWTH_FY2015_ADC_Type::HouseKeepingData hkData{};
+  hkData.realtime = channelManager_->getRealtime();
 
   for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
     // livetime
-    hkData.livetime[i] = channelModules[i]->getLivetime();
+    hkData.livetime[i] = channelModules_[i]->getLivetime();
     // acquisition status
-    hkData.acquisitionStarted[i] = channelManager->isAcquisitionCompleted(i);
+    hkData.acquisitionStarted[i] = channelManager_->isAcquisitionCompleted(i);
   }
 
   return hkData;
 }
 
-size_t GROWTH_FY2015_ADC::getNSamplesInEventListFile() {
+size_t GROWTH_FY2015_ADC::getNSamplesInEventListFile() const {
   return (this->SamplesInEventPacket) / this->DownSamplingFactorForSavedWaveform;
 }
 
@@ -259,17 +255,17 @@ void GROWTH_FY2015_ADC::dumpMustExistKeywords() {
       << "TriggerCloseThresholds: [800, 800, 800, 800]" << endl;
 }
 
-void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
+void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) {
   using namespace std;
   YAML::Node yaml_root = YAML::LoadFile(inputFileName);
-  std::vector<std::string> mustExistKeywords = {"DetectorID",
-                                                "PreTriggerSamples",
-                                                "PostTriggerSamples",
-                                                "SamplesInEventPacket",
-                                                "DownSamplingFactorForSavedWaveform",
-                                                "ChannelEnable",
-                                                "TriggerThresholds",
-                                                "TriggerCloseThresholds"};
+  const std::vector<std::string> mustExistKeywords = {"DetectorID",
+                                                      "PreTriggerSamples",
+                                                      "PostTriggerSamples",
+                                                      "SamplesInEventPacket",
+                                                      "DownSamplingFactorForSavedWaveform",
+                                                      "ChannelEnable",
+                                                      "TriggerThresholds",
+                                                      "TriggerCloseThresholds"};
 
   //---------------------------------------------
   // check keyword existence

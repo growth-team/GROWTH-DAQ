@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   u8* buffer   = adcBoard->getGPSRegisterUInt8();
   long long timeTag = 0;
 
-  for (size_t i = 14; i < GROWTH_FY2015_ADC::LengthOfGPSTimeRegister; i++) { timeTag = buffer[i] + (timeTag << 8); }
+  for (size_t i = 14; i < GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES; i++) { timeTag = buffer[i] + (timeTag << 8); }
   std::stringstream ss;
   for (size_t i = 0; i < 14; i++) { ss << buffer[i]; }
   cout << "timeTag=" << timeTag << " " << ss.str() << endl;

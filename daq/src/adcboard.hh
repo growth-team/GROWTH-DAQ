@@ -1,6 +1,7 @@
 #ifndef GROWTHDAQ_ADCBOARD_HH_
 #define GROWTHDAQ_ADCBOARD_HH_
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,16 +35,28 @@ enum class SpaceFibreADCException {
  */
 class GROWTH_FY2015_ADC {
  public:
+  // Clock Frequency
+  static constexpr f64 ClockFrequency = 100;  // MHz
+  // Clock Interval
+  static constexpr f64 ClockInterval = 10e-9;  // s
+  // FPGA TimeTag
+  static constexpr u32 TimeTagResolutionInNanoSec = 10;  // ns
+  // PHA Min/Max
+  static constexpr u16 PHAMinimum = 0;
+  static constexpr u16 PHAMaximum = 4095;
+  static constexpr size_t GPS_TIME_REG_SIZE_BYTES = 20;
+
+ public:
   /** Constructor.
    * @param deviceName UART-USB device name (e.g. /dev/tty.usb-aaa-bbb)
    */
   GROWTH_FY2015_ADC(std::string deviceName);
   ~GROWTH_FY2015_ADC();
 
-  u32 getFPGAType();
-  u32 getFPGAVersion();
-  std::string getGPSRegister();
-  u8* getGPSRegisterUInt8();
+  u32 getFPGAType() const;
+  u32 getFPGAVersion() const;
+  std::string getGPSRegister() const;
+  std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1> getGPSRegisterUInt8() const;
 
   /** Clears the GPS Data FIFO.
    *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
@@ -135,11 +148,11 @@ class GROWTH_FY2015_ADC {
   /** Gets Livetime.
    * @return elapsed livetime in 10ms unit
    */
-  u32 getLivetime(size_t chNumber);
+  u32 getLivetime(size_t chNumber) const;
   /** Get current ADC value.
    * @return temporal ADC value
    */
-  u32 getCurrentADCValue(size_t chNumber);
+  u32 getCurrentADCValue(size_t chNumber) const;
 
   /** Turn on ADC.
    */
@@ -165,12 +178,12 @@ class GROWTH_FY2015_ADC {
   /** Checks if all data acquisition is completed in all channels.
    * 	return true if data acquisition is stopped.
    */
-  bool isAcquisitionCompleted();
+  bool isAcquisitionCompleted() const;
 
   /** Checks if data acquisition of single channel is completed.
    * 	return true if data acquisition is stopped.
    */
-  bool isAcquisitionCompleted(size_t chNumber);
+  bool isAcquisitionCompleted(size_t chNumber) const;
 
   /** Stops data acquisition regardless of the preset mode of the acquisition.
    */
@@ -208,7 +221,7 @@ class GROWTH_FY2015_ADC {
   /** Get Realtime which is elapsed time since the board power was turned on.
    * @return elapsed real time in 10ms unit
    */
-  f64 getRealtime();
+  f64 getRealtime() const;
 
   /** Sets ADC Clock.
    * - ADCClockFrequency::ADCClock200MHz <br>
@@ -222,22 +235,11 @@ class GROWTH_FY2015_ADC {
    * counted in the FPGA, and acquisition status (started or stopped).
    * @retrun HK information contained in a SpaceFibreADC::HouseKeepingData instance
    */
-  GROWTH_FY2015_ADC_Type::HouseKeepingData getHouseKeepingData();
+  GROWTH_FY2015_ADC_Type::HouseKeepingData getHouseKeepingData() const;
 
-  size_t getNSamplesInEventListFile();
+  size_t getNSamplesInEventListFile() const;
   void dumpMustExistKeywords();
-  void loadConfigurationFile(std::string inputFileName);
-
-  // Clock Frequency
-  static constexpr f64 ClockFrequency = 100;  // MHz
-  // Clock Interval
-  static constexpr f64 ClockInterval = 10e-9;  // s
-  // FPGA TimeTag
-  static constexpr u32 TimeTagResolutionInNanoSec = 10;  // ns
-  // PHA Min/Max
-  static constexpr u16 PHAMinimum = 0;
-  static constexpr u16 PHAMaximum = 1023;
-  static constexpr size_t LengthOfGPSTimeRegister = 20;
+  void loadConfigurationFile(const std::string& inputFileName);
 
   const size_t nChannels = 4;
   std::string DetectorID{};
@@ -276,23 +278,22 @@ class GROWTH_FY2015_ADC {
   static constexpr u32 AddressOfFPGAVersionRegister_H = 0x30000006;
   // clang-format on
 
-  std::shared_ptr<RMAPHandlerUART> rmapHandler;
-  std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode;
-  std::unique_ptr<RMAPInitiator> rmapIniaitorForGPSRegisterAccess;
-  std::unique_ptr<EventDecoder> eventDecoder;
-  std::unique_ptr<ChannelManager> channelManager;
-  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager;
+  std::shared_ptr<RMAPHandlerUART> rmapHandler_;
+  std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode_;
+  std::unique_ptr<RMAPInitiator> rmapIniaitorForGPSRegisterAccess_;
+  std::unique_ptr<EventDecoder> eventDecoder_;
+  std::unique_ptr<ChannelManager> channelManager_;
+  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager_;
   using ChannelModulePtr = std::unique_ptr<ChannelModule>;
-  std::vector<ChannelModulePtr> channelModules;
+  std::vector<ChannelModulePtr> channelModules_;
 
-  std::shared_ptr<RegisterAccessInterface> reg;
+  std::shared_ptr<RegisterAccessInterface> reg_;
 
-  size_t nReceivedEvents = 0;
-  std::array<u8, LengthOfGPSTimeRegister + 1> gpsTimeRegister;
-  const size_t GPSDataFIFODepthInBytes = 1024;
-  u8* gpsDataFIFOReadBuffer{nullptr};
-  std::vector<u8> gpsDataFIFOData{};
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> events{};
+  size_t nReceivedEvents_ = 0;
+  const size_t GPS_DATA_FIFO_DEPTH_BYTES = 1024;
+  std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_;
+  std::vector<u8> gpsDataFIFOData_{};
+  std::vector<GROWTH_FY2015_ADC_Type::Event*> events_{};
   bool stopDumpThread_ = false;
 };
 

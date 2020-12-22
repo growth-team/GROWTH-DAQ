@@ -5,7 +5,6 @@
 
 #include <fstream>
 
-
 EventListFileFITS::EventListFileFITS(const std::string& fileName, const std::string& detectorID,
                                      const std::string& configurationYAMLFile, size_t nSamples, f64 exposureInSec,
                                      u32 fpgaType, u32 fpgaVersion)
@@ -103,7 +102,7 @@ void EventListFileFITS::writeHeader() {
   }
 
   // configurationYAML as HISTORY
-  if (configurationYAMLFile_ != "") {
+  if (!configurationYAMLFile_.empty()) {
     std::vector<std::string> lines;
     std::ifstream ifs(configurationYAMLFile_);
     while (!ifs.eof()) {
@@ -126,11 +125,12 @@ void EventListFileFITS::reportErrorThenQuitIfError(int fitsStatus, const std::st
   }
 }
 
-void EventListFileFITS::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
+void EventListFileFITS::fillGPSTime(
+    const std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1>& gpsTimeRegisterBuffer) {
   // 0123456789X123456789
   // GPYYMMDDHHMMSSxxxxxx
   i64 timeTag = 0;
-  for (size_t i = 14; i < GROWTH_FY2015_ADC::LengthOfGPSTimeRegister; i++) {
+  for (size_t i = 14; i < GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES; i++) {
     timeTag = gpsTimeRegisterBuffer[i] + (timeTag << 8);
   }
   std::lock_guard<std::mutex> guard(fitsAccessMutex_);
@@ -148,7 +148,7 @@ void EventListFileFITS::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
   fits_write_col(outputFile_, TUINT, COL_UNIXTIME, rowIndexGPS_, FIRST_ELEMENT, 1, const_cast<u32*>(&unixTime),
                  &fitsStatus_);
   fits_write_col(outputFile_, TSTRING, COL_GPSTIME, rowIndexGPS_, FIRST_ELEMENT, 1 /* YYMMDDHHMMSS */,
-                 &gpsTimeRegisterBuffer, &fitsStatus_);
+                 const_cast<u8*>(gpsTimeRegisterBuffer.data()), &fitsStatus_);
 
   // move back to EVENTS HDU
   fits_movnam_hdu(outputFile_, BINARY_TBL, const_cast<char*>("EVENTS"), 0, &fitsStatus_);

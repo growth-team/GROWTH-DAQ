@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
   target.setReplyAddress({});
 
   RMAPHandlerUART* rmapHandler = new RMAPHandlerUART(deviceName, {&target});
-  if (rmapHandler->connectoToSpaceWireToGigabitEther() == false) {
+  if (!rmapHandler->connectoToSpaceWireToGigabitEther()) {
     exit(-1);
   }
   printf("EventFIFO data count = %d\n", rmapHandler->getRegister(AddressOf_EventFIFO_DataCountRegister));

@@ -25,7 +25,7 @@ class EventDecoder {
     u16 phaLast{};
     u16 maxDerivative{};
     u16 baseline{};
-    std::array<u16,GROWTH_FY2015_ADC_Type::MaxWaveformLength> waveform{};
+    std::array<u16, GROWTH_FY2015_ADC_Type::MaxWaveformLength> waveform{};
   } rawEvent;
 
  private:
@@ -168,7 +168,7 @@ class EventDecoder {
  public:
   void pushEventToQueue() {
     GROWTH_FY2015_ADC_Type::Event* event;
-    if (eventInstanceResavoir_.size() == 0) {
+    if (eventInstanceResavoir_.empty()) {
       event = new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
     } else {
       // reuse already created instance
@@ -217,7 +217,7 @@ class EventDecoder {
   /** Returns the number of available (allocated) Event instances.
    * @return the number of Event instances
    */
-  size_t getNAllocatedEventInstances() { return eventInstanceResavoir_.size(); }
+  size_t getNAllocatedEventInstances() const { return eventInstanceResavoir_.size(); }
 
  public:
  public:

@@ -449,7 +449,7 @@ class RMAPPacket : public SpaceWirePacket {
     bool nonZeroValueHasAppeared = false;
     std::vector<u8> result;
     for (size_t i = 0; i < replyAddress.size(); i++) {
-      if (nonZeroValueHasAppeared == false && replyAddress[i] != 0x00) {
+      if (!nonZeroValueHasAppeared && replyAddress[i] != 0x00) {
         nonZeroValueHasAppeared = true;
       }
       if (nonZeroValueHasAppeared) {

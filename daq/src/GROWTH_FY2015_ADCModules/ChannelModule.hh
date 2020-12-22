@@ -52,7 +52,7 @@ class ChannelModule : public RegisterAccessInterface {
   /** Returns trigger mode.
    * See setTrigger() for returned values.
    */
-  u32 getTriggerMode() { return read16(AddressOf_TriggerModeRegister); }
+  u32 getTriggerMode() const { return read16(AddressOf_TriggerModeRegister); }
 
   void sendCPUTrigger() {
     constexpr u16 TRIG_FIRE = 0xFFFF;

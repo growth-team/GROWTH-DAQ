@@ -41,11 +41,7 @@ class ChannelManager : public RegisterAccessInterface {
   /// Checks if all data acquisition is completed in all channels.
   bool isAcquisitionCompleted() {
     const u16 value = read16(AddressOf_StartStopRegister);
-    if (value == 0x0000) {
-      return true;
-    } else {
-      return false;
-    }
+    return value == 0x0000;
   }
 
   /// Checks if data acquisition of single channel is completed.
@@ -53,11 +49,7 @@ class ChannelManager : public RegisterAccessInterface {
     const u16 value = read16(AddressOf_StartStopRegister);
     if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
       const std::bitset<16> bits(value);
-      if (bits[chNumber] == 0) {
-        return true;
-      } else {
-        return false;
-      }
+      return bits[chNumber] == 0;
     } else {
       // if chNumber is out of the allowed range
       return false;
@@ -102,7 +94,7 @@ class ChannelManager : public RegisterAccessInterface {
   /** Get Realtime which is elapsed time since the data acquisition was started.
    * @return elapsed real time in 10ms unit
    */
-  f64 getRealtime() { return static_cast<f64>(read48(AddressOf_RealtimeRegisterL)); }
+  f64 getRealtime() const { return static_cast<f64>(read48(AddressOf_RealtimeRegisterL)); }
 
   /** Resets ChannelManager module on VHDL logic.
    * This method clear all internal registers in the logic module.
