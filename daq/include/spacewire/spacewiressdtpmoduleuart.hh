@@ -16,7 +16,11 @@
 class SpaceWireSSDTPModuleUART {
  public:
   SpaceWireSSDTPModuleUART(SerialPort* serialPort)
-      : serialPort_(serialPort), sendBuffer_(BufferSize), receiveBuffer_(BufferSize) {}
+      : serialPort_(serialPort), sendBuffer_(BufferSize), receiveBuffer_(BufferSize) {
+    if (!serialPort) {
+      throw std::runtime_error("serialPort pointer must not be nullptr");
+    }
+  }
 
   ~SpaceWireSSDTPModuleUART() = default;
 
@@ -158,7 +162,7 @@ class SpaceWireSSDTPModuleUART {
   void cancelReceive() { receiveCanceled_ = true; }
 
  private:
-  std::shared_ptr<SerialPort> serialPort_;
+  SerialPort* serialPort_;
   std::vector<u8> sendBuffer_{};
   std::vector<u8> receiveBuffer_{};
   u8 internalTimecode_{};

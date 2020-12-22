@@ -1,11 +1,11 @@
 #ifndef EVENTDECODER_HH_
 #define EVENTDECODER_HH_
 
+#include <cassert>
+#include <deque>
+
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "types.h"
-
-#include <deque>
-#include <cassert>
 
 /** Decodes event data received from the GROWTH ADC Board.
  * Decoded event instances will be stored in a queue.
@@ -25,7 +25,7 @@ class EventDecoder {
     u16 phaLast{};
     u16 maxDerivative{};
     u16 baseline{};
-    u16* waveform{};
+    std::array<u16,GROWTH_FY2015_ADC_Type::MaxWaveformLength> waveform{};
   } rawEvent;
 
  private:
@@ -64,17 +64,13 @@ class EventDecoder {
   }
 
  public:
-  void decodeEvent(std::vector<u8>* readDataUint8Array) {
+  void decodeEvent(const std::vector<u8>* readDataUint8Array) {
     using namespace std;
 
     const size_t numBytes = readDataUint8Array->size();
     assert(numBytes % 2 == 0);
     const size_t numWords = numBytes / 2;
-
-    // resize if necessary
-    if (numWords > readDataUint16Array_.size()) {
-      readDataUint16Array_.resize(numWords);
-    }
+    readDataUint16Array_.reserve(numWords);
 
     // fill data
     for (size_t i = 0; i < numWords; i++) {
@@ -194,13 +190,13 @@ class EventDecoder {
 
     // copy waveform
     const size_t nBytes = waveformLength_ << 1;
-    memcpy(event->waveform, rawEvent.waveform, nBytes);
+    memcpy(event->waveform, rawEvent.waveform.data(), nBytes);
 
     eventQueue_.push_back(event);
   }
 
  public:
-  /** Returns decoded event queue (as std::vecotr).
+  /** Returns decoded event queue (as std::vector).
    * After used in user application, decoded events should be freed
    * via EventDecoder::freeEvent(GROWTH_FY2015_ADC_Type::Event* event).
    * @return std::queue containing pointers to decoded events

@@ -7,8 +7,8 @@
 #include "spacewire/spacewireif.hh"
 #include "spacewire/types.hh"
 #include "spacewiressdtpmoduleuart.hh"
+#include "stringutil.hh"
 #include "types.h"
-
 /** SpaceWire IF class which transfers data over UART.
  */
 class SpaceWireIFOverUART : public SpaceWireIF {
@@ -19,12 +19,8 @@ class SpaceWireIFOverUART : public SpaceWireIF {
   ~SpaceWireIFOverUART() override = default;
 
   bool open() override {
-    try {
-      serial_ = std::make_unique<SerialPort>(deviceName_, BAUD_RATE);
-      setTimeoutDuration(500000);
-    } catch (...) {
-      return false;
-    }
+    serial_ = std::make_unique<SerialPort>(deviceName_, BAUD_RATE);
+    setTimeoutDuration(500000);
 
     ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(serial_.get());
     isOpen_ = true;
@@ -56,13 +52,14 @@ class SpaceWireIFOverUART : public SpaceWireIF {
       EOPType eopType{};
       ssdtp_->receive(buffer, eopType);
       if (eopType == EOPType::EEP) {
-          throw SpaceWireIFException(SpaceWireIFException::EEP);
+        throw SpaceWireIFException(SpaceWireIFException::EEP);
       }
     } catch (const SpaceWireSSDTPException& e) {
       if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
         throw SpaceWireIFException(SpaceWireIFException::Timeout);
       } else {
-        throw SpaceWireIFException(SpaceWireIFException::SendFailed);
+        printf("SpaceWireIFOverUART::receive() e = %s (%d)\n", e.toString().c_str(), e.getStatus());
+        throw SpaceWireIFException(SpaceWireIFException::ReceiveFailed);
       }
     } catch (const SerialPortTimeoutException& e) {
       throw SpaceWireIFException(SpaceWireIFException::Timeout);

@@ -13,7 +13,7 @@ if(USE_ROOT)
     add_definitions(-DUSE_ROOT)
 endif(USE_ROOT)
 
-set(CMAKE_CXXFLAGS "-fcolor-diagnostics")
+set(CMAKE_CXX_FLAGS "-fcolor-diagnostics -g -O0")
 
 #=============================================
 # Initial definition of cmake variables

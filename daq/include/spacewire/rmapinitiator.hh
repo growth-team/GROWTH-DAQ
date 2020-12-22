@@ -56,6 +56,9 @@ class RMAPInitiatorException : public Exception {
 class RMAPInitiator {
  public:
   RMAPInitiator(RMAPEnginePtr rmapEngine) : rmapEngine_(rmapEngine) {
+    if (!rmapEngine_) {
+      throw std::runtime_error("RMAPEngine instance must not be nullptr");
+    }
     commandPacket.reset(new RMAPPacket());
     replyPacket.reset(new RMAPPacket());
   }

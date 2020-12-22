@@ -4,11 +4,11 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <list>
+#include <map>
+#include <mutex>
 #include <queue>
 #include <thread>
-#include <map>
-#include <list>
-#include <mutex>
 
 #include "spacewire/rmappacket.hh"
 #include "spacewire/spacewireif.hh"
@@ -20,6 +20,7 @@ class RMAPInitiator;
 class RMAPEngineException : public Exception {
  public:
   enum {
+	  SpaceWireInterfaceIsNotSet,
     RMAPEngineIsNotStarted,
     TransactionIDIsNotAvailable,
     TooManyConcurrentTransactions,
@@ -34,6 +35,9 @@ class RMAPEngineException : public Exception {
   std::string toString() const override {
     std::string result;
     switch (status_) {
+      case SpaceWireInterfaceIsNotSet:
+        result = "SpaceWireInterfaceIsNotSet";
+        break;
       case RMAPEngineIsNotStarted:
         result = "RMAPEngineIsNotStarted";
         break;
@@ -72,7 +76,7 @@ class RMAPEngine {
   void stop();
   TransactionID initiateTransaction(RMAPPacket* commandPacket, RMAPInitiator* rmapInitiator);
   void cancelTransaction(TransactionID transactionID) { deleteTransactionIDFromDB(transactionID); }
-  bool isStarted() const { return !stopped; }
+  bool isStarted() const { return !stopped_; }
   bool hasStopped() const { return hasStopped_; }
   bool isTransactionIDAvailable(u16 transactionID);
   void putBackRMAPPacketInstnce(RMAPPacketPtr&& packet);
@@ -98,7 +102,7 @@ class RMAPEngine {
   static const size_t MaximumTIDNumber = 65536;
   static constexpr double DefaultReceiveTimeoutDurationInMicroSec = 200000;  // 200ms
 
-  std::atomic<bool> stopped{true};
+  std::atomic<bool> stopped_{true};
   std::atomic<bool> hasStopped_{};
 
   size_t nDiscardedReceivedCommandPackets{};
@@ -109,7 +113,7 @@ class RMAPEngine {
   size_t nErrorInRMAPReplyPacketProcessing{};
 
   std::map<u16, RMAPInitiator*> transactions;
-  std::mutex transactionIDMutex;
+  std::recursive_mutex transactionIDMutex;
   std::list<u16> availableTransactionIDList;
   u16 latestAssignedTransactionID;
 

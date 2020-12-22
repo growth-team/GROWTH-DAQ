@@ -20,6 +20,8 @@ int main(int argc, char* argv[]) {
   const std::string configurationFile(argv[2]);
   const f64 exposureInSec = atoi(argv[3]);
 
+  std::cout << "exposure = " << exposureInSec << std::endl;
+
   int dummyArgc = 0;
   const char* dummyArgv[] = {""};
 

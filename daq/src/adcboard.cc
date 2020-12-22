@@ -1,7 +1,7 @@
 #include "adcboard.hh"
 
-#include <chrono>
 #include <cassert>
+#include <chrono>
 
 #include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
 #include "GROWTH_FY2015_ADCModules/ChannelModule.hh"
@@ -13,9 +13,8 @@
 #include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
-#include "yaml-cpp/yaml.h"
-
 #include "stringutil.hh"
+#include "yaml-cpp/yaml.h"
 void GROWTH_FY2015_ADC::dumpThread() {
   size_t nReceivedEvents_previous = 0;
   size_t delta = 0;
@@ -60,18 +59,25 @@ u32 GROWTH_FY2015_ADC::getFPGAType() { return reg->read32(AddressOfFPGATypeRegis
 u32 GROWTH_FY2015_ADC::getFPGAVersion() { return reg->read32(AddressOfFPGAVersionRegister_L); }
 
 std::string GROWTH_FY2015_ADC::getGPSRegister() {
-  reg->read(AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
+  reg->read(AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister.data());
   std::stringstream ss;
   for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
-    ss << gpsTimeRegister[i];
+    if (i < 14) {
+      ss << gpsTimeRegister.at(i);
+    } else {
+      ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint32_t>(gpsTimeRegister.at(i));
+    }
+    if (i == 13) {
+      ss << " ";
+    }
   }
   return ss.str();
 }
 
 u8* GROWTH_FY2015_ADC::getGPSRegisterUInt8() {
-  reg->read(AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
+  reg->read(AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister.data());
   gpsTimeRegister[LengthOfGPSTimeRegister] = 0x00;
-  return gpsTimeRegister;
+  return gpsTimeRegister.data();
 }
 
 void GROWTH_FY2015_ADC::clearGPSDataFIFO() {
@@ -98,7 +104,7 @@ void GROWTH_FY2015_ADC::reset() {
 
 std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
   events.clear();
-  std::vector<u8> data = consumerManager->getEventData();
+  const std::vector<u8> data = consumerManager->getEventData();
   if (!data.empty()) {
     eventDecoder->decodeEvent(&data);
     events = eventDecoder->getDecodedEvents();
@@ -314,12 +320,10 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(std::string inputFileName) {
   }
   cout << "SamplesInEventPacket              : " << this->SamplesInEventPacket << endl;
   cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
-  cout << "ChannelEnable                     : [" << stringutil::join(this->ChannelEnable, ", ") << "]"
+  cout << "ChannelEnable                     : [" << stringutil::join(this->ChannelEnable, ", ") << "]" << endl;
+  cout << "TriggerThresholds                 : [" << stringutil::join(this->TriggerThresholds, ", ") << "]" << endl;
+  cout << "TriggerCloseThresholds            : [" << stringutil::join(this->TriggerCloseThresholds, ", ") << "]"
        << endl;
-  cout << "TriggerThresholds                 : [" << stringutil::join(this->TriggerThresholds, ", ") << "]"
-       << endl;
-  cout << "TriggerCloseThresholds            : [" << stringutil::join(this->TriggerCloseThresholds, ", ")
-       << "]" << endl;
   cout << endl;
 
   cout << "//---------------------------------------------" << endl;

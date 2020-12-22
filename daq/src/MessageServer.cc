@@ -8,19 +8,18 @@ MessageServer::MessageServer(std::shared_ptr<MainThread> mainThread)
     :  //
       context_(1),
       socket_(context_, ZMQ_REP),
-      mainThread_(mainThread) {
+      mainThread_(mainThread) {}
+
+MessageServer::~MessageServer() = default;
+
+void MessageServer::run() {
   std::stringstream ss{};
   ss << "tcp://*:" << TCPPortNumber;
   const int timeout = TimeOutInMilisecond;
   socket_.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
   socket_.bind(ss.str().c_str());
-  // Show message
   std::cout << "MessageServer has started to accept IPC commands." << std::endl;
-}
 
-MessageServer::~MessageServer() = default;
-
-void MessageServer::run() {
   while (!stopped_) {
     zmq::message_t request{};
     //  Wait for next request from client

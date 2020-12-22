@@ -1,8 +1,9 @@
 #include "EventListFileFITS.hh"
 
 #include <fstream>
-#include "timeutil.hh"
+
 #include "stringutil.hh"
+#include "timeutil.hh"
 EventListFileFITS::EventListFileFITS(const std::string& fileName, const std::string& detectorID,
                                      const std::string& configurationYAMLFile, size_t nSamples, f64 exposureInSec,
                                      u32 fpgaType, u32 fpgaVersion)
@@ -20,7 +21,6 @@ EventListFileFITS::~EventListFileFITS() { close(); }
 
 void EventListFileFITS::createOutputFITSFile() {
   std::lock_guard<std::mutex> guard(fitsAccessMutex_);
-
 
   rowIndex = 0;
   rowIndexGPS = 0;
@@ -78,9 +78,9 @@ void EventListFileFITS::writeHeader() {
    */
 
   char* n;  // keyword name
-  std::string fpgaTypeStr = stringutil::toHexString(fpgaType, 8);
-  std::string fpgaVersionStr = stringutil::toHexString(fpgaVersion, 8);
-  std::string creationDate = timeutil::getCurrentTimeYYYYMMDD_HHMMSS();
+  const std::string fpgaTypeStr = stringutil::toHexString(fpgaType, 8);
+  const std::string fpgaVersionStr = stringutil::toHexString(fpgaVersion, 8);
+  const std::string creationDate = timeutil::getCurrentTimeYYYYMMDD_HHMMSS();
   long NSAMPLES = nSamples;
   // clang-format off
   if (
@@ -104,10 +104,10 @@ void EventListFileFITS::writeHeader() {
   if (configurationYAMLFile != "") {
     std::vector<std::string> lines;
     std::ifstream ifs(configurationYAMLFile);
-    while(!ifs.eof()){
-    	std::string line;
-    	std::getline(ifs, line);
-    	lines.push_back(line);
+    while (!ifs.eof()) {
+      std::string line;
+      std::getline(ifs, line);
+      lines.push_back(line);
     }
     for (auto line : lines) {
       line = "YAML-- " + line;
@@ -143,8 +143,8 @@ void EventListFileFITS::fillGPSTime(const u8* gpsTimeRegisterBuffer) {
 
   // write
   fits_write_col(outputFile, TLONGLONG, Column_fpgaTimeTag, rowIndexGPS, firstElement, 1, &timeTag, &fitsStatus);
-  fits_write_col(outputFile, TLONG, Column_unixTime, rowIndexGPS, firstElement, 1,
-		  const_cast<u32*>(&unixTime), &fitsStatus);
+  fits_write_col(outputFile, TUINT, Column_unixTime, rowIndexGPS, firstElement, 1, const_cast<u32*>(&unixTime),
+                 &fitsStatus);
   fits_write_col(outputFile, TSTRING, Column_gpsTime, rowIndexGPS, firstElement, 1 /* YYMMDDHHMMSS */,
                  &gpsTimeRegisterBuffer, &fitsStatus);
 

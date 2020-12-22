@@ -1,13 +1,13 @@
 #ifndef ADCBOARD_HH_
 #define ADCBOARD_HH_
 
-#include "GROWTH_FY2015_ADCModules/Types.hh"
-#include "types.h"
-#include "yaml-cpp/yaml.h"
-
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "GROWTH_FY2015_ADCModules/Types.hh"
+#include "types.h"
+#include "yaml-cpp/yaml.h"
 
 class ChannelManager;
 class ChannelModule;
@@ -288,9 +288,9 @@ class GROWTH_FY2015_ADC {
   std::shared_ptr<RegisterAccessInterface> reg;
 
   size_t nReceivedEvents = 0;
-  u8 gpsTimeRegister[LengthOfGPSTimeRegister + 1];
+  std::array<u8, LengthOfGPSTimeRegister + 1> gpsTimeRegister;
   const size_t GPSDataFIFODepthInBytes = 1024;
-  u8* gpsDataFIFOReadBuffer = NULL;
+  u8* gpsDataFIFOReadBuffer{nullptr};
   std::vector<u8> gpsDataFIFOData{};
   std::vector<GROWTH_FY2015_ADC_Type::Event*> events{};
   bool stopDumpThread_ = false;

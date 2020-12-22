@@ -35,7 +35,7 @@ class SpaceWireSSDTPException : public Exception {
         result = "Disconnected";
         break;
       case ReceiveFailed:
-        result = ReceiveFailed;
+        result = "ReceiveFailed";
         break;
       case SendFailed:
         result = "SendFailed";
@@ -61,9 +61,8 @@ class SpaceWireSSDTPException : public Exception {
       case Undefined:
         result = "Undefined";
         break;
-
       default:
-        result = "Undefined status";
+        result = "Undefined";
         break;
     }
     return result;

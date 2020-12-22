@@ -2,6 +2,7 @@
 #define SPACEWIRE_SPACEWIREIF_HH_
 
 #include <cstring>
+
 #include "spacewire/types.hh"
 
 class SpaceWireIF;
@@ -11,8 +12,8 @@ class SpaceWireIFException : public Exception {
   enum {
     OpeningConnectionFailed,
     Disconnected,
-	ReceiveFailed,
-	SendFailed,
+    ReceiveFailed,
+    SendFailed,
     Timeout,
     EEP,
     ReceiveBufferTooSmall,
@@ -83,9 +84,9 @@ class SpaceWireIF {
     } else {
       length = packetSize;
       if (packetSize <= maxLength) {
-        memcpy(buffer, &(packet->at(0)), packetSize);
+        memcpy(buffer, packet->data(), packetSize);
       } else {
-        memcpy(buffer, &(packet->at(0)), maxLength);
+        memcpy(buffer, packet->data(), maxLength);
         delete packet;
         throw SpaceWireIFException(SpaceWireIFException::ReceiveBufferTooSmall);
       }
@@ -93,6 +94,7 @@ class SpaceWireIF {
     delete packet;
   }
   virtual std::vector<u8>* receive() {
+    // TODO: replace with buffer pool
     std::vector<u8>* buffer = new std::vector<u8>();
     try {
       this->receive(buffer);

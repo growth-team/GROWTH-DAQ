@@ -1,23 +1,23 @@
 #ifndef RMAPHandlerUART_HH_
 #define RMAPHandlerUART_HH_
 
-#include "spacewire/rmapinitiator.hh"
-#include "spacewire/spacewireifoveruart.hh"
-#include "types.h"
-
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <thread>
 #include <vector>
 
+#include "spacewire/rmapinitiator.hh"
+#include "spacewire/spacewireifoveruart.hh"
+#include "types.h"
+
 class RMAPHandlerUART {
  public:
   RMAPHandlerUART(const std::string& deviceName) : deviceName_(deviceName) {
     spwif_.reset(new SpaceWireIFOverUART(deviceName_));
-    spwif_->open();
+    const bool openResult = spwif_->open();
+    assert(openResult);
 
-    // start RMAPEngine
     rmapEngine_.reset(new RMAPEngine(spwif_.get()));
     rmapEngine_->start();
     rmapInitiator_.reset(new RMAPInitiator(rmapEngine_));
@@ -42,9 +42,7 @@ class RMAPHandlerUART {
     assert(!rmapInitiator_);
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
-        // TODO: remove const_cast when the library is modernized.
-        rmapInitiator_->read(const_cast<RMAPTargetNode*>(rmapTargetNode), memoryAddress, length, buffer,
-                             timeOutDuration);
+        rmapInitiator_->read(rmapTargetNode, memoryAddress, length, buffer, timeOutDuration);
         break;
       } catch (RMAPInitiatorException& e) {
         std::cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << std::endl;
@@ -65,13 +63,9 @@ class RMAPHandlerUART {
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
         if (length != 0) {
-          // TODO: remove const_cast when the library is modernized.
-          rmapInitiator_->write(const_cast<RMAPTargetNode*>(rmapTargetNode), memoryAddress, const_cast<u8*>(data),
-                                length, timeOutDuration);
+          rmapInitiator_->write(rmapTargetNode, memoryAddress, const_cast<u8*>(data), length, timeOutDuration);
         } else {
-          // TODO: remove const_cast when the library is modernized.
-          rmapInitiator_->write(const_cast<RMAPTargetNode*>(rmapTargetNode), memoryAddress, nullptr, 0,
-                                timeOutDuration);
+          rmapInitiator_->write(rmapTargetNode, memoryAddress, nullptr, 0, timeOutDuration);
         }
         break;
       } catch (RMAPInitiatorException& e) {
