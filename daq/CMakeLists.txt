@@ -13,7 +13,10 @@ if(USE_ROOT)
     add_definitions(-DUSE_ROOT)
 endif(USE_ROOT)
 
-set(CMAKE_CXX_FLAGS "-fcolor-diagnostics -g -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+if(APPLE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics -g")
+endif(APPLE)
 
 #=============================================
 # Initial definition of cmake variables
