@@ -19,4 +19,3 @@
 [submodule "daq/external/spdlog"]
 	path = daq/external/spdlog
 	url = https://github.com/gabime/spdlog
-	branch = v1.8.2
