@@ -16,7 +16,7 @@ endif(USE_ROOT)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 if(APPLE)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics -g")
 endif(APPLE)
 
 #=============================================
@@ -87,6 +87,11 @@ add_executable(growth_daq
 #---------------------------------------------
 # Linked libraries
 #---------------------------------------------
+if(APPLE)
+  set(BOOST_LINK_LIBS boost_thread-mt boost_system-mt)
+else()
+  set(BOOST_LINK_LIBS boost_thread boost_system)
+endif()
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
