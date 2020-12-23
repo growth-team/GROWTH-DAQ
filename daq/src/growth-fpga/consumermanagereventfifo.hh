@@ -1,9 +1,8 @@
-#ifndef GROWTHDAQ_CONSUMERMANAGEREVENTFIFO_HH_
-#define GROWTHDAQ_CONSUMERMANAGEREVENTFIFO_HH_
-
-#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
+#ifndef GROWTH_FPGA_CONSUMERMANAGEREVENTFIFO_HH_
+#define GROWTH_FPGA_CONSUMERMANAGEREVENTFIFO_HH_
 
 #include "types.h"
+#include "growth-fpga/registeraccessinterface.hh"
 
 #include <cassert>
 
@@ -31,12 +30,12 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
    * @param maxBytes maximum data size to be returned (in bytes)
    */
   std::vector<u8> getEventData(size_t maxBytes = 4000) {
-    assert(maxBytes <= ReceiveBufferSize);
-    receiveBuffer_.resize(ReceiveBufferSize);
+    assert(maxBytes <= RECEIVE_BUFFER_SIZE_BYTES);
+    receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
     try {
       // TODO: replace cout/cerr with a proper logging function
       using namespace std;
-      size_t receivedSize = this->readEventFIFO(&(receiveBuffer_[0]), ReceiveBufferSize);
+      size_t receivedSize = this->readEventFIFO(&(receiveBuffer_[0]), RECEIVE_BUFFER_SIZE_BYTES);
       // if odd byte is received, wait until the following 1 byte is received.
       if (receivedSize % 2 == 1) {
         cout << "ConsumerManagerEventFIFO::getEventData(): odd bytes. wait for another byte." << endl;
@@ -103,8 +102,8 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr u32 FinalAddressOf_EventFIFO = 0x1000FFFF;
   static constexpr u32 AddressOf_EventFIFO_DataCount_Register = 0x20000000;
 
-  static constexpr size_t ReceiveBufferSize = 3000;
-  static constexpr size_t EventFIFOSizeInBytes = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
+  static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 3000;
+  static constexpr size_t EVENT_FIFIO_SIZE_BYTES = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
   std::vector<u8> receiveBuffer_{};
   size_t receivedBytes_ = 0;

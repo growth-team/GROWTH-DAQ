@@ -1,10 +1,10 @@
-#ifndef GROWTH_FY2015_ADC_TYPES_HH_
-#define GROWTH_FY2015_ADC_TYPES_HH_
+#ifndef GROWTH_FPGA_TYPES_HH_
+#define GROWTH_FPGA_TYPES_HH_
 
 #include "types.h"
-#include "GROWTH_FY2015_ADCModules/Constants.hh"
+#include "growth-fpga/constants.hh"
 
-namespace GROWTH_FY2015_ADC_Type {
+namespace growth_fpga {
 enum class TriggerMode : u32 {
   StartThreshold_NSamples_AutoClose = 1,       //
   CommonGateIn = 2,                            //
@@ -23,8 +23,8 @@ enum class PresetMode : u32 {
 
 struct HouseKeepingData {
   u32 realtime;
-  u32 livetime[GROWTH_FY2015_ADC_Type::NumberOfChannels];
-  bool acquisitionStarted[GROWTH_FY2015_ADC_Type::NumberOfChannels];
+  u32 livetime[growth_fpga::NumberOfChannels];
+  bool acquisitionStarted[growth_fpga::NumberOfChannels];
 };
 
 struct Event {
@@ -45,6 +45,6 @@ struct Event {
 };
 
 enum class ADCClockFrequency : u16 { ADCClock200MHz = 20000, ADCClock100MHz = 10000, ADCClock50MHz = 5000 };
-}  // namespace GROWTH_FY2015_ADC_Type
+}  // namespace growth_fpga
 
 #endif

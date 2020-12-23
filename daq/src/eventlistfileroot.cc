@@ -3,7 +3,7 @@
 EventListFileROOT::EventListFileROOT(std::string fileName, std::string detectorID = "empty",
                                      std::string configurationYAMLFile = "")
     : EventListFile(fileName), detectorID_(detectorID), configurationYAMLFile_(configurationYAMLFile) {
-  eventEntry_.waveform = new u16[GROWTH_FY2015_ADC_Type::MaxWaveformLength];
+  eventEntry_.waveform = new u16[growth_fpga::MaxWaveformLength];
   createOutputRootFile();
 }
 
@@ -12,7 +12,7 @@ EventListFileROOT::~EventListFileROOT() {
   delete[] eventEntry_.waveform;
 }
 
-void EventListFileROOT::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
+void EventListFileROOT::fillEvents(const std::vector<growth_fpga::Event*>& events) {
   unixTime_ = timeutil::getUNIXTimeAsUInt64();
   for (auto& event : events) {
     copyEventData(event, &eventEntry_);
@@ -67,7 +67,7 @@ void EventListFileROOT::createOutputRootFile() {
   writeHeader();
 }
 
-void EventListFileROOT::copyEventData(GROWTH_FY2015_ADC_Type::Event* from, GROWTH_FY2015_ADC_Type::Event* to) {
+void EventListFileROOT::copyEventData(growth_fpga::Event* from, growth_fpga::Event* to) {
   to->ch = from->ch;
   to->timeTag = from->timeTag;
   to->triggerCount = from->triggerCount;

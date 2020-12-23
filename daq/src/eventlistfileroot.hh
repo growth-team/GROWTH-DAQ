@@ -13,13 +13,13 @@ class EventListFileROOT : public EventListFile {
   EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "");
   ~EventListFileROOT();
   void fillGPSTime(const u8* gpsTimeRegisterBuffer) override;
-  void fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) override;
+  void fillEvents(const std::vector<growth_fpga::Event*>& events) override;
   size_t getEntries() const override;
   void close() override;
 
  private:
   void createOutputRootFile();
-  void copyEventData(GROWTH_FY2015_ADC_Type::Event* from, GROWTH_FY2015_ADC_Type::Event* to);
+  void copyEventData(growth_fpga::Event* from, growth_fpga::Event* to);
   void writeHeader();
 
  private:
@@ -27,7 +27,7 @@ class EventListFileROOT : public EventListFile {
   std::unique_ptr<TFile> outputFile_;
   std::string detectorID_{};
   u32 unixTime_{};
-  GROWTH_FY2015_ADC_Type::Event eventEntry_{};
+  growth_fpga::Event eventEntry_{};
   std::string configurationYAMLFile_{};
 };
 

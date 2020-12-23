@@ -1,15 +1,16 @@
-#ifndef GROWTHDAQ_CHANNELMANAGER_HH_
-#define GROWTHDAQ_CHANNELMANAGER_HH_
+#ifndef GROWTH_FPGA_CHANNELMANAGER_HH_
+#define GROWTH_FPGA_CHANNELMANAGER_HH_
 
-#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
-#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
-#include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
-#include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "types.h"
+#include "growth-fpga/types.hh"
+#include "growth-fpga/registeraccessinterface.hh"
+#include "growth-fpga/rmaphandleruart.hh"
+#include "growth-fpga/semaphoreregister.hh"
 
 #include <array>
 #include <bitset>
 #include <memory>
+
 
 /** A class which represents ChannelManager module on VHDL logic.
  * This module controls start/stop, preset mode, livetime, and
@@ -39,15 +40,15 @@ class ChannelManager : public RegisterAccessInterface {
   }
 
   /// Checks if all data acquisition is completed in all channels.
-  bool isAcquisitionCompleted() {
+  bool isAcquisitionCompleted() const {
     const u16 value = read16(AddressOf_StartStopRegister);
     return value == 0x0000;
   }
 
   /// Checks if data acquisition of single channel is completed.
-  bool isAcquisitionCompleted(size_t chNumber) {
+  bool isAcquisitionCompleted(size_t chNumber) const {
     const u16 value = read16(AddressOf_StartStopRegister);
-    if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
+    if (chNumber < growth_fpga::NumberOfChannels) {
       const std::bitset<16> bits(value);
       return bits[chNumber] == 0;
     } else {
@@ -72,7 +73,7 @@ class ChannelManager : public RegisterAccessInterface {
    * PresetMode::NonStop (Forever)
    * @param presetMode preset mode value (see also enum class PresetMode )
    */
-  void setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetMode) {
+  void setPresetMode(growth_fpga::PresetMode presetMode) {
     write(AddressOf_PresetModeRegister, static_cast<u16>(presetMode));
   }
 
@@ -82,7 +83,7 @@ class ChannelManager : public RegisterAccessInterface {
    * - ADCClockFrequency::ADCClock50MHz <br>
    * @param adcClockFrequency enum class ADCClockFrequency
    */
-  void setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency) {
+  void setAdcClock(growth_fpga::ADCClockFrequency adcClockFrequency) {
     write(AddressOf_ADCClock_Register, static_cast<u16>(adcClockFrequency));
   }
 

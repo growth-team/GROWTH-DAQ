@@ -1,11 +1,12 @@
-#ifndef GROWTHDAQ_EVENTDECODER_HH_
-#define GROWTHDAQ_EVENTDECODER_HH_
+#ifndef GROWTH_FPGA_EVENTDECODER_HH_
+#define GROWTH_FPGA_EVENTDECODER_HH_
+
+#include "types.h"
+#include "growth-fpga/types.hh"
 
 #include <cassert>
 #include <deque>
 
-#include "GROWTH_FY2015_ADCModules/Types.hh"
-#include "types.h"
 
 /** Decodes event data received from the GROWTH ADC Board.
  * Decoded event instances will be stored in a queue.
@@ -25,7 +26,7 @@ class EventDecoder {
     u16 phaLast{};
     u16 maxDerivative{};
     u16 baseline{};
-    std::array<u16, GROWTH_FY2015_ADC_Type::MaxWaveformLength> waveform{};
+    std::array<u16, growth_fpga::MaxWaveformLength> waveform{};
   } rawEvent;
 
  private:
@@ -49,21 +50,19 @@ class EventDecoder {
  public:
   /** Constructor.
    */
-  EventDecoder() : state(EventDecoderState::state_flag_FFF0), rawEvent{} {
-    for (size_t i = 0; i < InitialEventInstanceNumber; i++) {
-      auto event = new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
+  EventDecoder() : state_(EventDecoderState::state_flag_FFF0), rawEvent{} {
+    for (size_t i = 0; i < INITIAL_NUM_EVENT_INSTANCES; i++) {
+      auto event = new growth_fpga::Event{growth_fpga::MaxWaveformLength};
       eventInstanceResavoir_.push_back(event);
     }
   }
 
- public:
   virtual ~EventDecoder() {
     for (auto event : eventInstanceResavoir_) {
       delete event;
     }
   }
 
- public:
   void decodeEvent(const std::vector<u8>* readDataUint8Array) {
     using namespace std;
 
@@ -80,11 +79,11 @@ class EventDecoder {
     // decode the data
     // event packet format version 20151016
     for (size_t i = 0; i < numWords; i++) {
-      switch (state) {
+      switch (state_) {
         case EventDecoderState::state_flag_FFF0:
           waveformLength_ = 0;
           if (readDataUint16Array_[i] == 0xfff0) {
-            state = EventDecoderState::state_ch_realtimeH;
+            state_ = EventDecoderState::state_ch_realtimeH;
           } else {
             cerr << "EventDecoder::decodeEvent(): invalid start flag ("
                  << "0x" << hex << right << setw(4) << setfill('0') << static_cast<u32>(readDataUint16Array_[i]) << ")"
@@ -94,64 +93,64 @@ class EventDecoder {
         case EventDecoderState::state_ch_realtimeH:
           rawEvent.ch = (readDataUint16Array_[i] & 0xFF00) >> 8;
           rawEvent.timeH = readDataUint16Array_[i] & 0xFF;
-          state = EventDecoderState::state_realtimeM;
+          state_ = EventDecoderState::state_realtimeM;
           break;
         case EventDecoderState::state_realtimeM:
           rawEvent.timeM = readDataUint16Array_[i];
-          state = EventDecoderState::state_realtimeL;
+          state_ = EventDecoderState::state_realtimeL;
           break;
         case EventDecoderState::state_realtimeL:
           rawEvent.timeL = readDataUint16Array_[i];
-          state = EventDecoderState::state_reserved;
+          state_ = EventDecoderState::state_reserved;
           break;
         case EventDecoderState::state_reserved:
-          state = EventDecoderState::state_triggerCount;
+          state_ = EventDecoderState::state_triggerCount;
           break;
         case EventDecoderState::state_triggerCount:
           rawEvent.triggerCount = readDataUint16Array_[i];
-          state = EventDecoderState::state_phaMax;
+          state_ = EventDecoderState::state_phaMax;
           break;
         case EventDecoderState::state_phaMax:
           rawEvent.phaMax = readDataUint16Array_[i];
-          state = EventDecoderState::state_phaMaxTime;
+          state_ = EventDecoderState::state_phaMaxTime;
           break;
         case EventDecoderState::state_phaMaxTime:
           rawEvent.phaMaxTime = readDataUint16Array_[i];
-          state = EventDecoderState::state_phaMin;
+          state_ = EventDecoderState::state_phaMin;
           break;
         case EventDecoderState::state_phaMin:
           rawEvent.phaMin = readDataUint16Array_[i];
-          state = EventDecoderState::state_phaFirst;
+          state_ = EventDecoderState::state_phaFirst;
           break;
         case EventDecoderState::state_phaFirst:
           rawEvent.phaFirst = readDataUint16Array_[i];
-          state = EventDecoderState::state_phaLast;
+          state_ = EventDecoderState::state_phaLast;
           break;
         case EventDecoderState::state_phaLast:
           rawEvent.phaLast = readDataUint16Array_[i];
-          state = EventDecoderState::state_maxDerivative;
+          state_ = EventDecoderState::state_maxDerivative;
           break;
         case EventDecoderState::state_maxDerivative:
           rawEvent.maxDerivative = readDataUint16Array_[i];
-          state = EventDecoderState::state_baseline;
+          state_ = EventDecoderState::state_baseline;
           break;
         case EventDecoderState::state_baseline:
           rawEvent.baseline = readDataUint16Array_[i];
-          state = EventDecoderState::state_pha_list;
+          state_ = EventDecoderState::state_pha_list;
           break;
         case EventDecoderState::state_pha_list:
           if (readDataUint16Array_[i] == 0xFFFF) {
             // push GROWTH_FY2015_ADC_Type::Event to a queue
             pushEventToQueue();
             // move to the idle state
-            state = EventDecoderState::state_flag_FFF0;
+            state_ = EventDecoderState::state_flag_FFF0;
             break;
           } else {
-            if (GROWTH_FY2015_ADC_Type::MaxWaveformLength <= waveformLength_) {
+            if (growth_fpga::MaxWaveformLength <= waveformLength_) {
               cerr << "EventDecoder::decodeEvent(): waveform too long. something is wrong with data transfer. Return "
                       "to the idle state."
                    << endl;
-              state = EventDecoderState::state_flag_FFF0;
+              state_ = EventDecoderState::state_flag_FFF0;
             } else {
               rawEvent.waveform[waveformLength_] = readDataUint16Array_[i];
               waveformLength_++;
@@ -162,14 +161,10 @@ class EventDecoder {
     }
   }
 
- public:
-  static const size_t InitialEventInstanceNumber = 10000;
-
- public:
   void pushEventToQueue() {
-    GROWTH_FY2015_ADC_Type::Event* event;
+    growth_fpga::Event* event;
     if (eventInstanceResavoir_.empty()) {
-      event = new GROWTH_FY2015_ADC_Type::Event{GROWTH_FY2015_ADC_Type::MaxWaveformLength};
+      event = new growth_fpga::Event{growth_fpga::MaxWaveformLength};
     } else {
       // reuse already created instance
       event = eventInstanceResavoir_.back();
@@ -195,90 +190,34 @@ class EventDecoder {
     eventQueue_.push_back(event);
   }
 
- public:
   /** Returns decoded event queue (as std::vector).
    * After used in user application, decoded events should be freed
    * via EventDecoder::freeEvent(GROWTH_FY2015_ADC_Type::Event* event).
    * @return std::queue containing pointers to decoded events
    */
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> getDecodedEvents() {
-    std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueueCopied = eventQueue_;
+  std::vector<growth_fpga::Event*> getDecodedEvents() {
+    std::vector<growth_fpga::Event*> eventQueueCopied = eventQueue_;
     eventQueue_.clear();
     return eventQueueCopied;
   }
 
- public:
   /** Frees event instance so that buffer area can be reused in the following commands.
    * @param event event instance to be freed
    */
-  void freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventInstanceResavoir_.push_back(event); }
+  void freeEvent(growth_fpga::Event* event) { eventInstanceResavoir_.push_back(event); }
 
- public:
   /** Returns the number of available (allocated) Event instances.
    * @return the number of Event instances
    */
   size_t getNAllocatedEventInstances() const { return eventInstanceResavoir_.size(); }
 
- public:
- public:
-  std::string stateToString() {
-    std::string result;
-    switch (state) {
-      case EventDecoderState::state_flag_FFF0:
-        result = "state_flag_FFF0";
-        break;
-      case EventDecoderState::state_ch_realtimeH:
-        result = "state_ch_realtimeH";
-        break;
-      case EventDecoderState::state_realtimeM:
-        result = "state_realtimeM";
-        break;
-      case EventDecoderState::state_realtimeL:
-        result = "state_realtimeL";
-        break;
-      case EventDecoderState::state_reserved:
-        result = "state_reserved";
-        break;
-      case EventDecoderState::state_triggerCount:
-        result = "state_triggerCount";
-        break;
-      case EventDecoderState::state_phaMax:
-        result = "state_phaMax";
-        break;
-      case EventDecoderState::state_phaMaxTime:
-        result = "state_phaMaxTime";
-        break;
-      case EventDecoderState::state_phaMin:
-        result = "state_phaMin";
-        break;
-      case EventDecoderState::state_phaFirst:
-        result = "state_phaFirst";
-        break;
-      case EventDecoderState::state_phaLast:
-        result = "state_phaLast";
-        break;
-      case EventDecoderState::state_maxDerivative:
-        result = "state_maxDerivative";
-        break;
-      case EventDecoderState::state_baseline:
-        result = "state_baseline";
-        break;
-      case EventDecoderState::state_pha_list:
-        result = "state_pha_list";
-        break;
-
-      default:
-        result = "Undefined status";
-        break;
-    }
-    return result;
-  }
+  static constexpr size_t INITIAL_NUM_EVENT_INSTANCES = 10000;
 
  private:
-  EventDecoderState state{};
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueue_;
-  std::vector<u16> readDataUint16Array_;
-  std::deque<GROWTH_FY2015_ADC_Type::Event*> eventInstanceResavoir_;
+  EventDecoderState state_{};
+  std::vector<growth_fpga::Event*> eventQueue_{};
+  std::vector<u16> readDataUint16Array_{};
+  std::deque<growth_fpga::Event*> eventInstanceResavoir_{};
   size_t waveformLength_{};
 };
 

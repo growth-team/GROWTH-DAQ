@@ -155,7 +155,7 @@ void EventListFileFITS::fillGPSTime(
   reportErrorThenQuitIfError(fitsStatus_, __func__);
 }
 
-void EventListFileFITS::fillEvents(const std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
+void EventListFileFITS::fillEvents(const std::vector<growth_fpga::Event*>& events) {
   std::lock_guard<std::mutex> guard(fitsAccessMutex_);
   for (auto& event : events) {
     rowIndexEvent_++;

@@ -1,19 +1,21 @@
 #include "adcboard.hh"
 
-#include "GROWTH_FY2015_ADCModules/ChannelManager.hh"
-#include "GROWTH_FY2015_ADCModules/ChannelModule.hh"
-#include "GROWTH_FY2015_ADCModules/Constants.hh"
-#include "GROWTH_FY2015_ADCModules/ConsumerManagerEventFIFO.hh"
-#include "GROWTH_FY2015_ADCModules/EventDecoder.hh"
-#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
-#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
-#include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
-#include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "stringutil.hh"
 #include "yaml-cpp/yaml.h"
 
+#include "growth-fpga/channelmanager.hh"
+#include "growth-fpga/channelmodule.hh"
+#include "growth-fpga/constants.hh"
+#include "growth-fpga/consumermanagereventfifo.hh"
+#include "growth-fpga/eventdecoder.hh"
+#include "growth-fpga/registeraccessinterface.hh"
+#include "growth-fpga/rmaphandleruart.hh"
+#include "growth-fpga/semaphoreregister.hh"
+#include "growth-fpga/types.hh"
+
 #include <cassert>
 #include <chrono>
+
 
 void GROWTH_FY2015_ADC::dumpThread() {
   size_t nReceivedEvents_previous = 0;
@@ -46,7 +48,7 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
   consumerManager_ = std::make_unique<ConsumerManagerEventFIFO>(rmapHandler_, adcRMAPTargetNode_);
 
   // create instances of ADCChannelRegister
-  for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
+  for (size_t i = 0; i < growth_fpga::NumberOfChannels; i++) {
     channelModules_.emplace_back(new ChannelModule(rmapHandler_, adcRMAPTargetNode_, i));
   }
 
@@ -102,7 +104,7 @@ void GROWTH_FY2015_ADC::reset() {
   consumerManager_->reset();
 }
 
-std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
+std::vector<growth_fpga::Event*> GROWTH_FY2015_ADC::getEvent() {
   events_.clear();
   const std::vector<u8> data = consumerManager_->getEventData();
   if (!data.empty()) {
@@ -113,21 +115,21 @@ std::vector<GROWTH_FY2015_ADC_Type::Event*> GROWTH_FY2015_ADC::getEvent() {
   return events_;
 }
 
-void GROWTH_FY2015_ADC::freeEvent(GROWTH_FY2015_ADC_Type::Event* event) { eventDecoder_->freeEvent(event); }
+void GROWTH_FY2015_ADC::freeEvent(growth_fpga::Event* event) { eventDecoder_->freeEvent(event); }
 
-void GROWTH_FY2015_ADC::freeEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
+void GROWTH_FY2015_ADC::freeEvents(std::vector<growth_fpga::Event*>& events) {
   for (auto event : events) {
     eventDecoder_->freeEvent(event);
   }
 }
 
 void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, TriggerMode triggerMode) {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->setTriggerMode(triggerMode);
 }
 
 void GROWTH_FY2015_ADC::setNumberOfSamples(u16 nSamples) {
-  for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
+  for (size_t i = 0; i < growth_fpga::NumberOfChannels; i++) {
     channelModules_[i]->setNumberOfSamples(nSamples);
   }
   setNumberOfSamplesInEventPacket(nSamples);
@@ -138,37 +140,37 @@ void GROWTH_FY2015_ADC::setNumberOfSamplesInEventPacket(u16 nSamples) {
 }
 
 void GROWTH_FY2015_ADC::setStartingThreshold(size_t chNumber, u32 threshold) {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->setStartingThreshold(threshold);
 }
 
 void GROWTH_FY2015_ADC::setClosingThreshold(size_t chNumber, u32 threshold) {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->setClosingThreshold(threshold);
 }
 
 void GROWTH_FY2015_ADC::setDepthOfDelay(size_t chNumber, u32 depthOfDelay) {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->setDepthOfDelay(depthOfDelay);
 }
 
 u32 GROWTH_FY2015_ADC::getLivetime(size_t chNumber) const {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   return channelModules_[chNumber]->getLivetime();
 }
 
 u32 GROWTH_FY2015_ADC::getCurrentADCValue(size_t chNumber) const {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   return channelModules_[chNumber]->getCurrentADCValue();
 }
 
 void GROWTH_FY2015_ADC::turnOnADCPower(size_t chNumber) {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->turnADCPower(true);
 }
 
 void GROWTH_FY2015_ADC::turnOffADCPower(size_t chNumber) {
-  assert(chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels);
+  assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->turnADCPower(false);
 }
 
@@ -188,7 +190,7 @@ bool GROWTH_FY2015_ADC::isAcquisitionCompleted(size_t chNumber) const {
 void GROWTH_FY2015_ADC::stopAcquisition() { channelManager_->stopAcquisition(); }
 
 void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
-  if (chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels) {
+  if (chNumber < growth_fpga::NumberOfChannels) {
     channelModules_[chNumber]->sendCPUTrigger();
   } else {
     throw SpaceFibreADCException::InvalidChannelNumber;
@@ -196,7 +198,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
 }
 
 void GROWTH_FY2015_ADC::sendCPUTrigger() {
-  for (size_t chNumber = 0; chNumber < GROWTH_FY2015_ADC_Type::NumberOfChannels; chNumber++) {
+  for (size_t chNumber = 0; chNumber < growth_fpga::NumberOfChannels; chNumber++) {
     if (this->ChannelEnable[chNumber]) {  // if enabled
       std::cout << "CPU Trigger to Channel " << chNumber << std::endl;
       channelModules_[chNumber]->sendCPUTrigger();
@@ -204,7 +206,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger() {
   }
 }
 
-void GROWTH_FY2015_ADC::setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetMode) {
+void GROWTH_FY2015_ADC::setPresetMode(growth_fpga::PresetMode presetMode) {
   channelManager_->setPresetMode(presetMode);
 }
 
@@ -216,15 +218,15 @@ void GROWTH_FY2015_ADC::setPresetnEvents(u32 nEvents) { channelManager_->setPres
 
 f64 GROWTH_FY2015_ADC::getRealtime() const { return channelManager_->getRealtime(); }
 
-void GROWTH_FY2015_ADC::setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency) {
+void GROWTH_FY2015_ADC::setAdcClock(growth_fpga::ADCClockFrequency adcClockFrequency) {
   channelManager_->setAdcClock(adcClockFrequency);
 }
 
-GROWTH_FY2015_ADC_Type::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() const {
-  GROWTH_FY2015_ADC_Type::HouseKeepingData hkData{};
+growth_fpga::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() const {
+  growth_fpga::HouseKeepingData hkData{};
   hkData.realtime = channelManager_->getRealtime();
 
-  for (size_t i = 0; i < GROWTH_FY2015_ADC_Type::NumberOfChannels; i++) {
+  for (size_t i = 0; i < growth_fpga::NumberOfChannels; i++) {
     // livetime
     hkData.livetime[i] = channelModules_[i]->getLivetime();
     // acquisition status
@@ -342,7 +344,7 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
       this->setClosingThreshold(ch, TriggerCloseThresholds[ch]);
 
       // adc clock 50MHz
-      this->setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency::ADCClock50MHz);
+      this->setAdcClock(growth_fpga::ADCClockFrequency::ADCClock50MHz);
 
       // turn on ADC
       this->turnOnADCPower(ch);

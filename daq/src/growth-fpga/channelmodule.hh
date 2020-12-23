@@ -1,8 +1,8 @@
 #ifndef CHANNELMODULE_HH_
 #define CHANNELMODULE_HH_
 
-#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
-#include "GROWTH_FY2015_ADCModules/Types.hh"
+#include "growth-fpga/registeraccessinterface.hh"
+#include "growth-fpga/types.hh"
 
 class RMAPHandlerUART;
 
@@ -45,7 +45,7 @@ class ChannelModule : public RegisterAccessInterface {
    * CPU Trigger = CPUTrigger<br>
    * @param triggerMode trigger mode number
    */
-  void setTriggerMode(GROWTH_FY2015_ADC_Type::TriggerMode triggerMode) {
+  void setTriggerMode(growth_fpga::TriggerMode triggerMode) {
     write(AddressOf_TriggerModeRegister, static_cast<u16>(triggerMode));
   }
 

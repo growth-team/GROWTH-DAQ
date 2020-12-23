@@ -1,10 +1,9 @@
-#ifndef CONSUMERMANAGER_HH_
-#define CONSUMERMANAGER_HH_
-
-#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
-#include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
+#ifndef GROWTH_FPGA_CONSUMERMANAGER_HH_
+#define GROWTH_FPGA_CONSUMERMANAGER_HH_
 
 #include <cassert>
+#include "registeraccessinterface.hh"
+#include "semaphoreregister.hh"
 
 class RMAPHandlerUART;
 
@@ -47,7 +46,6 @@ class ConsumerManager : public RegisterAccessInterface {
     rmapHandler_->write(adcboxRMAPNode, AddressOf_EventPacket_NumberOfWaveform_Register, &writedata[0], 2);
   }
 
- public:
   // Addresses of Consumer Manager Module
   // clang-format off
   static constexpr u32 InitialAddressOf_ConsumerMgr                    = 0x01010000;

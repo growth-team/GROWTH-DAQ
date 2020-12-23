@@ -180,7 +180,7 @@
       switchOutputFile_ = false;
     }
 
-    std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard_->getEvent();
+    std::vector<growth_fpga::Event*> events = adcBoard_->getEvent();
     std::cout << "Received " << events.size() << " events" << std::endl;
     eventListFile_->fillEvents(events);
 

@@ -1,14 +1,15 @@
 #ifndef GROWTHDAQ_ADCBOARD_HH_
 #define GROWTHDAQ_ADCBOARD_HH_
 
+#include "growth-fpga/types.hh"
+#include "types.h"
+#include "yaml-cpp/yaml.h"
+
 #include <array>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "GROWTH_FY2015_ADCModules/Types.hh"
-#include "types.h"
-#include "yaml-cpp/yaml.h"
 
 class ChannelManager;
 class ChannelModule;
@@ -19,7 +20,7 @@ class RMAPInitiator;
 class RMAPTargetNode;
 class RegisterAccessInterface;
 
-using GROWTH_FY2015_ADC_Type::TriggerMode;
+using growth_fpga::TriggerMode;
 
 enum class SpaceFibreADCException {
   InvalidChannelNumber,
@@ -81,17 +82,17 @@ class GROWTH_FY2015_ADC {
    * reused to represent another event data.
    * @return a vector containing pointers to decoded event data
    */
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> getEvent();
+  std::vector<growth_fpga::Event*> getEvent();
 
   /** Frees an event instance so that buffer area can be reused in the following commands.
    * @param[in] event event instance to be freed
    */
-  void freeEvent(GROWTH_FY2015_ADC_Type::Event* event);
+  void freeEvent(growth_fpga::Event* event);
 
   /** Frees event instances so that buffer area can be reused in the following commands.
    * @param[in] events a vector of event instance to be freed
    */
-  void freeEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events);
+  void freeEvents(std::vector<growth_fpga::Event*>& events);
 
   /** Set trigger mode of the specified channel.
    * TriggerMode;<br>
@@ -206,7 +207,7 @@ class GROWTH_FY2015_ADC {
    * PresetMode::NonStop (Forever)
    * @param presetMode preset mode value (see also enum class SpaceFibreADC::PresetMode )
    */
-  void setPresetMode(GROWTH_FY2015_ADC_Type::PresetMode presetMode);
+  void setPresetMode(growth_fpga::PresetMode presetMode);
 
   /** Sets Livetime preset value.
    * @param livetimeIn10msUnit live time to be set (in a unit of 10ms)
@@ -229,13 +230,13 @@ class GROWTH_FY2015_ADC {
    * - ADCClockFrequency::ADCClock50MHz <br>
    * @param adcClockFrequency enum class ADCClockFrequency
    */
-  void setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency adcClockFrequency);
+  void setAdcClock(growth_fpga::ADCClockFrequency adcClockFrequency);
 
   /** Gets HK data including the real time and the live time which are
    * counted in the FPGA, and acquisition status (started or stopped).
    * @retrun HK information contained in a SpaceFibreADC::HouseKeepingData instance
    */
-  GROWTH_FY2015_ADC_Type::HouseKeepingData getHouseKeepingData() const;
+  growth_fpga::HouseKeepingData getHouseKeepingData() const;
 
   size_t getNSamplesInEventListFile() const;
   void dumpMustExistKeywords();
@@ -293,7 +294,7 @@ class GROWTH_FY2015_ADC {
   const size_t GPS_DATA_FIFO_DEPTH_BYTES = 1024;
   std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_;
   std::vector<u8> gpsDataFIFOData_{};
-  std::vector<GROWTH_FY2015_ADC_Type::Event*> events_{};
+  std::vector<growth_fpga::Event*> events_{};
   bool stopDumpThread_ = false;
 };
 

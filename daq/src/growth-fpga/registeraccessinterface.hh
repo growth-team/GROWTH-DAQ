@@ -1,8 +1,8 @@
-#ifndef GROWTHDAQ_REGISTER_ACCESS_INTERFACE_HH_
-#define GROWTHDAQ_REGISTER_ACCESS_INTERFACE_HH_
+#ifndef GROWTH_FPGA_REGISTER_ACCESS_INTERFACE_HH_
+#define GROWTH_FPGA_REGISTER_ACCESS_INTERFACE_HH_
 
-#include <GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh>
 #include "types.h"
+#include "growth-fpga/rmaphandleruart.hh"
 
 #include <array>
 #include <memory>

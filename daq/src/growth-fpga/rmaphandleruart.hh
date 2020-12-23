@@ -1,5 +1,5 @@
-#ifndef GROWTHDAQ_RMAP_HANDLER_UART_HH_
-#define GROWTHDAQ_RMAP_HANDLER_UART_HH_
+#ifndef GROWTH_FPGA_RMAP_HANDLER_UART_HH_
+#define GROWTH_FPGA_RMAP_HANDLER_UART_HH_
 
 #include "spacewire/rmapinitiator.hh"
 #include "spacewire/spacewireifoveruart.hh"
@@ -38,11 +38,11 @@ class RMAPHandlerUART {
     rmapInitiator_.reset();
   }
 
-  void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) {
+  void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) const {
     assert(!rmapInitiator_);
-    for (size_t i = 0; i < maxNTrials; i++) {
+    for (size_t i = 0; i < MAX_RETRIES; i++) {
       try {
-        rmapInitiator_->read(rmapTargetNode, memoryAddress, length, buffer, timeOutDuration);
+        rmapInitiator_->read(rmapTargetNode, memoryAddress, length, buffer, TIMEOUT_MILLISEC);
         break;
       } catch (RMAPInitiatorException& e) {
         std::cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << std::endl;
@@ -50,7 +50,7 @@ class RMAPHandlerUART {
                   << "0x" << std::hex << std::right << std::setw(8) << std::setfill('0') << memoryAddress
                   << " length=" << std::dec << length << "); trying again..." << std::endl;
         spwif_->cancelReceive();
-        if (i == maxNTrials - 1) {
+        if (i == MAX_RETRIES - 1) {
           assert(false && "Transaction failed");
         }
         usleep(100);
@@ -60,19 +60,19 @@ class RMAPHandlerUART {
 
   void write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, const u8* data) {
     assert(!rmapInitiator_);
-    for (size_t i = 0; i < maxNTrials; i++) {
+    for (size_t i = 0; i < MAX_RETRIES; i++) {
       try {
         if (length != 0) {
-          rmapInitiator_->write(rmapTargetNode, memoryAddress, const_cast<u8*>(data), length, timeOutDuration);
+          rmapInitiator_->write(rmapTargetNode, memoryAddress, const_cast<u8*>(data), length, TIMEOUT_MILLISEC);
         } else {
-          rmapInitiator_->write(rmapTargetNode, memoryAddress, nullptr, 0, timeOutDuration);
+          rmapInitiator_->write(rmapTargetNode, memoryAddress, nullptr, 0, TIMEOUT_MILLISEC);
         }
         break;
       } catch (RMAPInitiatorException& e) {
         std::cerr << "RMAPHandler::write() RMAPInitiatorException::" << e.toString() << std::endl;
         std::cerr << "Time out; trying again..." << std::endl;
         spwif_->cancelReceive();
-        if (i == maxNTrials - 1) {
+        if (i == MAX_RETRIES - 1) {
           assert(false && "Transaction failed");
         }
         usleep(100);
@@ -87,8 +87,8 @@ class RMAPHandlerUART {
   std::shared_ptr<SpaceWireIFOverUART> spwif_{};
   std::shared_ptr<RMAPEngine> rmapEngine_{};
   std::shared_ptr<RMAPInitiator> rmapInitiator_{};
-  f64 timeOutDuration = 1000.0;
-  size_t maxNTrials = 5;
+  static constexpr f64 TIMEOUT_MILLISEC = 1000.0;
+  static constexpr size_t MAX_RETRIES = 5;
 };
 
 #endif

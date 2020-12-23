@@ -1,10 +1,11 @@
-#ifndef SEMAPHOREREGISTER_HH_
-#define SEMAPHOREREGISTER_HH_
+#ifndef GROWTH_FPGA_SEMAPHOREREGISTER_HH_
+#define GROWTH_FPGA_SEMAPHOREREGISTER_HH_
 
-#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
-#include "GROWTH_FY2015_ADCModules/RegisterAccessInterface.hh"
-#include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "types.h"
+
+#include "growth-fpga/registeraccessinterface.hh"
+#include "growth-fpga/rmaphandleruart.hh"
+#include "growth-fpga/types.hh"
 
 #include <chrono>
 #include <memory>
@@ -23,14 +24,13 @@ class SemaphoreRegister : public RegisterAccessInterface {
       : RegisterAccessInterface(rmapHandler, rmapTargetNode), address_(address) {}
 
  public:
-  /// Requests the semaphore.
   /// This method will wait for indefinitely until it successfully gets the semaphore.
   void request() {
     while (true) {
       constexpr u16 ACQUIRE = 0xFFFF;
       write(address_, ACQUIRE);
-      semaphoreValue = read16(address_);
-      if (semaphoreValue != 0x0000) {
+      semaphoreValue_ = read16(address_);
+      if (semaphoreValue_ != 0x0000) {
         return;
       } else {
         sleep();
@@ -38,13 +38,12 @@ class SemaphoreRegister : public RegisterAccessInterface {
     }
   }
 
-  /// Releases the semaphore.
   void release() {
     while (true) {
       constexpr u16 RELEASE = 0x0000;
       write(address_, RELEASE);
-      semaphoreValue = read16(address_);
-      if (semaphoreValue == RELEASE) {
+      semaphoreValue_ = read16(address_);
+      if (semaphoreValue_ == RELEASE) {
         return;
       } else {
         sleep();
@@ -60,8 +59,8 @@ class SemaphoreRegister : public RegisterAccessInterface {
   }
 
   u32 address_{};
-  u16 semaphoreValue = 0;
-  std::mutex mutex_;
+  u16 semaphoreValue_ = 0;
+  std::mutex mutex_{};
 };
 
 /// RAII lock using SemaphoreRegister.
