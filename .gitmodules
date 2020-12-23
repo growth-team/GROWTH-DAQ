@@ -16,3 +16,7 @@
 [submodule "daq/external/yaml-cpp"]
 	path = daq/external/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "daq/external/spdlog"]
+	path = daq/external/spdlog
+	url = https://github.com/gabime/spdlog
+	branch = v1.8.2
