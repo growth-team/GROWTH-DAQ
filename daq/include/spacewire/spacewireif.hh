@@ -76,34 +76,6 @@ class SpaceWireIF {
   virtual void close() = 0;
 
   virtual void send(const u8* data, size_t length, EOPType eopType = EOPType::EOP) = 0;
-  virtual void receive(u8* buffer, EOPType& eopType, size_t maxLength, size_t& length) {
-    std::vector<u8>* packet = this->receive();
-    const size_t packetSize = packet->size();
-    if (packetSize == 0) {
-      length = 0;
-    } else {
-      length = packetSize;
-      if (packetSize <= maxLength) {
-        memcpy(buffer, packet->data(), packetSize);
-      } else {
-        memcpy(buffer, packet->data(), maxLength);
-        delete packet;
-        throw SpaceWireIFException(SpaceWireIFException::ReceiveBufferTooSmall);
-      }
-    }
-    delete packet;
-  }
-  virtual std::vector<u8>* receive() {
-    // TODO: replace with buffer pool
-    std::vector<u8>* buffer = new std::vector<u8>();
-    try {
-      this->receive(buffer);
-      return buffer;
-    } catch (SpaceWireIFException& e) {
-      delete buffer;
-      throw e;
-    }
-  }
   virtual void receive(std::vector<u8>* buffer) = 0;
   virtual void cancelReceive() = 0;
   virtual void setTimeoutDuration(f64 microsecond) = 0;
@@ -114,4 +86,4 @@ class SpaceWireIF {
   bool isOpen_ = false;
   f64 timeoutDurationInMicroSec_{1e6};
 };
-#endif /* SPACEWIREIF_HH_ */
+#endif

@@ -84,14 +84,18 @@ add_executable(growth_daq
   src/timeutil.cc
 )
 
+add_executable(growth_reg
+  cli/growth_reg.cc
+  src/serialport.cc
+  src/spacewire/rmapengine.cc
+  src/spacewire/spacewireutil.cc
+  src/stringutil.cc
+  src/timeutil.cc
+)
+
 #---------------------------------------------
 # Linked libraries
 #---------------------------------------------
-if(APPLE)
-  set(BOOST_LINK_LIBS boost_thread-mt boost_system-mt)
-else()
-  set(BOOST_LINK_LIBS boost_thread boost_system)
-endif()
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
@@ -102,10 +106,15 @@ target_link_libraries(growth_daq
   z
 )
 
+target_link_libraries(growth_reg
+  yaml-cpp
+  serial
+)
+
 #=============================================
 # Installs
 #=============================================
-install_targets(/bin growth_daq)
+install_targets(/bin growth_daq growth_reg)
 
 #=============================================
 # Custom target

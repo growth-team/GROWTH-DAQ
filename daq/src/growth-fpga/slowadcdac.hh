@@ -8,9 +8,7 @@
 
 class RMAPHandlerUART;
 
-/** A class which represents ConsumerManager module in the VHDL logic.
- * It also holds information on a ring buffer constructed on SDRAM.
- */
+/// Communicates with the Slow ADC/DAC control block (if implemented on FPGA).
 class SlowAdcDac : public RegisterAccessInterface {
  public:
   /** Constructor.
@@ -33,7 +31,7 @@ class SlowAdcDac : public RegisterAccessInterface {
   }
 
   u16 dacOutputValue(size_t ch) const {
-    assert(ch == 0 || ch == 1);
+    assert(ch < NUM_DAC_CHANNELS);
     return dacOutputValue_.at(ch);
   }
 
@@ -42,7 +40,15 @@ class SlowAdcDac : public RegisterAccessInterface {
     constexpr u16 DIFFERENTIAL_FLAG = 0;  // not differential (i.e. single-ended mode)
     const u16 adcRegisterValue = (DIFFERENTIAL_FLAG << 15) | (static_cast<u16>(ch) << 12);
     writeAdcReg(adcRegisterValue);
-    return readAdcReg();
+    constexpr u16 ADC_READ_BUSY_FLAG = 1 << 15;
+    u16 readResult = readAdcReg();
+    while ((readResult & ADC_READ_BUSY_FLAG) != 0) {
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(10ms);
+      // TODO: add log message here
+      readResult = readAdcReg();
+    }
+    return readResult;
   }
 
  private:
@@ -51,7 +57,17 @@ class SlowAdcDac : public RegisterAccessInterface {
 
   static constexpr u32 ADDRESS_DAC_CH_DATA = 0x20000140;
   static constexpr u32 ADDRESS_ADC_CH_DATA = 0x20000142;
-  static constexpr u32 ADDRESS_GPIO = 0x20000144;
+
+  // Register Map
+  // === DAC ===
+  // i_mcp4822_control_reg <= uartRMAPBusMasterDataOut (15 downto 0);
+  // 15    14    13    12    11  10  9  8  7 ...  0
+  // nA/B   -    nGA  nSHDN D11 D10 D9 D8  ..... D0
+  //
+  // === ADC ===
+  // i_mcp3208_control_reg <= uartRMAPBusMasterDataOut (15 downto 12);
+  // differential   => i_mcp3208_command_reg (3)
+  // channel_select => i_mcp3208_command_reg (2 downto 0)
 
   u16 readAdcReg() const { return read16(ADDRESS_ADC_CH_DATA); }
   u16 readDacReg() const { return read16(ADDRESS_DAC_CH_DATA); }
@@ -61,14 +77,32 @@ class SlowAdcDac : public RegisterAccessInterface {
   std::array<u16, NUM_DAC_CHANNELS> dacOutputValue_{};
 };
 
-#endif
+class HighvoltageControlGpio : public RegisterAccessInterface {
+ public:
+  /** Constructor.
+   * @param[in] rmapHandler RMAPHandlerUART
+   * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
+   */
+  HighvoltageControlGpio(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
+  ~HighvoltageControlGpio() override = default;
 
-// DAC
-// i_mcp4822_control_reg <= uartRMAPBusMasterDataOut (15 downto 0);
-// 15    14    13    12    11  10  9  8  7 ...  0
-// nA/B   -    nGA  nSHDN D11 D10 D9 D8  ..... D0
-//
-// ADC
-// i_mcp3208_control_reg <= uartRMAPBusMasterDataOut (15 downto 12);
-// differential   => i_mcp3208_command_reg (3),
-// channel_select => i_mcp3208_command_reg (2 downto 0),
+  void outputEnable(bool enable) {
+    const u16 registerValue = enable ? 1 : 0;
+    write(ADDRESS_GPIO, registerValue);
+  }
+
+  bool outputEnabled() const {
+    constexpr u16 OUTPUT_ENABLED = 1;
+    return (read16(ADDRESS_GPIO) & 0x01) == OUTPUT_ENABLED;
+  }
+
+ private:
+  /// There are two high-voltage modules, but on the adaptor board, one control signal (Ch.0)
+  /// is connected to the enable signals of both HV0 and HV1.
+  static constexpr size_t NUM_HV_CHANNELS = 1;
+
+  static constexpr u32 ADDRESS_GPIO = 0x20000144;
+};
+
+#endif

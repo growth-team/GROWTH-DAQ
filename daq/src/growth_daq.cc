@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
   const char* dummyArgv[] = {""};
 
   // Instantiate
-  std::shared_ptr<MainThread> mainThread(new MainThread(deviceName, configurationFile, exposureInSec));
-  std::unique_ptr<MessageServer> messageServer(new MessageServer(mainThread));
+  auto mainThread = std::make_shared<MainThread>(deviceName, configurationFile, exposureInSec);
+  auto messageServer = std::make_unique<MessageServer>(mainThread);
 
   // Run
   if (exposureInSec > 0.0) {

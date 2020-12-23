@@ -11,12 +11,12 @@
 #include "growth-fpga/registeraccessinterface.hh"
 #include "growth-fpga/rmaphandleruart.hh"
 #include "growth-fpga/semaphoreregister.hh"
+#include "growth-fpga/hitpatternmodule.hh"
 #include "growth-fpga/slowadcdac.hh"
 #include "growth-fpga/types.hh"
 
 #include <cassert>
 #include <chrono>
-
 
 void GROWTH_FY2015_ADC::dumpThread() {
   size_t nReceivedEvents_previous = 0;
@@ -35,9 +35,9 @@ void GROWTH_FY2015_ADC::dumpThread() {
 
 GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
     : eventDecoder_(new EventDecoder),
-      rmapHandler_(std::make_unique<RMAPHandlerUART>(deviceName)),
+      rmapHandler_(std::make_shared<RMAPHandlerUART>(deviceName)),
       rmapIniaitorForGPSRegisterAccess_(std::make_unique<RMAPInitiator>(rmapHandler_->getRMAPEngine())),
-      gpsDataFIFOReadBuffer_(new u8[GPS_DATA_FIFO_DEPTH_BYTES]) {
+      gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
   adcRMAPTargetNode_ = std::make_shared<RMAPTargetNode>();
   adcRMAPTargetNode_->setDefaultKey(0x00);
   adcRMAPTargetNode_->setReplyAddress({});
