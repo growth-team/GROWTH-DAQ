@@ -11,6 +11,7 @@
 #include "growth-fpga/registeraccessinterface.hh"
 #include "growth-fpga/rmaphandleruart.hh"
 #include "growth-fpga/semaphoreregister.hh"
+#include "growth-fpga/slowadcdac.hh"
 #include "growth-fpga/types.hh"
 
 #include <cassert>

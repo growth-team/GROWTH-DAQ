@@ -4,6 +4,7 @@
 #include "timeutil.hh"
 
 #include <fstream>
+#include <cstring>
 
 EventListFileFITS::EventListFileFITS(const std::string& fileName, const std::string& detectorID,
                                      const std::string& configurationYAMLFile, size_t nSamples, f64 exposureInSec,
