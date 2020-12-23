@@ -126,8 +126,7 @@ std::vector<uint8_t> toUInt8Array(std::string str) {
   str = stringutil::replace(str, "\t", " ");
   const std::vector<std::string> stringArray = split(str, " ");
   for (const auto& entry : stringArray) {
-    if (entry.size() > 2 && entry[0] == '0' &&
-        (entry[1] == 'x' || entry[1] == 'X')) {
+    if (entry.size() > 2 && entry[0] == '0' && (entry[1] == 'x' || entry[1] == 'X')) {
       std::string element = stringutil::replace(stringutil::toLowerCase(entry), "0x", "");
       size_t elementLength = element.size();
       uint32_t avalue = 0;
@@ -180,7 +179,6 @@ bool contain(const std::string& str, const std::string& searched_str) {
 }
 
 size_t indexOf(const std::string& str, const std::string& searched_str) { return str.find(searched_str); }
-
 
 bool toBoolean(const std::string& str) {
   if (str == "true" || str == "TRUE" || str == "yes" || str == "YES") {

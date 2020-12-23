@@ -7,7 +7,6 @@
 #include <cassert>
 #include <deque>
 
-
 /** Decodes event data received from the GROWTH ADC Board.
  * Decoded event instances will be stored in a queue.
  */

@@ -38,7 +38,7 @@ void RMAPEngine::run() {
     } catch (const RMAPPacketException& e) {
       printf("%s\n", e.what());
     } catch (const RMAPEngineException& e) {
-    	printf("%s\n", e.toString().c_str());
+      printf("%s\n", e.toString().c_str());
     }
   }
   stopped_ = true;

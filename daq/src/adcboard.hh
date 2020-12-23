@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 
-
 class ChannelManager;
 class ChannelModule;
 class ConsumerManagerEventFIFO;
@@ -105,7 +104,7 @@ class GROWTH_FY2015_ADC {
    * @param chNumber channel number
    * @param triggerMode trigger mode (see TriggerMode)
    */
-  void setTriggerMode(size_t chNumber, TriggerMode triggerMode);
+  void setTriggerMode(size_t chNumber, growth_fpga::TriggerMode triggerMode);
 
   /** Sets the number of ADC samples recorded for a single trigger.
    * This method sets the same number to all the channels.
@@ -219,7 +218,7 @@ class GROWTH_FY2015_ADC {
    */
   void setPresetnEvents(u32 nEvents);
 
-  /** Get Realtime which is elapsed time since the board power was turned on.
+  /** Get real time which is elapsed time since the board power was turned on.
    * @return elapsed real time in 10ms unit
    */
   f64 getRealtime() const;

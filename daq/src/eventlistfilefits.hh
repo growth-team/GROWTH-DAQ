@@ -11,7 +11,6 @@ extern "C" {
 
 #include <mutex>
 
-
 class EventListFileFITS : public EventListFile {
  public:
   EventListFileFITS(const std::string& fileName, const std::string& detectorID = "empty",
@@ -24,7 +23,8 @@ class EventListFileFITS : public EventListFile {
    * @param[in] buffer buffer containing a GPS Time Register data
    */
   void fillEvents(const std::vector<growth_fpga::Event*>& events) override;
-  void fillGPSTime(const std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1>& gpsTimeRegisterBuffer) override;
+  void fillGPSTime(
+      const std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1>& gpsTimeRegisterBuffer) override;
   size_t getEntries() const override { return rowIndexEvent_; }
   void close() override;
   void expandIfNecessary();

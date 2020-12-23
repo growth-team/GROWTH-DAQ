@@ -79,8 +79,8 @@ int main(int argc, char* argv[]) {
     dump(buffer);
     // write
     u16 threshold = 540;
-    buffer[1]          = threshold % 0x100;
-    buffer[0]          = threshold / 0x100;
+    buffer[1] = threshold % 0x100;
+    buffer[0] = threshold / 0x100;
     rmapInitiator->write(&target, 0x00001006, buffer, 2);
     cout << "Write done" << endl;
     rmapInitiator->read(&target, 0x00001006, 2, buffer);

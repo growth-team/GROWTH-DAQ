@@ -9,19 +9,19 @@
 /// Represents ADC data.
 class ADCData {
  public:
-  static const size_t nTemperatureSensors = 4;
+  static constexpr size_t nTemperatureSensors = 4;
   u16 temperature_raw[nTemperatureSensors];
   f64 temperature[nTemperatureSensors];
 
-  static const size_t nCurrentSensors = 2;
+  static constexpr size_t nCurrentSensors = 2;
   u16 current_raw[nCurrentSensors];
   f64 current[nCurrentSensors];
 
-  static const size_t nGeneralPurposeADC = 2;
+  static constexpr size_t nGeneralPurposeADC = 2;
   u16 generalPurposeADC_raw[nGeneralPurposeADC];
   f64 generalPurposeADC[nGeneralPurposeADC];
 
-  std::string toString();
+  std::string toString() const;
   ADCData();
 };
 
@@ -69,48 +69,48 @@ class ADCDAC {
   i32 disableDAC(size_t channel);
   ADCData getADCData();
 
-  static constexpr f32 LT6106_Rout   = 10e3;   // 10kOhm
-  static constexpr f32 LT6106_Rin    = 100;    // 100Ohm
+  static constexpr f32 LT6106_Rout = 10e3;     // 10kOhm
+  static constexpr f32 LT6106_Rin = 100;       // 100Ohm
   static constexpr f32 LT6106_Rsense = 10e-3;  // 10mOhm
 
   // ADC (MCP3208)
-  static const size_t NADCChannels          = 8;
-  static const size_t SPIChannelADC            = 0x00;
-  static const u16 ADCMax              = 4095;
-  static constexpr f32 ADCVref            = 2.5;  // V
-  static const size_t ADCChannel_Current5V  = 4;
-  static const size_t ADCChannel_Current3V3 = 5;
+  static constexpr size_t NADCChannels = 8;
+  static constexpr size_t SPIChannelADC = 0x00;
+  static constexpr u16 ADCMax = 4095;
+  static constexpr f32 ADCVref = 2.5;  // V
+  static constexpr size_t ADCChannel_Current5V = 4;
+  static constexpr size_t ADCChannel_Current3V3 = 5;
 
   // DAC
-  static const size_t NDACChannels = 2;
-  static const size_t SPIChannelDAC   = 0x01;
-  static const u16 DACMin     = 0;
-  static const u16 DACMax     = 4095;
+  static constexpr size_t NDACChannels = 2;
+  static constexpr size_t SPIChannelDAC = 0x01;
+  static constexpr u16 DACMin = 0;
+  static constexpr u16 DACMax = 4095;
 
-  static const u8 DACChannelA    = 0x00;
-  static const u8 DACChannelB    = 0x80;
-  static const u8 DACGain1       = 0x20;
-  static const u8 DACGain2       = 0x00;
-  static const u8 DACShutdownYes = 0x00;
-  static const u8 DACShutdownNo  = 0x10;
+  static constexpr u8 DACChannelA = 0x00;
+  static constexpr u8 DACChannelB = 0x80;
+  static constexpr u8 DACGain1 = 0x20;
+  static constexpr u8 DACGain2 = 0x00;
+  static constexpr u8 DACShutdownYes = 0x00;
+  static constexpr u8 DACShutdownNo = 0x10;
 
   // SPI
-  static const int SPIClockFrequency = 500000;  // Hz
+  static constexpr i32 SPIClockFrequency = 500000;  // Hz
 
   // Temperature sensor LM60
   static constexpr f64 LM60Coefficient = 0.00625;  // V/deg
-  static constexpr f64 LM60Offset      = 0.424;    // V
+  static constexpr f64 LM60Offset = 0.424;         // V
 
   // Error status
   enum ADCDACError {
     SPICommunicationError = -3,  //
-    InvalidRange          = -2,  //
-    InvalidChannel        = -1,  //
-    Successful            = 0    //
+    InvalidRange = -2,           //
+    InvalidChannel = -1,         //
+    Successful = 0               //
   };
 
  private:
-  void dumpError(int status);
+  void dumpError(i32 status);
   bool initialized = false;
   void initialize();
 };

@@ -42,6 +42,7 @@ include_directories(SYSTEM
   external/libzmq/include
   external/cppzmq
   external/cfitsio
+  external/spdlog/include
   external/yaml-cpp/include
   ${ROOT_INCLUDE_DIRS}
 )

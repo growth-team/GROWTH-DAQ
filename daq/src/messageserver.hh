@@ -38,7 +38,7 @@ class MessageServer {
   void stop() { stopped_ = true; }
   void join() { thread_.join(); }
   void run();
-  static constexpr u16 TCPPortNumber  = 10020;
+  static constexpr u16 TCPPortNumber = 10020;
   static constexpr int TimeOutInMilisecond = 1000;  // 1 sec
 
  private:

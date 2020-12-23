@@ -1,12 +1,12 @@
 #ifndef GROWTHDAQ_REGISTER_ACCESS_AUTOMATOR_HH_
 #define GROWTHDAQ_REGISTER_ACCESS_AUTOMATOR_HH_
 
-
 #include "growth-fpga/rmaphandleruart.hh"
 #include "growth-fpga/hitpatternmodule.hh"
 #include "growth-fpga/slowadcdac.hh"
 
 #include "yaml-cpp/yaml.h"
+#include "spdlog/spdlog.h"
 
 #include <sstream>
 #include <memory>
@@ -31,8 +31,7 @@ class RegisterAccessAutomator {
 
     size_t entryIndex = 0;
     for (const auto& entry : yaml_root) {
-      // TODO: use proper logging library
-      std::cout << "Processing " << entryIndex << std::endl;
+      spdlog::info("Processing {}", entryIndex);
       checkMustHaveKeys(entry);
       executeCommand(entry);
       entryIndex++;
@@ -74,26 +73,24 @@ class RegisterAccessAutomator {
     const auto ch = arguments["ch"].as<std::size_t>();
     const HitPatternSettings settings{arguments["lowerThreshold"].as<u16>(), arguments["upperThreshold"].as<u16>(),
                                       arguments["width"].as<u16>(), arguments["delay"].as<u16>()};
-    std::cout << "Setting hit-pattern registers (Ch." << ch << ", lower = " << settings.lowerThreshold
-              << ", upper = " << settings.upperThreshold << ", width = " << settings.width
-              << ", delay = " << settings.delay << ")" << std::endl;
+    spdlog::info("Setting hit-pattern registers (Ch.{}, lower = {}, upper = {}, width = {}, delay = {})", ch,
+                 settings.lowerThreshold, settings.upperThreshold, settings.width, settings.delay);
     hitPatternModule_->writeSettings(ch, settings);
-    std::cout << MSG_DONE << std::endl;
+    spdlog::info("==> DONE");
   }
 
   void executeSlowDacSet(const YAML::Node& arguments) {
     const auto ch = arguments["ch"].as<std::size_t>();
     const u16 gain = arguments["ch"].as<u16>();
     const u16 outputValue = arguments["outputValue"].as<u16>();
-    std::cout << "Setting DAC (Ch." << ch << ", gain = " << gain << ", outputValue = " << outputValue << ")"
-              << std::endl;
+    spdlog::info("Setting DAC (Ch.{}, gain = {}, outputValue = {})", ch, gain, outputValue);
     slowAdcDacModule_->setDac(ch, gain, outputValue);
-    std::cout << MSG_DONE << std::endl;
+    spdlog::info("==> DONE");
   }
 
   void executeHighvoltageControlSet(const YAML::Node& arguments) {
     const auto outputEnable = arguments["outputEnable"].as<bool>();
-    std::cout << "Setting HV output enable (enable = " << (outputEnable ? "enabled" : "disabled") << ")" << std::endl;
+    spdlog::info("Setting HV output enable (enable = {})", (outputEnable ? "enabled" : "disabled"));
     highvoltageControlGpioModule_->outputEnable(outputEnable);
   }
 
@@ -102,7 +99,5 @@ class RegisterAccessAutomator {
   std::unique_ptr<SlowAdcDac> slowAdcDacModule_;
   std::unique_ptr<HighvoltageControlGpio> highvoltageControlGpioModule_;
   std::unique_ptr<HitPatternModule> hitPatternModule_;
-
-  static constexpr std::string_view MSG_DONE = "  ==> DONE";
 };
 #endif

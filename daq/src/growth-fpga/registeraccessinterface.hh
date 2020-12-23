@@ -49,8 +49,10 @@ class RegisterAccessInterface {
     const u16 lower16 = static_cast<u16>(value & 0xFFFF);
     const u16 upper16 = static_cast<u8>(value >> 16);
     const std::array<u8, 4> data{
-        static_cast<u8>((lower16 & 0xFF00) >> 8), static_cast<u8>(lower16 & 0xFF),
-        static_cast<u8>((upper16 & 0xFF00) >> 8), static_cast<u8>(upper16 & 0xFF),
+        static_cast<u8>((lower16 & 0xFF00) >> 8),
+        static_cast<u8>(lower16 & 0xFF),
+        static_cast<u8>((upper16 & 0xFF00) >> 8),
+        static_cast<u8>(upper16 & 0xFF),
     };
     rmapHandler_->write(rmapTargetNode_.get(), address, 4, data.data());
   }

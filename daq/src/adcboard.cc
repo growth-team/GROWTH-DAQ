@@ -2,6 +2,7 @@
 
 #include "stringutil.hh"
 #include "yaml-cpp/yaml.h"
+#include "spdlog/spdlog.h"
 
 #include "growth-fpga/channelmanager.hh"
 #include "growth-fpga/channelmodule.hh"
@@ -28,8 +29,8 @@ void GROWTH_FY2015_ADC::dumpThread() {
     nReceivedEvents_latch = nReceivedEvents_;
     delta = nReceivedEvents_latch - nReceivedEvents_previous;
     nReceivedEvents_previous = nReceivedEvents_latch;
-    printf("Received %zu events (delta=%zu). Available Event instances=%zu\n", nReceivedEvents_latch, delta,
-           eventDecoder_->getNAllocatedEventInstances());
+    spdlog::info("Received {} events (delta={}). Available Event instances={}", nReceivedEvents_latch, delta,
+                 eventDecoder_->getNAllocatedEventInstances());
   }
 }
 
@@ -124,7 +125,7 @@ void GROWTH_FY2015_ADC::freeEvents(std::vector<growth_fpga::Event*>& events) {
   }
 }
 
-void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, TriggerMode triggerMode) {
+void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, growth_fpga::TriggerMode triggerMode) {
   assert(chNumber < growth_fpga::NumberOfChannels);
   channelModules_[chNumber]->setTriggerMode(triggerMode);
 }
@@ -201,7 +202,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
 void GROWTH_FY2015_ADC::sendCPUTrigger() {
   for (size_t chNumber = 0; chNumber < growth_fpga::NumberOfChannels; chNumber++) {
     if (this->ChannelEnable[chNumber]) {  // if enabled
-      std::cout << "CPU Trigger to Channel " << chNumber << std::endl;
+      spdlog::info("CPU Trigger to Channel {}", chNumber);
       channelModules_[chNumber]->sendCPUTrigger();
     }
   }

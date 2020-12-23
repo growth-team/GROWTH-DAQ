@@ -11,7 +11,6 @@
 #include <bitset>
 #include <memory>
 
-
 /** A class which represents ChannelManager module on VHDL logic.
  * This module controls start/stop, preset mode, livetime, and
  * realtime of data acquisition.

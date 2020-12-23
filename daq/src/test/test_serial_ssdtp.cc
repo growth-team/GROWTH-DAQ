@@ -11,10 +11,10 @@
 
 class ReceiveThread : public CxxUtilities::StoppableThread {
  private:
-  SpaceWireSSDTPModuleUART *ssdtp;
+  SpaceWireSSDTPModuleUART* ssdtp;
 
  public:
-  ReceiveThread(SpaceWireSSDTPModuleUART *ssdtp) { this->ssdtp = ssdtp; }
+  ReceiveThread(SpaceWireSSDTPModuleUART* ssdtp) { this->ssdtp = ssdtp; }
 
  public:
   void run() {
@@ -26,7 +26,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
       try {
         cout << "Receive() loop:" << endl;
         receivedData = ssdtp->receive();
-      } catch (SpaceWireSSDTPException &e) {
+      } catch (SpaceWireSSDTPException& e) {
         cout << "SpaceWireSSDTPException " << e.toString() << endl;
         this->stop();
         return;
@@ -37,7 +37,9 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
       for (size_t i = 0; i < length; i++) {
         cout << hex << right << setw(2) << setfill('0') << (u32)receivedData[i] << " ";
         if (i != 0) {
-          if (receivedData[i - 1] + 1 != receivedData[i]) { cout << "Transfer Error! "; }
+          if (receivedData[i - 1] + 1 != receivedData[i]) {
+            cout << "Transfer Error! ";
+          }
         }
       }
       cout << endl;
@@ -46,7 +48,7 @@ class ReceiveThread : public CxxUtilities::StoppableThread {
 };
 
 //#include "SpaceWireSSDTPModuleUART.hh"
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   if (argc != 2) {
     std::cerr << "Provide serial port device (e.g. /dev/tty.usb-xxxxx)." << std::endl;
     return 1;
