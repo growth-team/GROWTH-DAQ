@@ -24,4 +24,4 @@
 	url = https://github.com/boostorg/boost
 [submodule "daq/external/asio"]
 	path = daq/external/asio
-	url = https://github.com/chriskohlhoff/asio/
+	url = https://github.com/chriskohlhoff/asio
