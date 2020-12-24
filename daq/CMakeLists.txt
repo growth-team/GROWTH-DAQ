@@ -40,6 +40,7 @@ include_directories(SYSTEM
   include/CxxUtilities/includes
   external/serial/include
   external/libzmq/include
+  external/boost
   external/cppzmq
   external/cfitsio
   external/spdlog/include

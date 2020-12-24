@@ -15,13 +15,13 @@
  */
 class SpaceWireIFOverUART : public SpaceWireIF {
  public:
-  static constexpr i32 BAUD_RATE = 230400;
+  static constexpr i32 BAUD_RATE = 1000000;
 
   SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
   ~SpaceWireIFOverUART() override = default;
 
   bool open() override {
-    serial_ = std::make_unique<SerialPort>(deviceName_, BAUD_RATE);
+    serial_ = std::make_unique<SerialPortBoostAsio>(deviceName_, BAUD_RATE);
     setTimeoutDuration(500000);
 
     ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(serial_.get());
@@ -63,7 +63,7 @@ class SpaceWireIFOverUART : public SpaceWireIF {
         printf("SpaceWireIFOverUART::receive() e = %s (%d)\n", e.toString().c_str(), e.getStatus());
         throw SpaceWireIFException(SpaceWireIFException::ReceiveFailed);
       }
-    } catch (const SerialPortTimeoutException& e) {
+    } catch (const SerialPortException& e) {
       throw SpaceWireIFException(SpaceWireIFException::Timeout);
     }
   }

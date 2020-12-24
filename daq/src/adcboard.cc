@@ -23,14 +23,25 @@ void GROWTH_FY2015_ADC::dumpThread() {
   size_t nReceivedEvents_previous = 0;
   size_t delta = 0;
   size_t nReceivedEvents_latch;
+  using namespace std::chrono_literals;
+  constexpr auto dumpInterval = 5s;
   while (!stopDumpThread_) {
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(1s);
     nReceivedEvents_latch = nReceivedEvents_;
     delta = nReceivedEvents_latch - nReceivedEvents_previous;
     nReceivedEvents_previous = nReceivedEvents_latch;
-    spdlog::info("Received {} events (delta={}). Available Event instances={}", nReceivedEvents_latch, delta,
-                 eventDecoder_->getNAllocatedEventInstances());
+    const auto rateHz = static_cast<f64>(delta) / dumpInterval.count();
+    const auto elapsedTimeSec = [&]() -> f64 {
+      if (acquisitionStartTime_) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - acquisitionStartTime_.value()).count();
+
+      } else {
+        return 0.0;
+      }
+    }() / 1000.0;
+
+    spdlog::info("Time = {:.1f} sec, Received total = {} events, rate = {:.1f} Hz, available event instances = {}",  //
+                 elapsedTimeSec, nReceivedEvents_latch, rateHz, eventDecoder_->getNAllocatedEventInstances());
+    std::this_thread::sleep_for(dumpInterval);
   }
 }
 
@@ -57,7 +68,15 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
   reg_ = std::make_shared<RegisterAccessInterface>(rmapHandler_, adcRMAPTargetNode_);
 }
 
-GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() = default;
+GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
+  stopDumpThread_ = true;
+  dumpThread_.join();
+}
+
+void GROWTH_FY2015_ADC::startDumpThread() {
+  assert(!dumpThread_.joinable());
+  dumpThread_ = std::thread(&GROWTH_FY2015_ADC::dumpThread, this);
+}
 
 u32 GROWTH_FY2015_ADC::getFPGAType() const { return reg_->read32(AddressOfFPGATypeRegister_L); }
 
@@ -92,7 +111,7 @@ void GROWTH_FY2015_ADC::clearGPSDataFIFO() {
   reg_->read(AddressOfGPSDataFIFOResetRegister, 2, dummy);
 }
 
-std::vector<u8> GROWTH_FY2015_ADC::readGPSDataFIFO() {
+const std::vector<u8>& GROWTH_FY2015_ADC::readGPSDataFIFO() {
   if (gpsDataFIFOData_.size() != GPS_DATA_FIFO_DEPTH_BYTES) {
     gpsDataFIFOData_.resize(GPS_DATA_FIFO_DEPTH_BYTES);
   }
@@ -102,13 +121,25 @@ std::vector<u8> GROWTH_FY2015_ADC::readGPSDataFIFO() {
 }
 
 void GROWTH_FY2015_ADC::reset() {
+  channelManager_->stopAcquisition();
   channelManager_->reset();
-  consumerManager_->reset();
+
+  consumerManager_->disableEventOutput();  // stop event recording in FIFO
+
+  while (true) {
+    const std::vector<u8>& rawEventData = consumerManager_->getEventData();
+    spdlog::debug("Clearing event FIFO ({} bytes read)", rawEventData.size());
+    if (rawEventData.empty()) {
+      break;
+    }
+  }
+
+  consumerManager_->enableEventOutput();  // start event recording in FIFO
 }
 
 std::vector<growth_fpga::Event*> GROWTH_FY2015_ADC::getEvent() {
   events_.clear();
-  const std::vector<u8> data = consumerManager_->getEventData();
+  const std::vector<u8>& data = consumerManager_->getEventData();
   if (!data.empty()) {
     eventDecoder_->decodeEvent(&data);
     events_ = eventDecoder_->getDecodedEvents();
@@ -177,11 +208,12 @@ void GROWTH_FY2015_ADC::turnOffADCPower(size_t chNumber) {
 }
 
 void GROWTH_FY2015_ADC::startAcquisition(std::vector<bool> channelsToBeStarted) {
-  consumerManager_->reset();  // reset EventFIFO
+  reset();
+  acquisitionStartTime_ = std::chrono::system_clock::now();
   channelManager_->startAcquisition(channelsToBeStarted);
 }
 
-void GROWTH_FY2015_ADC::startAcquisition() { channelManager_->startAcquisition(this->ChannelEnable); }
+void GROWTH_FY2015_ADC::startAcquisition() { startAcquisition(ChannelEnable); }
 
 bool GROWTH_FY2015_ADC::isAcquisitionCompleted() const { return channelManager_->isAcquisitionCompleted(); }
 
@@ -201,7 +233,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
 
 void GROWTH_FY2015_ADC::sendCPUTrigger() {
   for (size_t chNumber = 0; chNumber < growth_fpga::NumberOfChannels; chNumber++) {
-    if (this->ChannelEnable[chNumber]) {  // if enabled
+    if (ChannelEnable[chNumber]) {  // if enabled
       spdlog::info("CPU Trigger to Channel {}", chNumber);
       channelModules_[chNumber]->sendCPUTrigger();
     }
@@ -239,7 +271,7 @@ growth_fpga::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() const {
 }
 
 size_t GROWTH_FY2015_ADC::getNSamplesInEventListFile() const {
-  return (this->SamplesInEventPacket) / this->DownSamplingFactorForSavedWaveform;
+  return SamplesInEventPacket / DownSamplingFactorForSavedWaveform;
 }
 
 void GROWTH_FY2015_ADC::dumpMustExistKeywords() {
@@ -260,7 +292,6 @@ void GROWTH_FY2015_ADC::dumpMustExistKeywords() {
 }
 
 void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) {
-  using namespace std;
   YAML::Node yaml_root = YAML::LoadFile(inputFileName);
   const std::vector<std::string> mustExistKeywords = {"DetectorID",
                                                       "PreTriggerSamples",
@@ -276,9 +307,9 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
   //---------------------------------------------
   for (auto keyword : mustExistKeywords) {
     if (!yaml_root[keyword].IsDefined()) {
-      cerr << "Error: " << keyword << " is not defined in the configuration file." << endl;
+      spdlog::error("Keyword {} is not defined in the configuration file.", keyword);
       dumpMustExistKeywords();
-      exit(-1);
+      throw std::runtime_error("Invalid configuration file format");
     }
   }
 
@@ -292,7 +323,7 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
     // Convert integer-type trigger mode to TriggerMode enum type
     const std::vector<size_t> triggerModeInt = yaml_root["TriggerModes"].as<std::vector<size_t>>();
     for (size_t i = 0; i < triggerModeInt.size(); i++) {
-      this->TriggerModes[i] = static_cast<enum TriggerMode>(triggerModeInt.at(i));
+      this->TriggerModes[i] = static_cast<enum growth_fpga::TriggerMode>(triggerModeInt.at(i));
     }
   }
   this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
@@ -304,56 +335,52 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
   //---------------------------------------------
   // dump setting
   //---------------------------------------------
-  cout << "#---------------------------------------------" << endl;
-  cout << "# Configuration" << endl;
-  cout << "#---------------------------------------------" << endl;
-  cout << "DetectorID                        : " << this->DetectorID << endl;
-  cout << "PreTriggerSamples                 : " << this->PreTriggerSamples << endl;
-  cout << "PostTriggerSamples                : " << this->PostTriggerSamples << endl;
-  {
-    cout << "TriggerModes                      : [";
+  spdlog::info("Configuration");
+  spdlog::info("  DetectorID                        : {}", DetectorID);
+  spdlog::info("  PreTriggerSamples                 : {}", PreTriggerSamples);
+  spdlog::info("  PostTriggerSamples                : {}", PostTriggerSamples);
+
+  const std::string triggerModeListStr = [&]() {
     std::vector<size_t> triggerModeInt{};
-    for (const auto mode : this->TriggerModes) {
+    for (const auto mode : TriggerModes) {
       triggerModeInt.push_back(static_cast<size_t>(mode));
     }
-    cout << stringutil::join(triggerModeInt, ", ") << "]" << endl;
-  }
-  cout << "SamplesInEventPacket              : " << this->SamplesInEventPacket << endl;
-  cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
-  cout << "ChannelEnable                     : [" << stringutil::join(this->ChannelEnable, ", ") << "]" << endl;
-  cout << "TriggerThresholds                 : [" << stringutil::join(this->TriggerThresholds, ", ") << "]" << endl;
-  cout << "TriggerCloseThresholds            : [" << stringutil::join(this->TriggerCloseThresholds, ", ") << "]"
-       << endl;
-  cout << endl;
+    return stringutil::join(triggerModeInt, ", ");
+  }();
+  spdlog::info("  TriggerModes                      : [{}]", triggerModeListStr);
 
-  cout << "//---------------------------------------------" << endl;
-  cout << "// Programing the digitizer" << endl;
-  cout << "//---------------------------------------------" << endl;
+  spdlog::info("  SamplesInEventPacket              : {}", SamplesInEventPacket);
+  spdlog::info("  DownSamplingFactorForSavedWaveform: {}", DownSamplingFactorForSavedWaveform);
+  spdlog::info("  ChannelEnable                     : [{}]", stringutil::join(ChannelEnable, ", "));
+  spdlog::info("  TriggerThresholds                 : [{}]", stringutil::join(TriggerThresholds, ", "));
+  spdlog::info("  TriggerCloseThresholds            : [{}]", stringutil::join(TriggerCloseThresholds, ", "));
+
+  spdlog::info("Programming the digitizer");
   try {
     // record length
-    this->setNumberOfSamples(PreTriggerSamples + PostTriggerSamples);
-    this->setNumberOfSamplesInEventPacket(SamplesInEventPacket);
+    setNumberOfSamples(PreTriggerSamples + PostTriggerSamples);
+    setNumberOfSamplesInEventPacket(SamplesInEventPacket);
     for (size_t ch = 0; ch < nChannels; ch++) {
       // pre-trigger (delay)
-      this->setDepthOfDelay(ch, PreTriggerSamples);
+      setDepthOfDelay(ch, PreTriggerSamples);
 
       // trigger mode
-      const auto triggerMode = this->TriggerModes.at(ch);
-      this->setTriggerMode(ch, triggerMode);
+      const auto triggerMode = TriggerModes.at(ch);
+      setTriggerMode(ch, triggerMode);
 
       // threshold
-      this->setStartingThreshold(ch, TriggerThresholds[ch]);
-      this->setClosingThreshold(ch, TriggerCloseThresholds[ch]);
+      setStartingThreshold(ch, TriggerThresholds[ch]);
+      setClosingThreshold(ch, TriggerCloseThresholds[ch]);
 
       // adc clock 50MHz
-      this->setAdcClock(growth_fpga::ADCClockFrequency::ADCClock50MHz);
+      setAdcClock(growth_fpga::ADCClockFrequency::ADCClock50MHz);
 
       // turn on ADC
-      this->turnOnADCPower(ch);
+      turnOnADCPower(ch);
     }
-    cout << "Device configuration done." << endl;
+    spdlog::info("Device configuration is done");
   } catch (...) {
-    cerr << "Device configuration failed." << endl;
-    ::exit(-1);
+    spdlog::error("Device configuration has failed");
+    throw;
   }
 }

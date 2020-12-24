@@ -37,8 +37,9 @@ void MainThread::run() {
     adcBoard_->startAcquisition();
     spdlog::info("Acquisition started");
   } catch (...) {
-    spdlog::error("Failed to start acquisition");
-    ::exit(-1);
+    const std::string msg = "Failed to start acquisition";
+    spdlog::error(msg);
+    throw std::runtime_error(msg);
   }
 
   //---------------------------------------------
@@ -50,6 +51,8 @@ void MainThread::run() {
   // Send CPU Trigger
   //---------------------------------------------
   adcBoard_->sendCPUTrigger();
+
+  adcBoard_->startDumpThread();
 
   //---------------------------------------------
   // Read raw ADC values
@@ -115,6 +118,8 @@ void MainThread::run() {
   closeOutputEventListFile();
 
   setDAQStatus(DAQStatus::Paused);
+
+  spdlog::info("Acquisition is complete");
 }
 
 /** This method is called to close the current output event list file,
@@ -130,7 +135,8 @@ void MainThread::setDAQStatus(DAQStatus status) {
 }
 
 void MainThread::readAnsSaveGPSRegister() {
-  eventListFile_->fillGPSTime(adcBoard_->getGPSRegisterUInt8());
+  const auto buffer = adcBoard_->getGPSRegisterUInt8();
+  eventListFile_->fillGPSTime(buffer);
   timeOfLastGPSRegisterRead = std::chrono::system_clock::now();
 }
 
@@ -139,7 +145,7 @@ void MainThread::readAnsSaveGPSRegister() {
  * value is used.
  */
 void MainThread::setWaitDurationBetweenEventRead() {
-  const char* envPointer = std::getenv("GROWTH_DAQ_WAIT_DURATION");
+  const auto envPointer = std::getenv("GROWTH_DAQ_WAIT_DURATION");
   if (envPointer) {
     const u32 waitDurationInMillisec = atoi(envPointer);
     if (waitDurationInMillisec != 0) {

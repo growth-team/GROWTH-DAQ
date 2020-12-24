@@ -69,7 +69,7 @@ class MainThread {
   std::atomic<bool> stopped_{true};
   std::atomic<bool> hasStopped_{};
 
-  const std::chrono::milliseconds DefaultEventReadWaitDuration = std::chrono::milliseconds(50);
+  const std::chrono::milliseconds DefaultEventReadWaitDuration = std::chrono::milliseconds(10);
   std::chrono::milliseconds eventReadWaitDuration = DefaultEventReadWaitDuration;
   const std::chrono::seconds GPSRegisterReadWaitInSec = std::chrono::seconds(30);
   std::chrono::system_clock::time_point timeOfLastGPSRegisterRead{};

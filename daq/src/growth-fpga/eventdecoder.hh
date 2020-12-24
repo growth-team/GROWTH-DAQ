@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "growth-fpga/types.hh"
+#include "spdlog/spdlog.h"
 
 #include <cassert>
 #include <deque>
@@ -47,8 +48,6 @@ class EventDecoder {
   };
 
  public:
-  /** Constructor.
-   */
   EventDecoder() : state_(EventDecoderState::state_flag_FFF0), rawEvent{} {
     for (size_t i = 0; i < INITIAL_NUM_EVENT_INSTANCES; i++) {
       auto event = new growth_fpga::Event{growth_fpga::MaxWaveformLength};
@@ -63,7 +62,9 @@ class EventDecoder {
   }
 
   void decodeEvent(const std::vector<u8>* readDataUint8Array) {
-    using namespace std;
+    bool dumpInvalidHeaderError = true;
+    size_t invalidHeaderErrorCount = 0;
+    constexpr size_t MAX_NUM_INVALID_HEADER_ERROR = 5;
 
     const size_t numBytes = readDataUint8Array->size();
     assert(numBytes % 2 == 0);
@@ -84,9 +85,11 @@ class EventDecoder {
           if (readDataUint16Array_[i] == 0xfff0) {
             state_ = EventDecoderState::state_ch_realtimeH;
           } else {
-            cerr << "EventDecoder::decodeEvent(): invalid start flag ("
-                 << "0x" << hex << right << setw(4) << setfill('0') << static_cast<u32>(readDataUint16Array_[i]) << ")"
-                 << endl;
+            if (invalidHeaderErrorCount < MAX_NUM_INVALID_HEADER_ERROR) {
+              spdlog::warn("EventDecoder::decodeEvent(): invalid start flag (0x{:04x})",
+                           static_cast<u32>(readDataUint16Array_[i]));
+            }
+            invalidHeaderErrorCount++;
           }
           break;
         case EventDecoderState::state_ch_realtimeH:
@@ -146,9 +149,9 @@ class EventDecoder {
             break;
           } else {
             if (growth_fpga::MaxWaveformLength <= waveformLength_) {
-              cerr << "EventDecoder::decodeEvent(): waveform too long. something is wrong with data transfer. Return "
-                      "to the idle state."
-                   << endl;
+              spdlog::error(
+                  "EventDecoder::decodeEvent(): waveform too long. something is wrong with data transfer. Return to "
+                  "the idle state.");
               state_ = EventDecoderState::state_flag_FFF0;
             } else {
               rawEvent.waveform[waveformLength_] = readDataUint16Array_[i];
@@ -157,6 +160,10 @@ class EventDecoder {
           }
           break;
       }
+    }
+    if (invalidHeaderErrorCount > MAX_NUM_INVALID_HEADER_ERROR) {
+      spdlog::warn("There were {} more invalid header values detected",
+                   static_cast<size_t>(invalidHeaderErrorCount - MAX_NUM_INVALID_HEADER_ERROR));
     }
   }
 

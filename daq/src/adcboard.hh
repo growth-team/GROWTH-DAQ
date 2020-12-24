@@ -9,6 +9,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
+#include <optional>
 
 class ChannelManager;
 class ChannelModule;
@@ -53,6 +55,7 @@ class GROWTH_FY2015_ADC {
   GROWTH_FY2015_ADC(std::string deviceName);
   ~GROWTH_FY2015_ADC();
 
+  void startDumpThread();
   u32 getFPGAType() const;
   u32 getFPGAVersion() const;
   std::string getGPSRegister() const;
@@ -66,7 +69,7 @@ class GROWTH_FY2015_ADC {
   /** Reads GPS Data FIFO.
    *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
    */
-  std::vector<u8> readGPSDataFIFO();
+  const std::vector<u8>& readGPSDataFIFO();
 
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
@@ -233,7 +236,7 @@ class GROWTH_FY2015_ADC {
 
   /** Gets HK data including the real time and the live time which are
    * counted in the FPGA, and acquisition status (started or stopped).
-   * @retrun HK information contained in a SpaceFibreADC::HouseKeepingData instance
+   * @return HK information contained in a SpaceFibreADC::HouseKeepingData instance
    */
   growth_fpga::HouseKeepingData getHouseKeepingData() const;
 
@@ -294,7 +297,11 @@ class GROWTH_FY2015_ADC {
   std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_;
   std::vector<u8> gpsDataFIFOData_{};
   std::vector<growth_fpga::Event*> events_{};
-  bool stopDumpThread_ = false;
+
+  std::optional<TimePointSystemClock> acquisitionStartTime_{};
+
+  std::thread dumpThread_;
+  std::atomic<bool> stopDumpThread_{false};
 };
 
 #endif /* ADCBOARD_HH_ */

@@ -38,8 +38,8 @@ class EventListFileFITS : public EventListFile {
   const std::string detectorID_{};
   const std::string configurationYAMLFile_{};
 
-  static constexpr size_t INITIAL_ROW_NUMBER_EVENTS = 100000;
-  static constexpr size_t INITIAL_ROW_NUMBER_GPS = 1000;
+  static constexpr size_t INITIAL_ROW_NUMBER_EVENTS = 1024;
+  static constexpr size_t INITIAL_ROW_NUMBER_GPS = 128;
   i32 fitsStatus_ = 0;
   bool outputFileIsOpen_ = false;
   size_t rowIndexEvent_{};   // will be initialized in createOutputFITSFile()

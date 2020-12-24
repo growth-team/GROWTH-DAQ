@@ -19,3 +19,9 @@
 [submodule "daq/external/spdlog"]
 	path = daq/external/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "daq/external/boost"]
+	path = daq/external/boost
+	url = https://github.com/boostorg/boost
+[submodule "daq/external/asio"]
+	path = daq/external/asio
+	url = https://github.com/chriskohlhoff/asio/

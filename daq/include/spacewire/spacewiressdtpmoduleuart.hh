@@ -79,7 +79,7 @@ class SpaceWireSSDTPModuleUART {
             const size_t result = serialPort_->receive(rheader_.data() + hsize, 12 - hsize);
             hsize += result;
           }
-        } catch (const SerialPortTimeoutException& e) {
+        } catch (const SerialPortException& e) {
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
         } catch (...) {
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
@@ -107,7 +107,7 @@ class SpaceWireSSDTPModuleUART {
             }
             try {
               result = serialPort_->receive(data_pointer + size + received_size, flagment_size - received_size);
-            } catch (const SerialPortTimeoutException& e) {
+            } catch (const SerialPortException& e) {
               throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
             }
             received_size += result;
@@ -121,7 +121,7 @@ class SpaceWireSSDTPModuleUART {
               int result = serialPort_->receive(timecodeReceiveBuffer.data() + receivedSize, 2 - receivedSize);
               receivedSize += result;
             }
-          } catch (const SerialPortTimeoutException& e) {
+          } catch (const SerialPortException& e) {
             throw SpaceWireSSDTPException(SpaceWireSSDTPException::TimecodeReceiveError);
           }
         } else {
@@ -145,7 +145,7 @@ class SpaceWireSSDTPModuleUART {
       return size;
     } catch (const SpaceWireSSDTPException& e) {
       throw e;
-    } catch (const SerialPortTimeoutException& e) {
+    } catch (const SerialPortException& e) {
       throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
     }
   }
@@ -154,7 +154,7 @@ class SpaceWireSSDTPModuleUART {
     std::lock_guard<std::mutex> guard(sendMutex_);
     try {
       serialPort_->send(data, length);
-    } catch (const SerialPortTimeoutException& e) {
+    } catch (const SerialPortException& e) {
       throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
     }
   }

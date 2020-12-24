@@ -2,9 +2,11 @@
 
 #include "stringutil.hh"
 #include "timeutil.hh"
+#include "spdlog/spdlog.h"
 
 #include <fstream>
 #include <cstring>
+#include <chrono>
 
 EventListFileFITS::EventListFileFITS(const std::string& fileName, const std::string& detectorID,
                                      const std::string& configurationYAMLFile, size_t nSamples, f64 exposureInSec,
@@ -98,8 +100,9 @@ void EventListFileFITS::writeHeader() {
       fits_update_key_dbl(outputFile_, n = const_cast<char*>("EXPOSURE"), exposureInSec_, 2, "exposure specified via command line", &fitsStatus_)
       ) {  // clang-format on
 
-    std::cerr << "Error: while updating TTYPE comment for " << n << std::endl;
-    exit(-1);
+    const std::string msg = fmt::format("Failed to update TTYPE comment for {}", n);
+    spdlog::error(msg);
+    throw std::runtime_error(msg);
   }
 
   // configurationYAML as HISTORY
@@ -120,9 +123,10 @@ void EventListFileFITS::writeHeader() {
 
 void EventListFileFITS::reportErrorThenQuitIfError(int fitsStatus, const std::string& methodName) {
   if (fitsStatus) {  // if error
-    std::cerr << "Error (" << methodName << "):";
+    const std::string msg = "FITS file manipulation error in " + methodName;
+    spdlog::error(msg);
     fits_report_error(stderr, fitsStatus);
-    exit(-1);
+    throw std::runtime_error(methodName);
   }
 }
 
@@ -130,11 +134,16 @@ void EventListFileFITS::fillGPSTime(
     const std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1>& gpsTimeRegisterBuffer) {
   // 0123456789X123456789
   // GPYYMMDDHHMMSSxxxxxx
-  i64 timeTag = 0;
-  for (size_t i = 14; i < GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES; i++) {
-    timeTag = gpsTimeRegisterBuffer[i] + (timeTag << 8);
-  }
+  const i64 timeTag = [&]() {
+    i64 timeTag = 0;
+    for (size_t i = 14; i < GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES; i++) {
+      timeTag = gpsTimeRegisterBuffer.at(i) + (timeTag << 8);
+    }
+    return timeTag;
+  }();
+
   std::lock_guard<std::mutex> guard(fitsAccessMutex_);
+
   // move to GPS HDU
   fits_movnam_hdu(outputFile_, BINARY_TBL, const_cast<char*>("GPS"), 0, &fitsStatus_);
   reportErrorThenQuitIfError(fitsStatus_, __func__);
@@ -144,12 +153,17 @@ void EventListFileFITS::fillGPSTime(
   // get unix time
   const u32 unixTime = timeutil::getUNIXTimeAsUInt64();
 
+  spdlog::debug("GPS timestamp = {}, UNIX timestamp = {}, FPGA timestamp = {}",
+                std::string(reinterpret_cast<const char*>(gpsTimeRegisterBuffer.data()), 14), unixTime, timeTag);
+
   // write
-  fits_write_col(outputFile_, TLONGLONG, COL_FPGA_TIMETAG, rowIndexGPS_, FIRST_ELEMENT, 1, &timeTag, &fitsStatus_);
-  fits_write_col(outputFile_, TUINT, COL_UNIXTIME, rowIndexGPS_, FIRST_ELEMENT, 1, const_cast<u32*>(&unixTime),
-                 &fitsStatus_);
-  fits_write_col(outputFile_, TSTRING, COL_GPSTIME, rowIndexGPS_, FIRST_ELEMENT, 1 /* YYMMDDHHMMSS */,
-                 const_cast<u8*>(gpsTimeRegisterBuffer.data()), &fitsStatus_);
+  auto bufferPtr = const_cast<char*>(reinterpret_cast<const char*>(gpsTimeRegisterBuffer.data()));
+  fitsStatus_ = 0;
+  // clang-format off
+  fits_write_col(outputFile_, TLONGLONG, COL_FPGA_TIMETAG, rowIndexGPS_, FIRST_ELEMENT, 1, const_cast<i64*>(&timeTag),   &fitsStatus_);
+  fits_write_col(outputFile_, TUINT,     COL_UNIXTIME,     rowIndexGPS_, FIRST_ELEMENT, 1, const_cast<u32*>(&unixTime),  &fitsStatus_);
+  fits_write_col(outputFile_, TSTRING,   COL_GPSTIME,      rowIndexGPS_, FIRST_ELEMENT, 1, &bufferPtr, &fitsStatus_);
+  // clang-format on
 
   // move back to EVENTS HDU
   fits_movnam_hdu(outputFile_, BINARY_TBL, const_cast<char*>("EVENTS"), 0, &fitsStatus_);
@@ -161,16 +175,16 @@ void EventListFileFITS::fillEvents(const std::vector<growth_fpga::Event*>& event
   for (auto& event : events) {
     rowIndexEvent_++;
     {  // clang-format off
-      fits_write_col(outputFile_, TBYTE, COL_CHANNEL, rowIndexEvent_, FIRST_ELEMENT, 1, &event->ch, &fitsStatus_);
-      fits_write_col(outputFile_, TLONGLONG, COL_TIMETAG, rowIndexEvent_, FIRST_ELEMENT, 1, &event->timeTag, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_TRIGGER_COUNT, rowIndexEvent_, FIRST_ELEMENT, 1, &event->triggerCount, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_PHA_MAX, rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaMax, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_PHA_MAX_TIME, rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaMaxTime, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_PHA_MIN, rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaMin, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_PHA_FIRST, rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaFirst, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_PHA_LAST, rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaLast, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_MAX_DERIVATIVE, rowIndexEvent_, FIRST_ELEMENT, 1, &event->maxDerivative, &fitsStatus_);
-      fits_write_col(outputFile_, TUSHORT, COL_BASELINE, rowIndexEvent_, FIRST_ELEMENT, 1, &event->baseline, &fitsStatus_);
+      fits_write_col(outputFile_, TBYTE,     COL_CHANNEL,        rowIndexEvent_, FIRST_ELEMENT, 1, &event->ch,            &fitsStatus_);
+      fits_write_col(outputFile_, TLONGLONG, COL_TIMETAG,        rowIndexEvent_, FIRST_ELEMENT, 1, &event->timeTag,       &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_TRIGGER_COUNT,  rowIndexEvent_, FIRST_ELEMENT, 1, &event->triggerCount,  &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_PHA_MAX,        rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaMax,        &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_PHA_MAX_TIME,   rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaMaxTime,    &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_PHA_MIN,        rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaMin,        &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_PHA_FIRST,      rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaFirst,      &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_PHA_LAST,       rowIndexEvent_, FIRST_ELEMENT, 1, &event->phaLast,       &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_MAX_DERIVATIVE, rowIndexEvent_, FIRST_ELEMENT, 1, &event->maxDerivative, &fitsStatus_);
+      fits_write_col(outputFile_, TUSHORT,   COL_BASELINE,       rowIndexEvent_, FIRST_ELEMENT, 1, &event->baseline,      &fitsStatus_);
       if (nWaveformSamples_ != 0) {
         fits_write_col(outputFile_, TUSHORT, COL_WAVEFORM, rowIndexEvent_, FIRST_ELEMENT, nWaveformSamples_, event->waveform, &fitsStatus_);
       }
@@ -183,6 +197,7 @@ void EventListFileFITS::expandIfNecessary() {
   int fitsStatus = 0;
   // check heap size, and expand row size if necessary (to avoid slow down of cfitsio)
   while (rowIndexEvent_ > fitsNRowsEvent_) {
+	const auto startTime = std::chrono::system_clock::now();
     fits_flush_file(outputFile_, &fitsStatus);
     fits_insert_rows(outputFile_, fitsNRowsEvent_ + 1, rowExpansionStep - 1, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
@@ -193,58 +208,65 @@ void EventListFileFITS::expandIfNecessary() {
     fitsNRowsEvent_ = nRowsGot;
 
     rowExpansionStep = rowExpansionStep * 2;
-    std::cout << "Output FITS file was resized to " << std::dec << fitsNRowsEvent_ << " rows." << std::endl;
+    const auto endTime = std::chrono::system_clock::now();
+    const auto elapsedTimeMicrosec= std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    spdlog::info("Output FITS file was resized to {} rows (took {:.2f} ms)", fitsNRowsEvent_, elapsedTimeMicrosec/1000.0);
   }
 }
 
 void EventListFileFITS::close() {
+  std::lock_guard<std::mutex> guard(fitsAccessMutex_);
   if (outputFileIsOpen_) {
-    std::lock_guard<std::mutex> guard(fitsAccessMutex_);
     outputFileIsOpen_ = false;
     int fitsStatus = 0;
 
-    u32 nUnusedRow = fitsNRowsEvent_ - rowIndexEvent_;
-    std::cout << "Closing the current output file." << std::endl;
-    std::cout << " rowIndex    = " << std::dec << rowIndexEvent_ << " (number of filled rows)" << std::endl;
-    std::cout << " fitsNRows   = " << std::dec << fitsNRowsEvent_ << " (allocated row number)" << std::endl;
-    std::cout << " unused rows = " << std::dec << nUnusedRow << std::endl;
+    assert(rowIndexEvent_ <= fitsNRowsEvent_);
+    const size_t nUnusedRow = fitsNRowsEvent_ - rowIndexEvent_;
+    spdlog::info("Closing the current output file.");
+    spdlog::info(" rowIndex    = {} (number of filled rows)", rowIndexEvent_);
+    spdlog::info(" fitsNRows   = {} (allocated row number)", fitsNRowsEvent_);
+    spdlog::info(" unused rows = {}", nUnusedRow);
 
-    /* Delete unfilled rows. */
+    // Move to Event HDU
+    fits_movnam_hdu(outputFile_, BINARY_TBL, const_cast<char*>("EVENTS"), 0, &fitsStatus_);
+    reportErrorThenQuitIfError(fitsStatus_, __func__);
+
+    // Delete unfilled rows.
     fits_flush_file(outputFile_, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
     if (fitsNRowsEvent_ != rowIndexEvent_) {
-      std::cout << "Deleting unused " << nUnusedRow << " rows." << std::endl;
+      spdlog::debug("Deleting unused {} rows.", nUnusedRow);
       fits_delete_rows(outputFile_, rowIndexEvent_ + 1, nUnusedRow, &fitsStatus);
       reportErrorThenQuitIfError(fitsStatus, __func__);
     }
 
-    /* Recover unused heap. */
-    std::cout << "Recovering unused heap." << std::endl;
+    // Update NAXIS2
+    fits_update_key(outputFile_, TULONG, const_cast<char*>("NAXIS2"), reinterpret_cast<void*>(&rowIndexEvent_),
+                    const_cast<char*>("number of rows in table"), &fitsStatus);
+    reportErrorThenQuitIfError(fitsStatus, __func__);
+    if (rowIndexEvent_ == 0) {
+      spdlog::debug("This HDU has 0 row.");
+    }
+
+    // Recover unused heap
+    spdlog::debug("Recovering unused heap.");
     fits_compress_heap(outputFile_, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
 
-    /* Write date. */
-    std::cout << "Writing data to file." << std::endl;
+    // Write date
+    spdlog::debug("Writing date to file.");
     fits_write_date(outputFile_, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
 
-    /* Update NAXIS2 */
-    if (rowIndexEvent_ == 0) {
-      fits_update_key(outputFile_, TULONG, const_cast<char*>("NAXIS2"), reinterpret_cast<void*>(&rowIndexEvent_),
-                      const_cast<char*>("number of rows in table"), &fitsStatus);
-      reportErrorThenQuitIfError(fitsStatus, __func__);
-      std::cout << "This HDU has 0 row." << std::endl;
-    }
-
-    /* Update checksum. */
-    std::cout << "Updating checksum." << std::endl;
+    // Update checksum
+    spdlog::debug("Updating checksum.");
     fits_write_chksum(outputFile_, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
 
-    /* Close FITS File */
-    std::cout << "Closing file." << std::endl;
+    // Close FITS File
+    spdlog::debug("Closing file.");
     fits_close_file(outputFile_, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
-    std::cout << "Output FITS file closed." << std::endl;
+    spdlog::debug("Output FITS file closed.");
   }
 }

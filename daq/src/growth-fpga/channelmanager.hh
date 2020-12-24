@@ -27,15 +27,20 @@ class ChannelManager : public RegisterAccessInterface {
   void startAcquisition(const std::vector<bool>& channelsToBeStarted) {
     // Prepare register value for StartStopRegister
     const u16 value = [&]() {
-      u16 value = 0;
-      for (const auto bit : channelsToBeStarted) {
-        value = (value << 1) | (bit ? 1 : 0);
+      std::bitset<growth_fpga::NumberOfChannels> value{0};
+      size_t bitIndex{0};
+      for (const auto enabled : channelsToBeStarted) {
+        if (enabled) {
+          value.set(bitIndex);
+        }
+        bitIndex++;
       }
-      return value;
+      return value.to_ulong();
     }();
     // write the StartStopRegister (semaphore is needed)
     SemaphoreLock lock(startStopSemaphore_);
     write(AddressOf_StartStopRegister, value);
+    spdlog::debug("ChannelManager::startAcquisition() readback = {:08b}", read16(AddressOf_StartStopRegister));
   }
 
   /// Checks if all data acquisition is completed in all channels.
@@ -63,6 +68,7 @@ class ChannelManager : public RegisterAccessInterface {
     constexpr u16 STOP = 0x00;
     SemaphoreLock lock(startStopSemaphore_);
     write(AddressOf_StartStopRegister, STOP);
+    spdlog::debug("ChannelManager::stopAcquisition() readback = {:08b}", read16(AddressOf_StartStopRegister));
   }
 
   /** Sets Preset Mode.

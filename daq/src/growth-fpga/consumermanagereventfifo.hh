@@ -21,30 +21,37 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
       : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
   ~ConsumerManagerEventFIFO() override = default;
 
-  void reset() {
-    constexpr u16 RESET = 0x01;
-    write(AddressOf_ConsumerMgr_ResetRegister, RESET);
+  void enableEventOutput() {
+    constexpr u16 disableFlag = 0;
+    write(AddressOf_EventOutputDisableRegister, disableFlag);
+    spdlog::debug("ConsumerManager::enableEventOutput() disable register readback = {}",
+                  read16(AddressOf_EventOutputDisableRegister));
+  }
+
+  void disableEventOutput() {
+    constexpr u16 disableFlag = 0xFFFF;
+    write(AddressOf_EventOutputDisableRegister, disableFlag);
+    spdlog::debug("ConsumerManager::enableEventOutput() disable register readback = {}",
+                  read16(AddressOf_EventOutputDisableRegister));
   }
 
   /** Retrieve data stored in the EventFIFO.
    * @param maxBytes maximum data size to be returned (in bytes)
    */
-  std::vector<u8> getEventData(size_t maxBytes = 4000) {
+  const std::vector<u8>& getEventData(size_t maxBytes = 4000) {
     assert(maxBytes <= RECEIVE_BUFFER_SIZE_BYTES);
     receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
     try {
-      // TODO: replace cout/cerr with a proper logging function
-      using namespace std;
       size_t receivedSize = this->readEventFIFO(&(receiveBuffer_[0]), RECEIVE_BUFFER_SIZE_BYTES);
       // if odd byte is received, wait until the following 1 byte is received.
       if (receivedSize % 2 == 1) {
-        cout << "ConsumerManagerEventFIFO::getEventData(): odd bytes. wait for another byte." << endl;
+        spdlog::warn("ConsumerManagerEventFIFO::getEventData(): odd bytes. wait for another byte.");
         size_t receivedSizeOneByte = 0;
         while (receivedSizeOneByte == 0) {
           try {
             receivedSizeOneByte = this->readEventFIFO(&(receiveBuffer_[receivedSize]), 1);
           } catch (...) {
-            cerr << "ConsumerManagerEventFIFO::getEventData(): receive 1 byte timeout. continues." << endl;
+            spdlog::warn("ConsumerManagerEventFIFO::getEventData(): receive 1 byte timeout. continues.");
           }
         }
         // increment by 1 to make receivedSize even
@@ -52,13 +59,11 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
       }
       receiveBuffer_.resize(receivedSize);
     } catch (RMAPInitiatorException& e) {
-      // TODO: replace cout/cerr with a proper logging function
-      using namespace std;
       if (e.getStatus() == RMAPInitiatorException::Timeout) {
-        cerr << "ConsumerManagerEventFIFO::getEventData(): timeout" << endl;
+        spdlog::error("ConsumerManagerEventFIFO::getEventData(): timeout");
         receiveBuffer_.resize(0);
       } else {
-        cerr << "ConsumerManagerEventFIFO::getEventData(): TCPSocketException on receive()" << e.toString() << endl;
+        spdlog::error("ConsumerManagerEventFIFO::getEventData(): TCPSocketException on receive() ({})", e.toString());
         throw e;
       }
     }
@@ -73,6 +78,8 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
    */
   void setEventPacket_NumberOfWaveform(u16 nSamples) {
     write(AddressOf_EventPacket_NumberOfWaveform_Register, nSamples);
+    spdlog::debug("setEventPacket_NumberOfWaveform write value = {:d}, readback = {:d}", nSamples,
+                  read16(AddressOf_EventPacket_NumberOfWaveform_Register));
   }
 
  private:
@@ -102,7 +109,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr u32 FinalAddressOf_EventFIFO = 0x1000FFFF;
   static constexpr u32 AddressOf_EventFIFO_DataCount_Register = 0x20000000;
 
-  static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 3000;
+  static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 4096;
   static constexpr size_t EVENT_FIFIO_SIZE_BYTES = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
   std::vector<u8> receiveBuffer_{};
