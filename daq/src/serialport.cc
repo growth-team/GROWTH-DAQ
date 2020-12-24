@@ -1,5 +1,7 @@
 #include "spacewire/serialport.hh"
 
+#include "spdlog/spdlog.h"
+
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -15,9 +17,9 @@ _SerialPort_receive_loop:  //
   nReceivedBytes += receive(buffer, remainingLength);
 
   if (nReceivedBytes > length) {
-    using namespace std;
-    cerr << "SerialPort::receive(): too long data (" << nReceivedBytes << " bytes) received against specified "
-         << length << " bytes" << endl;
+    const std::string msg = fmt::format(
+        "SerialPort::receive(): too long data ({} bytes) received against specified {} bytes", nReceivedBytes, length);
+    spdlog::error(msg);
     throw SerialPortException(SerialPortException::TooLargeDataReceived);
   }
 
@@ -46,31 +48,22 @@ void SerialPortLibSerial::send(const u8* buffer, size_t length) { serial_->write
 size_t SerialPortLibSerial::receive(u8* buffer, size_t length) { return serial_->read(buffer, length); }
 
 //------------------------------------------------------------------------------------------
-SerialPortBoostAsio::SerialPortBoostAsio(const std::string& deviceName, size_t baudRate) : timeoutDurationObject(1000) {
-  using namespace std;
-
-  port = new boost::asio::serial_port(io, deviceName.c_str());
-  port->set_option(boost::asio::serial_port_base::baud_rate(baudRate));
-  port->set_option(boost::asio::serial_port_base::character_size(8));
-  port->set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
-  port->set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
-  port->set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
+SerialPortBoostAsio::SerialPortBoostAsio(const std::string& deviceName, size_t baudRate) {
+  port.reset(new asio::serial_port(io, deviceName.c_str()));
+  port->set_option(asio::serial_port_base::baud_rate(baudRate));
+  port->set_option(asio::serial_port_base::character_size(8));
+  port->set_option(asio::serial_port_base::flow_control(asio::serial_port_base::flow_control::none));
+  port->set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
+  port->set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
 
   // for non-blocking
-  // boost::thread thr_io(boost::bind(&boost::asio::io_service::run, &io));
-
-  setTimeout(1000);
+  // boost::thread thr_io(boost::bind(&asio::io_service::run, &io));
 }
 
-void SerialPortBoostAsio::close() {
-  port->close();
-  delete port;
-}
+void SerialPortBoostAsio::close() { port->close(); }
 
 void SerialPortBoostAsio::send(const u8* sendBuffer, size_t length) {
-  internalBufferForSend.resize(length);
-  memcpy(&(internalBufferForSend[0]), sendBuffer, length);
-  port->write_some(boost::asio::buffer(internalBufferForSend));
+  asio::write(*port, asio::buffer(sendBuffer, length));
 }
 
 size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
@@ -81,8 +74,8 @@ size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
 
   try {
   _SerialPort_receive_loop:  //
-    receiveWithTimeout(boost::asio::buffer((uint8_t*)data + readDoneLength, remainingLength), nReceivedBytes,
-                       timeoutDurationObject);
+    auto buffer = asio::buffer((uint8_t*)data + readDoneLength, remainingLength);
+    receiveWithTimeout(buffer, nReceivedBytes, std::chrono::milliseconds(1000));
 
     if (nReceivedBytes > length) {
       using namespace std;
@@ -92,12 +85,7 @@ size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
     }
 
     return nReceivedBytes;
-  } catch (boost::system::system_error& e) {
+  } catch (asio::system_error& e) {
     throw SerialPortException(SerialPortException::Timeout);
   }
-}
-
-void SerialPortBoostAsio::setTimeout(f64 timeoutDurationInMilliSec) {
-  this->timeoutDurationInMilliSec = timeoutDurationInMilliSec;
-  timeoutDurationObject = boost::posix_time::millisec(static_cast<uint32_t>(timeoutDurationInMilliSec));
 }

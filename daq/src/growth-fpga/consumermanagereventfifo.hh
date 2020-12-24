@@ -109,7 +109,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr u32 FinalAddressOf_EventFIFO = 0x1000FFFF;
   static constexpr u32 AddressOf_EventFIFO_DataCount_Register = 0x20000000;
 
-  static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 4096;
+  static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 4096 * 3;
   static constexpr size_t EVENT_FIFIO_SIZE_BYTES = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
   std::vector<u8> receiveBuffer_{};

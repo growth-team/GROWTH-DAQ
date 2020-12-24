@@ -15,7 +15,7 @@
  */
 class SpaceWireIFOverUART : public SpaceWireIF {
  public:
-  static constexpr i32 BAUD_RATE = 1000000;
+  static constexpr i32 BAUD_RATE = 230400;
 
   SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
   ~SpaceWireIFOverUART() override = default;

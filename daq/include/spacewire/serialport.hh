@@ -4,7 +4,8 @@
 #include "types.h"
 #include "spacewire/types.hh"
 
-#include "asio/asio.hpp"
+#include "asio.hpp"
+#include "asio/serial_port.hpp"
 
 #include "serial/serial.h"
 #include "spdlog/spdlog.h"
@@ -54,9 +55,6 @@ class SerialPort {
    * @return received size
    */
   virtual size_t receive(u8* data, u32 length, bool waitUntilSpecifiedLengthCompletes = false);
-
- private:
-  std::vector<u8> internalSendBuffer_{};
 };
 
 class SerialPortLibSerial : public SerialPort {
@@ -84,54 +82,49 @@ class SerialPortBoostAsio : public SerialPort {
   size_t receive(u8* buffer, size_t length) override;
 
  private:
-  void read_callback(const boost::system::error_code& e, std::size_t size, boost::array<char, ReadBufferSize> r) {
-    spdlog::info("read_callback size = {} bytes", size);
-  }
-  void write_callback(const boost::system::error_code& e, std::size_t size) {
-    spdlog::info("write_callback size = {} bytes, error = ", size);
-  }
+//  void read_callback(const asio::error_code& e, std::size_t size, boost::array<char, ReadBufferSize> r) {
+//    spdlog::info("read_callback size = {} bytes", size);
+//  }
+//  void write_callback(const asio::error_code& e, std::size_t size) {
+//    spdlog::info("write_callback size = {} bytes, error = ", size);
+//  }
 
-  // TODO: not used?
-  void send(std::vector<uint8_t>& sendBuffer) { port->write_some(boost::asio::buffer(sendBuffer)); }
-
-  void setTimeout(f64 timeoutDurationInMilliSec);
+//  // TODO: not used?
+//  void send(std::vector<uint8_t>& sendBuffer) { port->write_some(asio::buffer(sendBuffer)); }
 
   template <typename MutableBufferSequence>
-  void receiveWithTimeout(const MutableBufferSequence& buffers, size_t& nReceivedBytes,
-                          const boost::asio::deadline_timer::duration_type& expiry_time) {
-    boost::optional<boost::system::error_code> timer_result;
-    boost::asio::deadline_timer timer(port->get_io_service());
+  void receiveWithTimeout(MutableBufferSequence& buffers, size_t& nReceivedBytes,
+                          const asio::steady_timer::duration& expiry_time) {
+    std::optional<asio::error_code> timer_result;
+    asio::steady_timer timer(port->get_io_service());
     timer.expires_from_now(expiry_time);
-    timer.async_wait([&timer_result](const boost::system::error_code& error) { timer_result.reset(error); });
+    timer.async_wait([&timer_result](const asio::error_code& error) { timer_result = error; });
 
-    boost::optional<boost::system::error_code> read_result;
+    std::optional<asio::error_code> read_result;
     port->async_read_some(
-        buffers, [&read_result, &nReceivedBytes](const boost::system::error_code& error, size_t _nReceivedBytes) {
-          read_result.reset(error);
+        buffers, [&read_result, &nReceivedBytes](const asio::error_code& error, size_t _nReceivedBytes) {
+          read_result = error;
           nReceivedBytes = _nReceivedBytes;
         });
 
     port->get_io_service().reset();
     while (port->get_io_service().run_one()) {
-      if (read_result)
+      if (read_result){
         timer.cancel();
-      else if (timer_result)
+      }else if (timer_result){
         port->cancel();
+      }
     }
 
     if (*read_result) {
-      throw boost::system::system_error(*read_result);
+      throw asio::system_error(*read_result);
     }
   }
 
  private:
-  std::vector<u8> internalBufferForSend;
-  f64 timeoutDurationInMilliSec = 1000;
-  boost::posix_time::millisec timeoutDurationObject;
-
-  boost::asio::serial_port* port;
-  boost::asio::io_service io;
-  boost::asio::streambuf receive_buffer_;
+  std::unique_ptr<asio::serial_port> port;
+  asio::io_service io;
+  asio::streambuf receive_buffer_;
 };
 
 #endif

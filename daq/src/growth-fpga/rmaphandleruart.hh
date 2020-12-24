@@ -11,6 +11,19 @@
 #include <thread>
 #include <vector>
 
+class RMAPHandlerException : public Exception {
+ public:
+  enum { MaxRetryReached };
+  RMAPHandlerException(i32 status) : Exception(status) {}
+  std::string toString() const override {
+    switch (getStatus()) {
+      case MaxRetryReached:
+        return "MaxRetryReached";
+      default:
+        return "Invalid status";
+    }
+  }
+};
 class RMAPHandlerUART {
  public:
   RMAPHandlerUART(const std::string& deviceName) : deviceName_(deviceName) {
@@ -33,9 +46,6 @@ class RMAPHandlerUART {
       std::this_thread::sleep_for(100ms);
     }
     spwif_->close();
-    spwif_.reset();
-    rmapEngine_.reset();
-    rmapInitiator_.reset();
   }
 
   void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer) const {
@@ -43,19 +53,16 @@ class RMAPHandlerUART {
     for (size_t i = 0; i < MAX_RETRIES; i++) {
       try {
         rmapInitiator_->read(rmapTargetNode, memoryAddress, length, buffer, TIMEOUT_MILLISEC);
-        break;
+        return;
       } catch (RMAPInitiatorException& e) {
-        std::cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << std::endl;
-        std::cerr << "Read timed out (address="
-                  << "0x" << std::hex << std::right << std::setw(8) << std::setfill('0') << memoryAddress
-                  << " length=" << std::dec << length << "); trying again..." << std::endl;
+        spdlog::error("RMAPHandler::read(address= 0x{:08x}, length = {}) Try {} threw RMAPInitiatorException::{}",
+                      memoryAddress, length, i, e.toString());
         spwif_->cancelReceive();
-        if (i == MAX_RETRIES - 1) {
-          assert(false && "Transaction failed");
-        }
-        usleep(100);
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(2s);
       }
     }
+    throw RMAPHandlerException(RMAPHandlerException::MaxRetryReached);
   }
 
   void write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, const u8* data) {
@@ -67,17 +74,16 @@ class RMAPHandlerUART {
         } else {
           rmapInitiator_->write(rmapTargetNode, memoryAddress, nullptr, 0, TIMEOUT_MILLISEC);
         }
-        break;
+        return;
       } catch (RMAPInitiatorException& e) {
-        std::cerr << "RMAPHandler::write() RMAPInitiatorException::" << e.toString() << std::endl;
-        std::cerr << "Time out; trying again..." << std::endl;
+        spdlog::error("RMAPHandler::write(address= 0x{:08x}, length = {}) Try {} threw RMAPInitiatorException::{}",
+                      memoryAddress, length, i, e.toString());
         spwif_->cancelReceive();
-        if (i == MAX_RETRIES - 1) {
-          assert(false && "Transaction failed");
-        }
-        usleep(100);
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(2s);
       }
     }
+    throw RMAPHandlerException(RMAPHandlerException::MaxRetryReached);
   }
 
   std::shared_ptr<RMAPEngine> getRMAPEngine() const { return rmapEngine_; }

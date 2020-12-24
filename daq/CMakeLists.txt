@@ -13,7 +13,7 @@ if(USE_ROOT)
     add_definitions(-DUSE_ROOT)
 endif(USE_ROOT)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DASIO_STANDALONE")
 
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics -g")
@@ -31,33 +31,27 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "build type")
 file(GLOB_RECURSE HEADER_FILES src/*.hh)
 file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 
+SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
+add_subdirectory(external/libzmq)
+add_subdirectory(external/yaml-cpp)
+add_subdirectory(external) # For cfitsio and serial
+
 #=============================================
 # Include path
 #=============================================
 include_directories(SYSTEM
   include
   include/picojson
-  include/CxxUtilities/includes
   external/serial/include
   external/libzmq/include
-  external/boost
+  external/asio/asio/include
   external/cppzmq
   external/cfitsio
   external/spdlog/include
   external/yaml-cpp/include
   ${ROOT_INCLUDE_DIRS}
-)
-
-include_directories(
   src
 )
-
-SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
-
-add_subdirectory(external/libzmq)
-add_subdirectory(external/yaml-cpp)
-add_subdirectory(external) # For cfitsio and serial
-
 
 #=============================================
 # Link directories
@@ -122,8 +116,8 @@ install_targets(/bin growth_daq growth_reg)
 # Custom target
 #=============================================
 add_custom_target(
-        clangformat
-        COMMAND clang-format
-        -i
-        ${SOURCE_FILES} ${HEADER_FILES}
+  clangformat
+  COMMAND clang-format
+  -i
+  ${SOURCE_FILES} ${HEADER_FILES}
 )

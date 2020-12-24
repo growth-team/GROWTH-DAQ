@@ -24,6 +24,8 @@ void MainThread::run() {
   fpgaVersion_ = adcBoard_->getFPGAVersion();
   setWaitDurationBetweenEventRead();
 
+  spdlog::info("FPGA Type = {:08x} Version = {:08x}", fpgaType_, fpgaVersion_);
+
   //---------------------------------------------
   // Load configuration file
   //---------------------------------------------
