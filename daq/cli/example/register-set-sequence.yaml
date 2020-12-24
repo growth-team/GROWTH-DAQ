@@ -50,7 +50,7 @@
         "arguments": {
             "ch": 0,
             "gain": 1,
-            "output": 512
+            "outputValue": 512
         }
     },
     {
@@ -59,7 +59,7 @@
         "arguments": {
             "ch": 1,
             "gain": 1,
-            "output": 256
+            "outputValue": 256
         }
     },
     {
