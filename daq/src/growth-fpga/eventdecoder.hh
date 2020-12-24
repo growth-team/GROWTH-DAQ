@@ -143,7 +143,7 @@ class EventDecoder {
         case EventDecoderState::state_pha_list:
           if (readDataUint16Array_[i] == 0xFFFF) {
             // push GROWTH_FY2015_ADC_Type::Event to a queue
-            pushEventToQueue();
+            pushEventToTemporaryQueue();
             // move to the idle state
             state_ = EventDecoderState::state_flag_FFF0;
             break;
@@ -165,9 +165,39 @@ class EventDecoder {
       spdlog::warn("There were {} more invalid header values detected",
                    static_cast<size_t>(invalidHeaderErrorCount - MAX_NUM_INVALID_HEADER_ERROR));
     }
+    {
+      std::lock_guard<std::mutex> guard(eventQueueMutex_);
+      eventQueue_.insert(eventQueue_.end(), temporaryEventQueue_.begin(), temporaryEventQueue_.end());
+    }
+    temporaryEventQueue_.clear();
   }
 
-  void pushEventToQueue() {
+  /** Returns decoded event queue (as std::vector).
+   * After used in user application, decoded events should be freed
+   * via EventDecoder::freeEvent(GROWTH_FY2015_ADC_Type::Event* event).
+   * @return std::queue containing pointers to decoded events
+   */
+  void getDecodedEvents(std::vector<growth_fpga::Event*>& outputEventQueue) {
+    outputEventQueue.clear();
+
+    std::lock_guard<std::mutex> guard(eventQueueMutex_);
+    outputEventQueue.swap(eventQueue_);
+  }
+
+  /** Frees event instance so that buffer area can be reused in the following commands.
+   * @param event event instance to be freed
+   */
+  void freeEvent(growth_fpga::Event* event) { eventInstanceResavoir_.push_back(event); }
+
+  /** Returns the number of available (allocated) Event instances.
+   * @return the number of Event instances
+   */
+  size_t getNAllocatedEventInstances() const { return eventInstanceResavoir_.size(); }
+
+  static constexpr size_t INITIAL_NUM_EVENT_INSTANCES = 10000;
+
+ private:
+  void pushEventToTemporaryQueue() {
     growth_fpga::Event* event;
     if (eventInstanceResavoir_.empty()) {
       event = new growth_fpga::Event{growth_fpga::MaxWaveformLength};
@@ -193,35 +223,14 @@ class EventDecoder {
     const size_t nBytes = waveformLength_ << 1;
     memcpy(event->waveform, rawEvent.waveform.data(), nBytes);
 
-    eventQueue_.push_back(event);
+    temporaryEventQueue_.push_back(event);
   }
 
-  /** Returns decoded event queue (as std::vector).
-   * After used in user application, decoded events should be freed
-   * via EventDecoder::freeEvent(GROWTH_FY2015_ADC_Type::Event* event).
-   * @return std::queue containing pointers to decoded events
-   */
-  std::vector<growth_fpga::Event*> getDecodedEvents() {
-    std::vector<growth_fpga::Event*> eventQueueCopied = eventQueue_;
-    eventQueue_.clear();
-    return eventQueueCopied;
-  }
-
-  /** Frees event instance so that buffer area can be reused in the following commands.
-   * @param event event instance to be freed
-   */
-  void freeEvent(growth_fpga::Event* event) { eventInstanceResavoir_.push_back(event); }
-
-  /** Returns the number of available (allocated) Event instances.
-   * @return the number of Event instances
-   */
-  size_t getNAllocatedEventInstances() const { return eventInstanceResavoir_.size(); }
-
-  static constexpr size_t INITIAL_NUM_EVENT_INSTANCES = 10000;
-
- private:
   EventDecoderState state_{};
+  std::vector<growth_fpga::Event*> temporaryEventQueue_{};
+
   std::vector<growth_fpga::Event*> eventQueue_{};
+  std::mutex eventQueueMutex_{};
   std::vector<u16> readDataUint16Array_{};
   std::deque<growth_fpga::Event*> eventInstanceResavoir_{};
   size_t waveformLength_{};

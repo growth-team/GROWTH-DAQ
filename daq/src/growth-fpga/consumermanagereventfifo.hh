@@ -19,7 +19,13 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
    */
   ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
       : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
-  ~ConsumerManagerEventFIFO() override = default;
+
+  ~ConsumerManagerEventFIFO() override {
+    if (eventDataReadLoopThread_.joinable()) {
+      eventDataReadLoopStop_ = true;
+      eventDataReadLoopThread_.join();
+    }
+  }
 
   void enableEventOutput() {
     constexpr u16 disableFlag = 0;
@@ -38,39 +44,16 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   /** Retrieve data stored in the EventFIFO.
    * @param maxBytes maximum data size to be returned (in bytes)
    */
-  const std::vector<u8>& getEventData(size_t maxBytes = 4000) {
-    assert(maxBytes <= RECEIVE_BUFFER_SIZE_BYTES);
+  const std::vector<u8>& getEventData() {
     receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
-    try {
-      size_t receivedSize = this->readEventFIFO(&(receiveBuffer_[0]), RECEIVE_BUFFER_SIZE_BYTES);
-      // if odd byte is received, wait until the following 1 byte is received.
-      if (receivedSize % 2 == 1) {
-        spdlog::warn("ConsumerManagerEventFIFO::getEventData(): odd bytes. wait for another byte.");
-        size_t receivedSizeOneByte = 0;
-        while (receivedSizeOneByte == 0) {
-          try {
-            receivedSizeOneByte = this->readEventFIFO(&(receiveBuffer_[receivedSize]), 1);
-          } catch (...) {
-            spdlog::warn("ConsumerManagerEventFIFO::getEventData(): receive 1 byte timeout. continues.");
-          }
-        }
-        // increment by 1 to make receivedSize even
-        receivedSize++;
-      }
-      receiveBuffer_.resize(receivedSize);
-    } catch (RMAPInitiatorException& e) {
-      if (e.getStatus() == RMAPInitiatorException::Timeout) {
-        spdlog::error("ConsumerManagerEventFIFO::getEventData(): timeout");
-        receiveBuffer_.resize(0);
-      } else {
-        spdlog::error("ConsumerManagerEventFIFO::getEventData(): TCPSocketException on receive() ({})", e.toString());
-        throw e;
-      }
-    }
-
-    // return result
+    const size_t receivedSize = readEventFIFO(receiveBuffer_.data(), RECEIVE_BUFFER_SIZE_BYTES);
+    receiveBuffer_.resize(receivedSize);
     receivedBytes_ += receiveBuffer_.size();
     return receiveBuffer_;
+    //    if (!eventDataReadLoopStarted_) {
+    //      eventDataReadLoopThread_ = std::thread(&ConsumerManagerEventFIFO::eventDataReadLoop, this);
+    //      eventDataReadLoopStarted_ = true;
+    //    }
   }
 
   /** Sets EventPacket_NumberOfWaveform_Register
@@ -83,6 +66,17 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   }
 
  private:
+//  const std::vector<u8>& eventDataReadLoop() {
+//    while (!eventDataReadLoopStop_) {
+//      getEventDataSingle();
+//    }
+//  }
+//  const std::vector<u8>& getEventDataSingle() {
+//    receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
+//    readEventFIFO(receiveBuffer_.data(), RECEIVE_BUFFER_SIZE_BYTES);
+//    receivedBytes_ += receiveBuffer_.size();
+//    return receiveBuffer_;
+//  }
   size_t readEventFIFO(u8* buffer, size_t length) {
     const size_t dataCountsInWords = read16(AddressOf_EventFIFO_DataCount_Register);
     const size_t dataCountInBytes = dataCountsInWords * sizeof(u16);
@@ -110,10 +104,15 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr u32 AddressOf_EventFIFO_DataCount_Register = 0x20000000;
 
   static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 4096 * 3;
+  static constexpr size_t NUM_RECEIVE_BUFFERS = 1024;
   static constexpr size_t EVENT_FIFIO_SIZE_BYTES = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
   std::vector<u8> receiveBuffer_{};
   size_t receivedBytes_ = 0;
+
+  bool eventDataReadLoopStarted_ = false;
+  bool eventDataReadLoopStop_ = false;
+  std::thread eventDataReadLoopThread_;
 };
 
 #endif

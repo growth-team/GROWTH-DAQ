@@ -138,11 +138,10 @@ void GROWTH_FY2015_ADC::reset() {
 }
 
 std::vector<growth_fpga::Event*> GROWTH_FY2015_ADC::getEvent() {
-  events_.clear();
   const std::vector<u8>& data = consumerManager_->getEventData();
   if (!data.empty()) {
     eventDecoder_->decodeEvent(&data);
-    events_ = eventDecoder_->getDecodedEvents();
+    eventDecoder_->getDecodedEvents(events_);
   }
   nReceivedEvents_ += events_.size();
   return events_;
