@@ -197,7 +197,7 @@ void EventListFileFITS::expandIfNecessary() {
   int fitsStatus = 0;
   // check heap size, and expand row size if necessary (to avoid slow down of cfitsio)
   while (rowIndexEvent_ > fitsNRowsEvent_) {
-	const auto startTime = std::chrono::system_clock::now();
+    const auto startTime = std::chrono::system_clock::now();
     fits_flush_file(outputFile_, &fitsStatus);
     fits_insert_rows(outputFile_, fitsNRowsEvent_ + 1, rowExpansionStep - 1, &fitsStatus);
     reportErrorThenQuitIfError(fitsStatus, __func__);
@@ -209,8 +209,9 @@ void EventListFileFITS::expandIfNecessary() {
 
     rowExpansionStep = rowExpansionStep * 2;
     const auto endTime = std::chrono::system_clock::now();
-    const auto elapsedTimeMicrosec= std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
-    spdlog::info("Output FITS file was resized to {} rows (took {:.2f} ms)", fitsNRowsEvent_, elapsedTimeMicrosec/1000.0);
+    const auto elapsedTimeMicrosec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    spdlog::info("Output FITS file was resized to {} rows (took {:.2f} ms)", fitsNRowsEvent_,
+                 elapsedTimeMicrosec / 1000.0);
   }
 }
 

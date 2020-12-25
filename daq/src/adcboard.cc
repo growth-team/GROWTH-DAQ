@@ -32,7 +32,9 @@ void GROWTH_FY2015_ADC::dumpThread() {
     const auto rateHz = static_cast<f64>(delta) / dumpInterval.count();
     const auto elapsedTimeSec = [&]() -> f64 {
       if (acquisitionStartTime_) {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - acquisitionStartTime_.value()).count();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() -
+                                                                     acquisitionStartTime_.value())
+            .count();
 
       } else {
         return 0.0;

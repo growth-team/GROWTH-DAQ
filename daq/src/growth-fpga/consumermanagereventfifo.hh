@@ -66,17 +66,17 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   }
 
  private:
-//  const std::vector<u8>& eventDataReadLoop() {
-//    while (!eventDataReadLoopStop_) {
-//      getEventDataSingle();
-//    }
-//  }
-//  const std::vector<u8>& getEventDataSingle() {
-//    receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
-//    readEventFIFO(receiveBuffer_.data(), RECEIVE_BUFFER_SIZE_BYTES);
-//    receivedBytes_ += receiveBuffer_.size();
-//    return receiveBuffer_;
-//  }
+  //  const std::vector<u8>& eventDataReadLoop() {
+  //    while (!eventDataReadLoopStop_) {
+  //      getEventDataSingle();
+  //    }
+  //  }
+  //  const std::vector<u8>& getEventDataSingle() {
+  //    receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
+  //    readEventFIFO(receiveBuffer_.data(), RECEIVE_BUFFER_SIZE_BYTES);
+  //    receivedBytes_ += receiveBuffer_.size();
+  //    return receiveBuffer_;
+  //  }
   size_t readEventFIFO(u8* buffer, size_t length) {
     const size_t dataCountsInWords = read16(AddressOf_EventFIFO_DataCount_Register);
     const size_t dataCountInBytes = dataCountsInWords * sizeof(u16);

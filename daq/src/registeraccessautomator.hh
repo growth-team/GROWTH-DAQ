@@ -64,10 +64,10 @@ class RegisterAccessAutomator {
       if (command == "set") {
         executeSlowDacSet(arguments);
       }
-    }else if (module == "gpio") {
-        if (command == "set") {
-          executeHighvoltageControlSet(arguments);
-        }
+    } else if (module == "gpio") {
+      if (command == "set") {
+        executeHighvoltageControlSet(arguments);
+      }
     } else {
       throw std::runtime_error("Invalid module name (" + module + ")");
     }

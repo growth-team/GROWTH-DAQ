@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
   const f64 exposureInSec = atoi(argv[3]);
 
   spdlog::set_level(spdlog::level::debug);
-  spdlog::info ("Exposure = {} sec", exposureInSec );
+  spdlog::info("Exposure = {} sec", exposureInSec);
 
   int dummyArgc = 0;
   const char* dummyArgv[] = {""};

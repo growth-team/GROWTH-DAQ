@@ -54,7 +54,7 @@ class SerialPort {
    * @param[in] length the maximum size of the data buffer
    * @return received size
    */
-  virtual size_t receive(u8* data, u32 length, bool waitUntilSpecifiedLengthCompletes = false);
+  virtual size_t receive(u8* data, u32 length, bool waitUntilSpecifiedLengthCompletes);
 };
 
 class SerialPortLibSerial : public SerialPort {
