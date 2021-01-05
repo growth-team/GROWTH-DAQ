@@ -4,7 +4,6 @@
 #include "types.h"
 #include "growth-fpga/types.hh"
 #include "growth-fpga/registeraccessinterface.hh"
-#include "growth-fpga/rmaphandleruart.hh"
 #include "growth-fpga/semaphoreregister.hh"
 
 #include <array>
@@ -17,9 +16,9 @@
  */
 class ChannelManager : public RegisterAccessInterface {
  public:
-  ChannelManager(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RegisterAccessInterface(rmapHandler, rmapTargetNode),
-        startStopSemaphore_(rmapHandler, rmapTargetNode, AddressOf_StartStopSemaphoreRegister) {}
+  ChannelManager(std::shared_ptr<RMAPInitiator> rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(rmapInitiator, rmapTargetNode),
+        startStopSemaphore_(rmapInitiator, rmapTargetNode, AddressOf_StartStopSemaphoreRegister) {}
 
   /// Starts data acquisition.
   /// Configuration of registers of individual channels should be completed before invoking this method.

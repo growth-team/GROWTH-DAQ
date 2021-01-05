@@ -2,26 +2,26 @@
 #define GROWTH_FPGA_REGISTER_ACCESS_INTERFACE_HH_
 
 #include "types.h"
-#include "growth-fpga/rmaphandleruart.hh"
+#include "spacewire/rmapinitiator.hh"
 
 #include <array>
 #include <memory>
 
 class RegisterAccessInterface {
  public:
-  RegisterAccessInterface(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : rmapHandler_(std::move(rmapHandler)), rmapTargetNode_(std::move(rmapTargetNode)) {}
+  RegisterAccessInterface(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : rmapInitiator_(std::move(rmapInitiator)), rmapTargetNode_(std::move(rmapTargetNode)) {}
   virtual ~RegisterAccessInterface() = default;
 
   u16 read16(u32 address) const {
     std::array<u8, 2> data{};
-    rmapHandler_->read(rmapTargetNode_.get(), address, 2, data.data());
+    rmapInitiator_->read(rmapTargetNode_.get(), address, 2, data.data());
     return (static_cast<u16>(data[0]) << 8) + data[1];
   }
 
   u32 read32(u32 address) const {
     std::array<u8, 4> data{};
-    rmapHandler_->read(rmapTargetNode_.get(), address, 4, data.data());
+    rmapInitiator_->read(rmapTargetNode_.get(), address, 4, data.data());
     const auto lower16 = (static_cast<u32>(data[0]) << 8) + data[1];
     const auto upper16 = (static_cast<u32>(data[2]) << 8) + data[3];
     return (upper16 << 16) + lower16;
@@ -29,7 +29,7 @@ class RegisterAccessInterface {
 
   u64 read48(u32 address) const {
     std::array<u8, 6> data{};
-    rmapHandler_->read(rmapTargetNode_.get(), address, 6, data.data());
+    rmapInitiator_->read(rmapTargetNode_.get(), address, 6, data.data());
     const auto lower16 = (static_cast<u64>(data[0]) << 8) + data[1];
     const auto middle16 = (static_cast<u64>(data[2]) << 8) + data[3];
     const auto upper16 = (static_cast<u64>(data[4]) << 8) + data[5];
@@ -37,12 +37,12 @@ class RegisterAccessInterface {
   }
 
   void read(u32 address, size_t numBytes, u8* buffer) const {
-    rmapHandler_->read(rmapTargetNode_.get(), address, numBytes, buffer);
+    rmapInitiator_->read(rmapTargetNode_.get(), address, numBytes, buffer);
   }
 
   void write(u32 address, u16 value) {
     const std::array<u8, 2> data{static_cast<u8>((value & 0xFF00) >> 8), static_cast<u8>(value & 0xFF)};
-    rmapHandler_->write(rmapTargetNode_.get(), address, 2, data.data());
+    rmapInitiator_->write(rmapTargetNode_.get(), address, data.data(), 2);
   }
 
   void write(u32 address, u32 value) {
@@ -54,11 +54,11 @@ class RegisterAccessInterface {
         static_cast<u8>((upper16 & 0xFF00) >> 8),
         static_cast<u8>(upper16 & 0xFF),
     };
-    rmapHandler_->write(rmapTargetNode_.get(), address, 4, data.data());
+    rmapInitiator_->write(rmapTargetNode_.get(), address, data.data(), 4);
   }
 
  private:
-  std::shared_ptr<RMAPHandlerUART> rmapHandler_{};
+  std::shared_ptr<RMAPInitiator> rmapInitiator_{};
   std::shared_ptr<RMAPTargetNode> rmapTargetNode_{};
 };
 

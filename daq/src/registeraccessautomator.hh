@@ -1,7 +1,9 @@
 #ifndef GROWTHDAQ_REGISTER_ACCESS_AUTOMATOR_HH_
 #define GROWTHDAQ_REGISTER_ACCESS_AUTOMATOR_HH_
 
-#include "growth-fpga/rmaphandleruart.hh"
+#include "spacewire/rmapinitiator.hh"
+#include "spacewire/spacewireifoveruart.hh"
+
 #include "growth-fpga/hitpatternmodule.hh"
 #include "growth-fpga/slowadcdac.hh"
 
@@ -13,18 +15,24 @@
 
 class RegisterAccessAutomator {
  public:
-  RegisterAccessAutomator(const std::string& deviceName) : rmapHandler_(std::make_shared<RMAPHandlerUART>(deviceName)) {
+  RegisterAccessAutomator(const std::string& deviceName) {
+    spwif_ = std::make_unique<SpaceWireIFOverUART>(deviceName);
+    const bool openResult = spwif_->open();
+    assert(openResult);
+
+    rmapEngine_ = std::make_shared<RMAPEngine>(spwif_.get());
+    rmapEngine_->start();
+
     adcRMAPTargetNode_ = std::make_shared<RMAPTargetNode>();
     adcRMAPTargetNode_->setDefaultKey(0x00);
-    adcRMAPTargetNode_->setReplyAddress({});
-    adcRMAPTargetNode_->setTargetSpaceWireAddress({});
-    adcRMAPTargetNode_->setTargetLogicalAddress(0xFE);
-    adcRMAPTargetNode_->setInitiatorLogicalAddress(0xFE);
 
-    slowAdcDacModule_ = std::make_unique<SlowAdcDac>(rmapHandler_, adcRMAPTargetNode_);
-    highvoltageControlGpioModule_ = std::make_unique<HighvoltageControlGpio>(rmapHandler_, adcRMAPTargetNode_);
-    hitPatternModule_ = std::make_unique<HitPatternModule>(rmapHandler_, adcRMAPTargetNode_);
+    slowAdcDacModule_ = std::make_unique<SlowAdcDac>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
+    highvoltageControlGpioModule_ =
+        std::make_unique<HighvoltageControlGpio>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
+    hitPatternModule_ =
+        std::make_unique<HitPatternModule>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
   }
+
   void run(const std::string& inputFileName) {
     YAML::Node yaml_root = YAML::LoadFile(inputFileName);
     assert(yaml_root.IsSequence());
@@ -98,10 +106,12 @@ class RegisterAccessAutomator {
     highvoltageControlGpioModule_->outputEnable(outputEnable);
   }
 
-  std::shared_ptr<RMAPHandlerUART> rmapHandler_;
-  std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode_;
-  std::unique_ptr<SlowAdcDac> slowAdcDacModule_;
-  std::unique_ptr<HighvoltageControlGpio> highvoltageControlGpioModule_;
-  std::unique_ptr<HitPatternModule> hitPatternModule_;
+  std::unique_ptr<SpaceWireIFOverUART> spwif_{};
+  std::shared_ptr<RMAPEngine> rmapEngine_{};
+
+  std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode_{};
+  std::unique_ptr<SlowAdcDac> slowAdcDacModule_{};
+  std::unique_ptr<HighvoltageControlGpio> highvoltageControlGpioModule_{};
+  std::unique_ptr<HitPatternModule> hitPatternModule_{};
 };
 #endif

@@ -1,6 +1,9 @@
 #ifndef GROWTHDAQ_ADCBOARD_HH_
 #define GROWTHDAQ_ADCBOARD_HH_
 
+#include "spacewire/rmapinitiator.hh"
+#include "spacewire/spacewireifoveruart.hh"
+
 #include "growth-fpga/types.hh"
 #include "types.h"
 #include "yaml-cpp/yaml.h"
@@ -16,7 +19,6 @@ class ChannelManager;
 class ChannelModule;
 class ConsumerManagerEventFIFO;
 class EventDecoder;
-class RMAPHandlerUART;
 class RMAPInitiator;
 class RMAPTargetNode;
 class RegisterAccessInterface;
@@ -52,7 +54,7 @@ class GROWTH_FY2015_ADC {
   /** Constructor.
    * @param deviceName UART-USB device name (e.g. /dev/tty.usb-aaa-bbb)
    */
-  GROWTH_FY2015_ADC(std::string deviceName);
+  explicit GROWTH_FY2015_ADC(std::string deviceName);
   ~GROWTH_FY2015_ADC();
 
   void startDumpThread();
@@ -281,26 +283,26 @@ class GROWTH_FY2015_ADC {
   static constexpr u32 AddressOfFPGAVersionRegister_H = 0x30000006;
   // clang-format on
 
-  std::shared_ptr<RMAPHandlerUART> rmapHandler_;
+  std::unique_ptr<SpaceWireIFOverUART> spwif_{};
+  std::shared_ptr<RMAPEngine> rmapEngine_{};
   std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode_;
-  std::unique_ptr<RMAPInitiator> rmapIniaitorForGPSRegisterAccess_;
-  std::unique_ptr<EventDecoder> eventDecoder_;
-  std::unique_ptr<ChannelManager> channelManager_;
-  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager_;
+  std::unique_ptr<EventDecoder> eventDecoder_{};
+  std::unique_ptr<ChannelManager> channelManager_{};
+  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager_{};
   using ChannelModulePtr = std::unique_ptr<ChannelModule>;
   std::vector<ChannelModulePtr> channelModules_;
 
-  std::shared_ptr<RegisterAccessInterface> reg_;
+  std::shared_ptr<RegisterAccessInterface> reg_{};
 
   size_t nReceivedEvents_ = 0;
   const size_t GPS_DATA_FIFO_DEPTH_BYTES = 1024;
-  std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_;
+  std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_{};
   std::vector<u8> gpsDataFIFOData_{};
   std::vector<growth_fpga::Event*> events_{};
 
   std::optional<TimePointSystemClock> acquisitionStartTime_{};
 
-  std::thread dumpThread_;
+  std::thread dumpThread_{};
   std::atomic<bool> stopDumpThread_{false};
 };
 

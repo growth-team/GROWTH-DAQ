@@ -6,8 +6,6 @@
 
 #include <cassert>
 
-class RMAPHandlerUART;
-
 class HitPatternSettings {
  public:
   HitPatternSettings(u16 _lowerThreshold, u16 _upperThreshold, u16 _width, u16 _delay)
@@ -26,12 +24,8 @@ class HitPatternSettings {
 /// Aggregates hit-pattern settings.
 class HitPatternModule : public RegisterAccessInterface {
  public:
-  /** Constructor.
-   * @param[in] rmapHandler RMAPHandlerUART
-   * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
-   */
-  HitPatternModule(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
+  HitPatternModule(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(std::move(rmapInitiator), std::move(rmapTargetNode)) {}
   ~HitPatternModule() override = default;
 
   void writeSettings(size_t ch, const HitPatternSettings& hitPatternSettings) {

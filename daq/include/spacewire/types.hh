@@ -19,9 +19,11 @@ enum class EOPType { EOP = 0, EEP = 1, Continued = 0xFFFF };
 
 class SerialPort;
 class RMAPEngine;
+class RMAPInitiator;
 class RMAPPacket;
 using SerialPortPtr = std::shared_ptr<SerialPort>;
 using RMAPEnginePtr = std::shared_ptr<RMAPEngine>;
+using RMAPInitiatorPtr = std::shared_ptr<RMAPInitiator>;
 using RMAPPacketPtr = std::unique_ptr<RMAPPacket>;
 
 class Exception {

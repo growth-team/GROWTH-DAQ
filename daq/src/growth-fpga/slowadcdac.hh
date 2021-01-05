@@ -6,17 +6,11 @@
 
 #include <cassert>
 
-class RMAPHandlerUART;
-
 /// Communicates with the Slow ADC/DAC control block (if implemented on FPGA).
 class SlowAdcDac : public RegisterAccessInterface {
  public:
-  /** Constructor.
-   * @param[in] rmapHandler RMAPHandlerUART
-   * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
-   */
-  SlowAdcDac(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
+  SlowAdcDac(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(std::move(rmapInitiator), std::move(rmapTargetNode)) {}
   ~SlowAdcDac() override = default;
 
   void setDac(size_t ch, u16 gain, u16 outputValue) {
@@ -79,12 +73,8 @@ class SlowAdcDac : public RegisterAccessInterface {
 
 class HighvoltageControlGpio : public RegisterAccessInterface {
  public:
-  /** Constructor.
-   * @param[in] rmapHandler RMAPHandlerUART
-   * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
-   */
-  HighvoltageControlGpio(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
+  HighvoltageControlGpio(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(std::move(rmapInitiator), std::move(rmapTargetNode)) {}
   ~HighvoltageControlGpio() override = default;
 
   void outputEnable(bool enable) {

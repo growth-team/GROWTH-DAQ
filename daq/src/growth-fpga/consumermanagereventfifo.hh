@@ -6,19 +6,13 @@
 
 #include <cassert>
 
-class RMAPHandlerUART;
-
 /** A class which represents ConsumerManager module in the VHDL logic.
  * It also holds information on a ring buffer constructed on SDRAM.
  */
 class ConsumerManagerEventFIFO : public RegisterAccessInterface {
  public:
-  /** Constructor.
-   * @param[in] rmapHandler RMAPHandlerUART
-   * @param[in] adcRMAPTargetNode RMAPTargetNode that corresponds to the ADC board
-   */
-  ConsumerManagerEventFIFO(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RegisterAccessInterface(rmapHandler, rmapTargetNode) {}
+  ConsumerManagerEventFIFO(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
+      : RegisterAccessInterface(std::move(rmapInitiator), rmapTargetNode) {}
 
   ~ConsumerManagerEventFIFO() override {
     if (eventDataReadLoopThread_.joinable()) {

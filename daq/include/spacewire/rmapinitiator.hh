@@ -22,7 +22,7 @@ class RMAPInitiatorException : public Exception {
     RMAPTransactionCouldNotBeInitiated,
   };
 
-  RMAPInitiatorException(u32 status) : Exception(status) {}
+  explicit RMAPInitiatorException(u32 status) : Exception(status) {}
   virtual ~RMAPInitiatorException() = default;
   std::string toString() const override {
     std::string result;
@@ -55,17 +55,14 @@ class RMAPInitiatorException : public Exception {
 
 class RMAPInitiator {
  public:
-  RMAPInitiator(RMAPEnginePtr rmapEngine) : rmapEngine_(rmapEngine) {
-    if (!rmapEngine_) {
-      throw std::runtime_error("RMAPEngine instance must not be nullptr");
-    }
-    commandPacket_.reset(new RMAPPacket());
-    replyPacket_.reset(new RMAPPacket());
+  explicit RMAPInitiator(RMAPEnginePtr rmapEngine) : rmapEngine_(std::move(rmapEngine)) {
+    commandPacket_ = std::make_unique<RMAPPacket>();
+    replyPacket_ = std::make_unique<RMAPPacket>();
   }
 
   void read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, u32 length, u8* buffer,
             i32 timeoutDurationMillisec = DDEFAULT_TIMEOUT_DURATION_MILLISEC) {
-    commandPacket_->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
+    commandPacket_->setInitiatorLogicalAddress(getInitiatorLogicalAddress());
     commandPacket_->setRead();
     commandPacket_->setCommand();
     commandPacket_->setIncrementFlag(incrementMode_);
@@ -106,7 +103,7 @@ class RMAPInitiator {
 
   void write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, const u8* data, u32 length,
              i32 timeoutDurationMillisec = DDEFAULT_TIMEOUT_DURATION_MILLISEC) {
-    commandPacket_->setInitiatorLogicalAddress(this->getInitiatorLogicalAddress());
+    commandPacket_->setInitiatorLogicalAddress(getInitiatorLogicalAddress());
     commandPacket_->setWrite();
     commandPacket_->setCommand();
     commandPacket_->setIncrementFlag(incrementMode_);
@@ -154,9 +151,9 @@ class RMAPInitiator {
   bool getVerifyMode() const { return verifyMode_; }
 
   void setInitiatorLogicalAddress(u8 logicalAddress) { initiatorLogicalAddress_ = logicalAddress; }
-  void setReplyMode(bool replyMode) { this->replyMode_ = replyMode; }
-  void setIncrementMode(bool incrementMode) { this->incrementMode_ = incrementMode; }
-  void setVerifyMode(bool verifyMode) { this->verifyMode_ = verifyMode; }
+  void setReplyMode(bool replyMode) { replyMode_ = replyMode; }
+  void setIncrementMode(bool incrementMode) { incrementMode_ = incrementMode; }
+  void setVerifyMode(bool verifyMode) { verifyMode_ = verifyMode; }
 
   static constexpr i32 DDEFAULT_TIMEOUT_DURATION_MILLISEC = 1000;
   static const bool DEFAULT_INCREMENT_MODE = true;

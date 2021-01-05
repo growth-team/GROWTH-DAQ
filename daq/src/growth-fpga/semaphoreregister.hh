@@ -4,7 +4,6 @@
 #include "types.h"
 
 #include "growth-fpga/registeraccessinterface.hh"
-#include "growth-fpga/rmaphandleruart.hh"
 #include "growth-fpga/types.hh"
 
 #include <chrono>
@@ -15,13 +14,8 @@
 /// An internal class which represents a semaphore in the VHDL logic.
 class SemaphoreRegister : public RegisterAccessInterface {
  public:
-  /** Constructor.
-   * @param rmaphandler instance of RMAPHandler which is used for this class to communicate the ADC board
-   * @param address an address of which semaphore this instance should handle
-   */
-  SemaphoreRegister(std::shared_ptr<RMAPHandlerUART> rmapHandler, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
-                    u32 address)
-      : RegisterAccessInterface(rmapHandler, rmapTargetNode), address_(address) {}
+  SemaphoreRegister(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode, u32 address)
+      : RegisterAccessInterface(std::move(rmapInitiator), std::move(rmapTargetNode)), address_(address) {}
 
  public:
   /// This method will wait for indefinitely until it successfully gets the semaphore.

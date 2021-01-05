@@ -10,7 +10,6 @@
 #include "growth-fpga/consumermanagereventfifo.hh"
 #include "growth-fpga/eventdecoder.hh"
 #include "growth-fpga/registeraccessinterface.hh"
-#include "growth-fpga/rmaphandleruart.hh"
 #include "growth-fpga/semaphoreregister.hh"
 #include "growth-fpga/hitpatternmodule.hh"
 #include "growth-fpga/slowadcdac.hh"
@@ -48,26 +47,28 @@ void GROWTH_FY2015_ADC::dumpThread() {
 }
 
 GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
-    : eventDecoder_(new EventDecoder),
-      rmapHandler_(std::make_shared<RMAPHandlerUART>(deviceName)),
-      rmapIniaitorForGPSRegisterAccess_(std::make_unique<RMAPInitiator>(rmapHandler_->getRMAPEngine())),
-      gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
+    : eventDecoder_(new EventDecoder), gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
+  spwif_ = std::make_unique<SpaceWireIFOverUART>(deviceName);
+  const bool openResult = spwif_->open();
+  assert(openResult);
+
+  rmapEngine_ = std::make_shared<RMAPEngine>(spwif_.get());
+  rmapEngine_->start();
+
   adcRMAPTargetNode_ = std::make_shared<RMAPTargetNode>();
   adcRMAPTargetNode_->setDefaultKey(0x00);
-  adcRMAPTargetNode_->setReplyAddress({});
-  adcRMAPTargetNode_->setTargetSpaceWireAddress({});
-  adcRMAPTargetNode_->setTargetLogicalAddress(0xFE);
-  adcRMAPTargetNode_->setInitiatorLogicalAddress(0xFE);
 
-  channelManager_ = std::make_unique<ChannelManager>(rmapHandler_, adcRMAPTargetNode_);
-  consumerManager_ = std::make_unique<ConsumerManagerEventFIFO>(rmapHandler_, adcRMAPTargetNode_);
+  channelManager_ = std::make_unique<ChannelManager>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
+  consumerManager_ =
+      std::make_unique<ConsumerManagerEventFIFO>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
 
   // create instances of ADCChannelRegister
   for (size_t i = 0; i < growth_fpga::NumberOfChannels; i++) {
-    channelModules_.emplace_back(new ChannelModule(rmapHandler_, adcRMAPTargetNode_, i));
+    channelModules_.emplace_back(
+        new ChannelModule(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_, i));
   }
 
-  reg_ = std::make_shared<RegisterAccessInterface>(rmapHandler_, adcRMAPTargetNode_);
+  reg_ = std::make_shared<RegisterAccessInterface>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
 }
 
 GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
