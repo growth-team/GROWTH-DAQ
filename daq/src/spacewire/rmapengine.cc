@@ -5,6 +5,8 @@
 #include "spacewire/spacewireutil.hh"
 #include "spacewire/types.hh"
 
+#include "spdlog/spdlog.h"
+
 RMAPEngine::RMAPEngine(SpaceWireIF* spwif) : spwif(spwif) { initialize(); }
 RMAPEngine::~RMAPEngine() {
   stopped_ = true;
@@ -27,7 +29,7 @@ void RMAPEngine::run() {
   spwif->setTimeoutDuration(DefaultReceiveTimeoutDurationInMicroSec);
   while (!stopped_) {
     try {
-      std::unique_ptr<RMAPPacket> rmapPacket = receivePacket();
+      auto rmapPacket = receivePacket();
       if (rmapPacket) {
         if (rmapPacket->isCommand()) {
           nDiscardedReceivedCommandPackets++;
@@ -58,6 +60,7 @@ void RMAPEngine::stop() {
 }
 
 TransactionID RMAPEngine::initiateTransaction(RMAPPacket* commandPacket, RMAPInitiator* rmapInitiator) {
+  spdlog::info("RMAPEngine initiateTransaction");
   if (!isStarted()) {
     throw RMAPEngineException(RMAPEngineException::RMAPEngineIsNotStarted);
   }
@@ -75,6 +78,7 @@ TransactionID RMAPEngine::initiateTransaction(RMAPPacket* commandPacket, RMAPIni
   commandPacket->constructPacket();
   const auto packet = commandPacket->getPacketBufferPointer();
   spwif->send(packet->data(), packet->size());
+  spdlog::info("RMAPEngine initiateTransaction tid = {}",transactionID);
   return transactionID;
 }
 
@@ -121,7 +125,7 @@ void RMAPEngine::releaseTransactionID(u16 transactionID) {
   std::lock_guard guard(transactionIDMutex);
   availableTransactionIDList.push_back(transactionID);
 }
-std::unique_ptr<RMAPPacket> RMAPEngine::receivePacket() {
+RMAPPacketPtr RMAPEngine::receivePacket() {
   try {
     spwif->receive(&receivePacketBuffer_);
   } catch (const SpaceWireIFException& e) {
@@ -161,7 +165,8 @@ RMAPInitiator* RMAPEngine::resolveTransaction(const RMAPPacket* packet) {
   }
 }
 
-void RMAPEngine::rmapReplyPacketReceived(std::unique_ptr<RMAPPacket> packet) {
+void RMAPEngine::rmapReplyPacketReceived(RMAPPacketPtr packet) {
+  spdlog::info("RMAP Reply packet received");
   try {
     // find a corresponding command packet
     auto rmapInitiator = resolveTransaction(packet.get());

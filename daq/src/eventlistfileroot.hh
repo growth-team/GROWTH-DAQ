@@ -13,7 +13,7 @@ class EventListFileROOT : public EventListFile {
   EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "");
   ~EventListFileROOT();
   void fillGPSTime(const u8* gpsTimeRegisterBuffer) override;
-  void fillEvents(const std::vector<growth_fpga::Event*>& events) override;
+  void fillEvents(const EventList& events) override;
   size_t getEntries() const override;
   void close() override;
 

@@ -38,16 +38,14 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   /** Retrieve data stored in the EventFIFO.
    * @param maxBytes maximum data size to be returned (in bytes)
    */
-  const std::vector<u8>& getEventData() {
-    receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
-    const size_t receivedSize = readEventFIFO(receiveBuffer_.data(), RECEIVE_BUFFER_SIZE_BYTES);
-    receiveBuffer_.resize(receivedSize);
-    receivedBytes_ += receiveBuffer_.size();
-    return receiveBuffer_;
-    //    if (!eventDataReadLoopStarted_) {
-    //      eventDataReadLoopThread_ = std::thread(&ConsumerManagerEventFIFO::eventDataReadLoop, this);
-    //      eventDataReadLoopStarted_ = true;
-    //    }
+  void getEventData(std::vector<u8>& receiveBuffer, bool blockUntilNonzeroDataReceived) {
+    receiveBuffer.resize(RECEIVE_BUFFER_SIZE_BYTES);
+    size_t receivedSize = 0;
+    while (blockUntilNonzeroDataReceived && receivedSize == 0) {
+      receivedSize = readEventFIFO(receiveBuffer.data(), RECEIVE_BUFFER_SIZE_BYTES);
+    }
+    receiveBuffer.resize(receivedSize);
+    receivedBytes_ += receivedSize;
   }
 
   /** Sets EventPacket_NumberOfWaveform_Register
@@ -60,17 +58,6 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   }
 
  private:
-  //  const std::vector<u8>& eventDataReadLoop() {
-  //    while (!eventDataReadLoopStop_) {
-  //      getEventDataSingle();
-  //    }
-  //  }
-  //  const std::vector<u8>& getEventDataSingle() {
-  //    receiveBuffer_.resize(RECEIVE_BUFFER_SIZE_BYTES);
-  //    readEventFIFO(receiveBuffer_.data(), RECEIVE_BUFFER_SIZE_BYTES);
-  //    receivedBytes_ += receiveBuffer_.size();
-  //    return receiveBuffer_;
-  //  }
   size_t readEventFIFO(u8* buffer, size_t length) {
     const size_t dataCountsInWords = read16(AddressOf_EventFIFO_DataCount_Register);
     const size_t dataCountInBytes = dataCountsInWords * sizeof(u16);
@@ -101,7 +88,6 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr size_t NUM_RECEIVE_BUFFERS = 1024;
   static constexpr size_t EVENT_FIFIO_SIZE_BYTES = 2 * 16 * 1024;  // 16-bit wide * 16-k depth
 
-  std::vector<u8> receiveBuffer_{};
   size_t receivedBytes_ = 0;
 
   bool eventDataReadLoopStarted_ = false;

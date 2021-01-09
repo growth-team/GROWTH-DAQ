@@ -191,13 +191,16 @@ size_t MainThread::readAndThenSaveEvents() {
     switchOutputFile_ = false;
   }
 
-  std::vector<growth_fpga::Event*> events = adcBoard_->getEvent();
-  eventListFile_->fillEvents(events);
+  if (auto result = adcBoard_->getEventList()) {
+    auto eventListPtr = std::move(result.value());
+    eventListFile_->fillEvents(*eventListPtr);
 
-  const size_t nReceivedEvents = events.size();
-  nEvents_ += nReceivedEvents;
-  nEventsOfCurrentOutputFile_ += nReceivedEvents;
-  adcBoard_->freeEvents(events);
+    const size_t nReceivedEvents = eventListPtr->size();
+    nEvents_ += nReceivedEvents;
+    nEventsOfCurrentOutputFile_ += nReceivedEvents;
 
-  return nReceivedEvents;
+    return nReceivedEvents;
+  } else {
+    return 0;
+  }
 }

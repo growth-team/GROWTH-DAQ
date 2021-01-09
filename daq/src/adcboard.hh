@@ -14,6 +14,7 @@
 #include <vector>
 #include <thread>
 #include <optional>
+#include <deque>
 
 class ChannelManager;
 class ChannelModule;
@@ -77,6 +78,8 @@ class GROWTH_FY2015_ADC {
    */
   void reset();
 
+  void eventPacketReadThread();
+
   /** Reads, decodes, and returns event data recorded by the board.
    * When no event packet is received within a timeout duration,
    * this method will return empty vector meaning a time out.
@@ -86,17 +89,12 @@ class GROWTH_FY2015_ADC {
    * reused to represent another event data.
    * @return a vector containing pointers to decoded event data
    */
-  std::vector<growth_fpga::Event*> getEvent();
-
-  /** Frees an event instance so that buffer area can be reused in the following commands.
-   * @param[in] event event instance to be freed
-   */
-  void freeEvent(growth_fpga::Event* event);
+  std::optional<EventListPtr> getEventList();
 
   /** Frees event instances so that buffer area can be reused in the following commands.
    * @param[in] events a vector of event instance to be freed
    */
-  void freeEvents(std::vector<growth_fpga::Event*>& events);
+  void returnEventList(EventListPtr events);
 
   /** Set trigger mode of the specified channel.
    * TriggerMode;<br>
@@ -284,7 +282,7 @@ class GROWTH_FY2015_ADC {
   // clang-format on
 
   std::unique_ptr<SpaceWireIFOverUART> spwif_{};
-  std::shared_ptr<RMAPEngine> rmapEngine_{};
+  RMAPEnginePtr rmapEngine_{};
   std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode_;
   std::unique_ptr<EventDecoder> eventDecoder_{};
   std::unique_ptr<ChannelManager> channelManager_{};
@@ -298,12 +296,14 @@ class GROWTH_FY2015_ADC {
   const size_t GPS_DATA_FIFO_DEPTH_BYTES = 1024;
   std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_{};
   std::vector<u8> gpsDataFIFOData_{};
-  std::vector<growth_fpga::Event*> events_{};
 
   std::optional<TimePointSystemClock> acquisitionStartTime_{};
 
   std::thread dumpThread_{};
   std::atomic<bool> stopDumpThread_{false};
+
+  std::thread eventPacketReadThread_;
+  std::atomic<bool> stopEventPacketReadThread_{false};
 };
 
 #endif /* ADCBOARD_HH_ */

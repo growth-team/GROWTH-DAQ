@@ -69,11 +69,15 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
   }
 
   reg_ = std::make_shared<RegisterAccessInterface>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
+
+  eventPacketReadThread_ = std::thread(&GROWTH_FY2015_ADC::eventPacketReadThread, this);
 }
 
 GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
   stopDumpThread_ = true;
+  stopEventPacketReadThread_ = true;
   dumpThread_.join();
+  eventPacketReadThread_.join();
 }
 
 void GROWTH_FY2015_ADC::startDumpThread() {
@@ -126,36 +130,32 @@ const std::vector<u8>& GROWTH_FY2015_ADC::readGPSDataFIFO() {
 void GROWTH_FY2015_ADC::reset() {
   channelManager_->stopAcquisition();
   channelManager_->reset();
-
   consumerManager_->disableEventOutput();  // stop event recording in FIFO
-
-  while (true) {
-    const std::vector<u8>& rawEventData = consumerManager_->getEventData();
-    spdlog::debug("Clearing event FIFO ({} bytes read)", rawEventData.size());
-    if (rawEventData.empty()) {
-      break;
-    }
-  }
-
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  eventDecoder_->reset();
   consumerManager_->enableEventOutput();  // start event recording in FIFO
 }
 
-std::vector<growth_fpga::Event*> GROWTH_FY2015_ADC::getEvent() {
-  const std::vector<u8>& data = consumerManager_->getEventData();
-  if (!data.empty()) {
-    eventDecoder_->decodeEvent(&data);
-    eventDecoder_->getDecodedEvents(events_);
+void GROWTH_FY2015_ADC::eventPacketReadThread() {
+  spdlog::info("EventPacketReadThread started...");
+  while (!stopEventPacketReadThread_) {
+    auto u8Buffer = eventDecoder_->borrowU8Buffer();
+    consumerManager_->getEventData(*u8Buffer, true);
+    eventDecoder_->pushEventPacketData(std::move(u8Buffer));
   }
-  nReceivedEvents_ += events_.size();
-  return events_;
+  spdlog::info("EventPacketReadThread stopped.");
 }
 
-void GROWTH_FY2015_ADC::freeEvent(growth_fpga::Event* event) { eventDecoder_->freeEvent(event); }
-
-void GROWTH_FY2015_ADC::freeEvents(std::vector<growth_fpga::Event*>& events) {
-  for (auto event : events) {
-    eventDecoder_->freeEvent(event);
+std::optional<EventListPtr> GROWTH_FY2015_ADC::getEventList() {
+  auto result = eventDecoder_->getEventList();
+  if (result) {
+    nReceivedEvents_ += result.value()->size();
   }
+  return result;
+}
+
+void GROWTH_FY2015_ADC::returnEventList(EventListPtr eventList) {
+  eventDecoder_->returnEventList(std::move(eventList));
 }
 
 void GROWTH_FY2015_ADC::setTriggerMode(size_t chNumber, growth_fpga::TriggerMode triggerMode) {

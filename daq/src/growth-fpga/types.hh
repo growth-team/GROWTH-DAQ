@@ -47,4 +47,10 @@ struct Event {
 enum class ADCClockFrequency : u16 { ADCClock200MHz = 20000, ADCClock100MHz = 10000, ADCClock50MHz = 5000 };
 }  // namespace growth_fpga
 
+using EventPtr = std::unique_ptr<growth_fpga::Event>;
+using EventList = std::vector<EventPtr>;
+using EventListPtr = std::unique_ptr<EventList>;
+using U8Buffer = std::vector<u8>;
+using U8BufferPtr = std::unique_ptr<U8Buffer>;
+
 #endif

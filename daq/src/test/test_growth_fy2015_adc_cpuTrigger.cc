@@ -145,7 +145,7 @@ class MainThread : public CxxUtilities::StoppableThread {
 #endif
 
     while (nEvents < nEventsMax) {
-      std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
+      std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEventList();
       cout << "Received " << events.size() << " events" << endl;
       for (auto event : events) {
         /*

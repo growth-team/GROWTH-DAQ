@@ -103,11 +103,14 @@ class RMAPPacket : public SpaceWirePacket {
         temporaryPathAddress.push_back(packet[i]);
         i++;
         if (i >= length) {
-          throw(RMAPPacketException("packet interpretation failed"));
+          throw(RMAPPacketException("packet too short"));
         }
       }
 
       rmapIndex = i;
+      if(rmapIndex + 8 >= length){
+        throw(RMAPPacketException("packet too short"));
+      }
       if (packet[rmapIndex + 1] != RMAPProtocol::ProtocolIdentifier) {
         throw(RMAPPacketException("non-rmap protocol id"));
       }

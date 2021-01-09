@@ -22,7 +22,7 @@ class EventListFileFITS : public EventListFile {
    * Length of the data should be the same as GROWTH_FY2015_ADC::LengthOfGPSTimeRegister.
    * @param[in] buffer buffer containing a GPS Time Register data
    */
-  void fillEvents(const std::vector<growth_fpga::Event*>& events) override;
+  void fillEvents(const EventList& events) override;
   void fillGPSTime(
       const std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1>& gpsTimeRegisterBuffer) override;
   size_t getEntries() const override { return rowIndexEvent_; }

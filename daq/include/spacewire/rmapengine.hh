@@ -93,10 +93,10 @@ class RMAPEngine {
   void deleteTransactionIDFromDB(TransactionID transactionID);
 
   void releaseTransactionID(u16 transactionID);
-  std::unique_ptr<RMAPPacket> receivePacket();
+  RMAPPacketPtr receivePacket();
 
   RMAPInitiator* resolveTransaction(const RMAPPacket* packet);
-  void rmapReplyPacketReceived(std::unique_ptr<RMAPPacket> packet);
+  void rmapReplyPacketReceived(RMAPPacketPtr packet);
   RMAPPacketPtr reuseOrCreateRMAPPacket();
 
   static const size_t MaximumTIDNumber = 65536;
