@@ -110,6 +110,7 @@ class RegisterAccessInterface {
       try {
         const std::array<u8, 2> data{static_cast<u8>((value & 0xFF00) >> 8), static_cast<u8>(value & 0xFF)};
         rmapInitiator_->write(rmapTargetNode_.get(), address, data.data(), 2);
+        return;
       } catch (const RMAPInitiatorException& e) {
         if (e.getStatus() == RMAPInitiatorException::Timeout) {
           nRetries++;
@@ -138,6 +139,7 @@ class RegisterAccessInterface {
             static_cast<u8>(upper16 & 0xFF),
         };
         rmapInitiator_->write(rmapTargetNode_.get(), address, data.data(), 4);
+        return;
       } catch (const RMAPInitiatorException& e) {
         if (e.getStatus() == RMAPInitiatorException::Timeout) {
           nRetries++;
