@@ -69,7 +69,7 @@ class EventDecoder {
       u8BufferDecodeQueue_.clear();
     }
     {
-      std::lock_guard<std::mutex> guard(eventListQueueMutex);
+      std::lock_guard<std::mutex> guard(eventListQueueMutex_);
       eventListQueue_.clear();
     }
     state_ = EventDecoderState::state_flag_FFF0;
@@ -77,15 +77,16 @@ class EventDecoder {
 
   U8BufferPtr borrowU8Buffer() {
     std::lock_guard<std::mutex> guard(u8BufferReservoirMutex_);
-    if (u8BufferReservoir_.empty()) {
+    if (!u8BufferReservoir_.empty()) {
+      U8BufferPtr result = std::move(u8BufferReservoir_.front());
+      u8BufferReservoir_.pop_front();
+      return result;
+    } else {
       return std::make_unique<U8Buffer>();
     }
-    auto result = std::move(u8BufferReservoir_.front());
-    u8BufferReservoir_.pop_front();
-    return result;
   }
 
-  void pushEventPacketData(U8BufferPtr&& u8Buffer) {
+  void pushEventPacketData(U8BufferPtr u8Buffer) {
     std::lock_guard<std::mutex> guard(u8BufferDecodeQueueMutex_);
     // Push the buffer to the decode queue
     u8BufferDecodeQueue_.emplace_back(std::move(u8Buffer));
@@ -97,7 +98,7 @@ class EventDecoder {
     if (eventListQueue_.empty()) {
       return {};
     }
-    std::lock_guard<std::mutex> guard(eventListQueueMutex);
+    std::lock_guard<std::mutex> guard(eventListQueueMutex_);
     auto result = std::move(eventListQueue_.front());
     eventListQueue_.pop_front();
     return result;
@@ -108,15 +109,15 @@ class EventDecoder {
       freeEvent(std::move(event));
     }
     eventList->clear();
-    eventListReservoir_.push_back(std::move(eventList));
+    eventListReservoir_.emplace_back(std::move(eventList));
   }
 
   /** Frees event instance so that buffer area can be reused in the following commands.
    * @param event event instance to be freed
    */
-  void freeEvent(EventPtr&& event) {
+  void freeEvent(EventPtr event) {
     std::lock_guard<std::mutex> guard(eventInstanceResavoirMutex_);
-    eventInstanceResavoir_.push_back(std::move(event));
+    eventInstanceResavoir_.emplace_back(std::move(event));
   }
 
   /** Returns the number of available (allocated) Event instances.
@@ -131,25 +132,28 @@ class EventDecoder {
     spdlog::info("EventPacketDecodeThread started...");
     std::unique_lock<std::mutex> lock(decodeQueueCVMutex_);
     std::vector<U8BufferPtr> localU8BufferList;
+    std::vector<U8BufferPtr> localU8BufferListDecoded;
     EventListPtr currentEventList{};
     while (!stopDecodeThread_) {
       decodeQueueCondition_.wait_for(lock, std::chrono::milliseconds(100),
                                      [&]() { return !u8BufferDecodeQueue_.empty(); });
       // Pop u8Buffer
       {
-        std::lock_guard<std::mutex> guard(u8BufferDecodeQueueMutex_);
-        if(u8BufferDecodeQueue_.empty()){
+        if (u8BufferDecodeQueue_.empty()) {
           spdlog::info("u8BufferDecodeQueue is empty()");
           continue;
         }
-        localU8BufferList.push_back(std::move(u8BufferDecodeQueue_.front()));
-        u8BufferDecodeQueue_.pop_front();
+        std::lock_guard<std::mutex> guard(u8BufferDecodeQueueMutex_);
+        while (!u8BufferDecodeQueue_.empty()) {
+          localU8BufferList.emplace_back(std::move(u8BufferDecodeQueue_.front()));
+          u8BufferDecodeQueue_.pop_front();
+        }
       }
       // Decode
       if (!currentEventList) {
         currentEventList = [&]() {
-          std::lock_guard<std::mutex> guard(eventListReservoirMutex);
-          if (eventListReservoir_.empty()) {
+          std::lock_guard<std::mutex> guard(eventListReservoirMutex_);
+          if (!eventListReservoir_.empty()) {
             auto eventListPtr = std::move(eventListReservoir_.front());
             eventListReservoir_.pop_front();
             return eventListPtr;
@@ -160,20 +164,20 @@ class EventDecoder {
       }
       for (auto& u8Buffer : localU8BufferList) {
         decodeEvent(u8Buffer.get(), currentEventList.get());
-        u8BufferReservoir_.push_back(std::move(u8Buffer));
       }
       if (!currentEventList->empty()) {
-        std::lock_guard<std::mutex> guard(eventListQueueMutex);
-        eventListQueue_.push_back(std::move(currentEventList));
+        std::lock_guard<std::mutex> guard(eventListQueueMutex_);
+        eventListQueue_.emplace_back(std::move(currentEventList));
         currentEventList.reset();
       }
       // Push u8Buffer to reservoir
       {
         std::lock_guard<std::mutex> guard(u8BufferReservoirMutex_);
         for (auto& u8Buffer : localU8BufferList) {
-          u8BufferReservoir_.push_back(std::move(u8Buffer));
+          u8BufferReservoir_.emplace_back(std::move(u8Buffer));
         }
       }
+      localU8BufferList.clear();
     }
     spdlog::info("EventPacketDecodeThread stopped.");
   }
@@ -322,10 +326,10 @@ class EventDecoder {
   std::mutex decodeQueueCVMutex_;
 
   std::deque<EventListPtr> eventListQueue_;
-  std::mutex eventListQueueMutex;
+  std::mutex eventListQueueMutex_;
 
   std::deque<EventListPtr> eventListReservoir_;
-  std::mutex eventListReservoirMutex;
+  std::mutex eventListReservoirMutex_;
 
   EventDecoderState state_{};
 

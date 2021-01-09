@@ -69,10 +69,10 @@ class MainThread {
   std::atomic<bool> stopped_{true};
   std::atomic<bool> hasStopped_{};
 
-  const std::chrono::milliseconds DefaultEventReadWaitDuration = std::chrono::milliseconds(10);
-  std::chrono::milliseconds eventReadWaitDuration = DefaultEventReadWaitDuration;
+  const std::chrono::milliseconds DEFAULT_EVENT_READ_WAIT_DURATION = std::chrono::milliseconds(50);
+  std::chrono::milliseconds eventReadWaitDuration = DEFAULT_EVENT_READ_WAIT_DURATION;
   const std::chrono::seconds GPSRegisterReadWaitInSec = std::chrono::seconds(30);
-  std::chrono::system_clock::time_point timeOfLastGPSRegisterRead{};
+  std::chrono::system_clock::time_point timeOfLastGPSRegisterRead_{};
 
   std::unique_ptr<GROWTH_FY2015_ADC> adcBoard_;
   u32 fpgaType_{};

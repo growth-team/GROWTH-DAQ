@@ -38,12 +38,10 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   /** Retrieve data stored in the EventFIFO.
    * @param maxBytes maximum data size to be returned (in bytes)
    */
-  void getEventData(std::vector<u8>& receiveBuffer, bool blockUntilNonzeroDataReceived) {
+  void getEventData(std::vector<u8>& receiveBuffer) {
     receiveBuffer.resize(RECEIVE_BUFFER_SIZE_BYTES);
     size_t receivedSize = 0;
-    while (blockUntilNonzeroDataReceived && receivedSize == 0) {
-      receivedSize = readEventFIFO(receiveBuffer.data(), RECEIVE_BUFFER_SIZE_BYTES);
-    }
+    receivedSize = readEventFIFO(receiveBuffer.data(), RECEIVE_BUFFER_SIZE_BYTES);
     receiveBuffer.resize(receivedSize);
     receivedBytes_ += receivedSize;
   }

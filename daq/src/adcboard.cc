@@ -138,10 +138,17 @@ void GROWTH_FY2015_ADC::reset() {
 
 void GROWTH_FY2015_ADC::eventPacketReadThread() {
   spdlog::info("EventPacketReadThread started...");
+  U8BufferPtr u8BufferPtr{};
   while (!stopEventPacketReadThread_) {
-    auto u8Buffer = eventDecoder_->borrowU8Buffer();
-    consumerManager_->getEventData(*u8Buffer, true);
-    eventDecoder_->pushEventPacketData(std::move(u8Buffer));
+    if (!u8BufferPtr) {
+      u8BufferPtr = eventDecoder_->borrowU8Buffer();
+      assert(u8BufferPtr);
+    }
+    consumerManager_->getEventData(*u8BufferPtr);
+    if (!u8BufferPtr->empty()) {
+      eventDecoder_->pushEventPacketData(std::move(u8BufferPtr));
+      u8BufferPtr.reset();
+    }
   }
   spdlog::info("EventPacketReadThread stopped.");
 }

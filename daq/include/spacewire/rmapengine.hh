@@ -79,7 +79,7 @@ class RMAPEngine {
   bool isStarted() const { return !stopped_; }
   bool hasStopped() const { return hasStopped_; }
   bool isTransactionIDAvailable(u16 transactionID);
-  void putBackRMAPPacketInstnce(RMAPPacketPtr&& packet);
+  void putBackRMAPPacketInstnce(RMAPPacketPtr packet);
   size_t getNTransactions() const { return transactions.size(); }
   size_t getNAvailableTransactionIDs() const { return availableTransactionIDList.size(); }
 

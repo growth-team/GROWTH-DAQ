@@ -82,7 +82,6 @@ void MainThread::run() {
   //---------------------------------------------
   // Read events
   //---------------------------------------------
-  auto elapsedTime = std::chrono::system_clock::now() - std::chrono::system_clock::now();
   size_t nReceivedEvents = 0;
   stopped_ = false;
   while (!stopped_) {
@@ -93,11 +92,11 @@ void MainThread::run() {
     // Get current UNIX time
     const auto currentTime = std::chrono::system_clock::now();
     // Read GPS register if necessary
-    if (currentTime - timeOfLastGPSRegisterRead > GPSRegisterReadWaitInSec) {
+    if (currentTime - timeOfLastGPSRegisterRead_ > GPSRegisterReadWaitInSec) {
       readAnsSaveGPSRegister();
     }
     // Update elapsed time
-    elapsedTime = currentTime - startTime_;
+    const auto elapsedTime = currentTime - startTime_;
     // Check whether specified exposure has been completed
     if (exposureInSec_ != exposureInSec_.zero() && elapsedTime >= exposureInSec_) {
       break;
@@ -108,7 +107,7 @@ void MainThread::run() {
   // Finalize observation run
   //---------------------------------------------
 
-  // Stop acquisition first
+  spdlog::info("Stopping acquisition...");
   adcBoard_->stopAcquisition();
 
   // Completely read the EventFIFO
@@ -139,7 +138,7 @@ void MainThread::setDAQStatus(DAQStatus status) {
 void MainThread::readAnsSaveGPSRegister() {
   const auto buffer = adcBoard_->getGPSRegisterUInt8();
   eventListFile_->fillGPSTime(buffer);
-  timeOfLastGPSRegisterRead = std::chrono::system_clock::now();
+  timeOfLastGPSRegisterRead_ = std::chrono::system_clock::now();
 }
 
 /** Sets a wait time duration in millisecond.
@@ -155,7 +154,7 @@ void MainThread::setWaitDurationBetweenEventRead() {
       return;
     }
   }
-  eventReadWaitDuration = DefaultEventReadWaitDuration;
+  eventReadWaitDuration = DEFAULT_EVENT_READ_WAIT_DURATION;
 }
 
 void MainThread::openOutputEventListFile() {

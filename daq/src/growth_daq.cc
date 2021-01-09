@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
   }
   const std::string deviceName(argv[1]);
   const std::string configurationFile(argv[2]);
-  const f64 exposureInSec = atoi(argv[3]);
+  const u32 exposureInSec = atoi(argv[3]);
 
   spdlog::set_level(spdlog::level::debug);
   spdlog::info("Exposure = {} sec", exposureInSec);
@@ -32,10 +32,10 @@ int main(int argc, char* argv[]) {
   auto messageServer = std::make_unique<MessageServer>(mainThread);
 
   // Run
-  if (exposureInSec > 0.0) {
+  if (exposureInSec > 0) {
     mainThread->start();
   }
-  if (exposureInSec <= 0.0) {
+  if (exposureInSec <= 0) {
     messageServer->start();
     messageServer->join();
   }

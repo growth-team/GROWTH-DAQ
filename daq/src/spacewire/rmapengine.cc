@@ -5,6 +5,8 @@
 #include "spacewire/spacewireutil.hh"
 #include "spacewire/types.hh"
 
+#include "spdlog/spdlog.h"
+
 RMAPEngine::RMAPEngine(SpaceWireIF* spwif) : spwif(spwif) { initialize(); }
 RMAPEngine::~RMAPEngine() {
   stopped_ = true;
@@ -83,9 +85,9 @@ bool RMAPEngine::isTransactionIDAvailable(u16 transactionID) {
   return transactions.find(transactionID) == transactions.end();
 }
 
-void RMAPEngine::putBackRMAPPacketInstnce(RMAPPacketPtr&& packet) {
+void RMAPEngine::putBackRMAPPacketInstnce(RMAPPacketPtr packet) {
   std::lock_guard<std::mutex> guard(freeRMAPPacketListMutex_);
-  freeRMAPPacketList_.push_back(std::move(packet));
+  freeRMAPPacketList_.emplace_back(std::move(packet));
 }
 
 void RMAPEngine::initialize() {
@@ -121,6 +123,7 @@ void RMAPEngine::releaseTransactionID(u16 transactionID) {
   std::lock_guard guard(transactionIDMutex);
   availableTransactionIDList.push_back(transactionID);
 }
+
 RMAPPacketPtr RMAPEngine::receivePacket() {
   try {
     spwif->receive(&receivePacketBuffer_);
@@ -137,7 +140,7 @@ RMAPPacketPtr RMAPEngine::receivePacket() {
       }
     }
   }
-  std::unique_ptr<RMAPPacket> packet = reuseOrCreateRMAPPacket();
+  RMAPPacketPtr packet = reuseOrCreateRMAPPacket();
   try {
     packet->interpretAsAnRMAPPacket(&receivePacketBuffer_);
   } catch (const RMAPPacketException& e) {
@@ -153,7 +156,7 @@ RMAPInitiator* RMAPEngine::resolveTransaction(const RMAPPacket* packet) {
     throw RMAPEngineException(RMAPEngineException::UnexpectedRMAPReplyPacketWasReceived);
   } else {  // if tid is registered to tid db
     // resolve transaction
-    RMAPInitiator* rmapInitiator = transactions[transactionID];
+    auto rmapInitiator = transactions[transactionID];
     // delete registered tid
     deleteTransactionIDFromDB(transactionID);
     // return resolved transaction
@@ -170,6 +173,7 @@ void RMAPEngine::rmapReplyPacketReceived(RMAPPacketPtr packet) {
   } catch (const RMAPEngineException& e) {
     // if not found, increment error counter
     nErrorneousReplyPackets++;
+    putBackRMAPPacketInstnce(std::move(packet));
     return;
   }
 }
@@ -177,10 +181,10 @@ void RMAPEngine::rmapReplyPacketReceived(RMAPPacketPtr packet) {
 RMAPPacketPtr RMAPEngine::reuseOrCreateRMAPPacket() {
   std::lock_guard<std::mutex> guard(freeRMAPPacketListMutex_);
   if (!freeRMAPPacketList_.empty()) {
-    RMAPPacketPtr packet{std::move(freeRMAPPacketList_.back())};
+    auto packet = std::move(freeRMAPPacketList_.back());
     freeRMAPPacketList_.pop_back();
     return packet;
   } else {
-    return RMAPPacketPtr(new RMAPPacket);
+    return std::make_unique<RMAPPacket>();
   }
 }

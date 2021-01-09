@@ -177,7 +177,7 @@ class SpaceWireSSDTPModuleUART {
   std::array<u8, 12> sheader_{};
 
  public:
-  static constexpr u32 BufferSize = 10 * 1024;
+  static constexpr u32 BufferSize = 100 * 1024;
 
   /* for SSDTP2 */
   static constexpr u8 DataFlag_Complete_EOP = 0x00;

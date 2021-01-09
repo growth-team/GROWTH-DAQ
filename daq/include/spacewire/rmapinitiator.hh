@@ -11,6 +11,8 @@
 #include "spacewire/rmapreplystatus.hh"
 #include "spacewire/rmaptargetnode.hh"
 
+#include "spdlog/spdlog.h"
+
 class RMAPInitiatorException : public Exception {
  public:
   enum {
@@ -77,14 +79,17 @@ class RMAPInitiator {
 
     if (replyPacket_) {
       rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket_));
+      replyPacketSet_=false;
     }
 
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
+
     const TransactionID assignedTransactionID = rmapEngine_->initiateTransaction(commandPacket_.get(), this);
+
     const auto rel_time = std::chrono::milliseconds(timeoutDurationMillisec);
     replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket_); });
 
-    if (replyPacket_) {
+    if (replyPacketSet_ && replyPacket_) {
       if (replyPacket_->getStatus() != RMAPReplyStatus::CommandExcecutedSuccessfully) {
         throw RMAPReplyException(replyPacket_->getStatus());
       }
@@ -117,6 +122,7 @@ class RMAPInitiator {
 
     if (replyPacket_) {
       rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket_));
+      replyPacketSet_=false;
     }
 
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
@@ -127,7 +133,7 @@ class RMAPInitiator {
     }
     const auto rel_time = std::chrono::milliseconds(timeoutDurationMillisec);
     replyWaitCondition_.wait_for(lock, rel_time, [&]() { return static_cast<bool>(replyPacket_); });
-    if (replyPacket_) {
+    if (replyPacketSet_ && replyPacket_) {
       if (replyPacket_->getStatus() == RMAPReplyStatus::CommandExcecutedSuccessfully) {
         return;
       } else {
@@ -139,9 +145,10 @@ class RMAPInitiator {
     }
   }
 
-  void replyReceived(RMAPPacketPtr&& packet) {
-    replyPacket_ = std::move(packet);
+  void replyReceived(RMAPPacketPtr packet) {
     std::lock_guard<std::mutex> guard(replyWaitMutex_);
+    replyPacket_ = std::move(packet);
+    replyPacketSet_=true;
     replyWaitCondition_.notify_one();
   }
 
@@ -164,6 +171,7 @@ class RMAPInitiator {
   RMAPEnginePtr rmapEngine_{};
   RMAPPacketPtr commandPacket_{};
   RMAPPacketPtr replyPacket_{};
+  std::atomic<bool> replyPacketSet_{false};
 
   u8 initiatorLogicalAddress_ = SpaceWireProtocol::DEFAULT_LOGICAL_ADDRESS;
   bool incrementMode_ = DEFAULT_INCREMENT_MODE;

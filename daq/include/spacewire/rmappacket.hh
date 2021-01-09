@@ -15,9 +15,8 @@ class RMAPPacketException : public std::runtime_error {
 
 class RMAPPacket : public SpaceWirePacket {
  public:
-  RMAPPacket():SpaceWirePacket(RMAPProtocol::ProtocolIdentifier) {
-	  //protocolID_ =RMAPProtocol::ProtocolIdentifier;
-  }
+  RMAPPacket() : SpaceWirePacket(RMAPProtocol::ProtocolIdentifier) {}
+  virtual ~RMAPPacket() override = default;
 
   void constructHeader() {
     header_.clear();
@@ -28,13 +27,13 @@ class RMAPPacket : public SpaceWirePacket {
       header_.push_back(instruction_);
       header_.push_back(key_);
       std::vector<u8> tmpvector;
-      u8 tmporaryCounter = replyAddress.size();
+      u8 tmporaryCounter = replyAddress_.size();
       while (tmporaryCounter % 4 != 0) {
         header_.push_back(0x00);
         tmporaryCounter++;
       }
-      for (size_t i = 0; i < replyAddress.size(); i++) {
-        header_.push_back(replyAddress.at(i));
+      for (size_t i = 0; i < replyAddress_.size(); i++) {
+        header_.push_back(replyAddress_.at(i));
       }
       header_.push_back(initiatorLogicalAddress_);
       header_.push_back((u8)((((((transactionID_ & 0xff00) >> 8))))));
@@ -79,7 +78,7 @@ class RMAPPacket : public SpaceWirePacket {
     if (isCommand()) {
       wholePacket_.insert(wholePacket_.end(), targetSpaceWireAddress_.begin(), targetSpaceWireAddress_.end());
     } else {
-      wholePacket_.insert(wholePacket_.end(), replyAddress.begin(), replyAddress.end());
+      wholePacket_.insert(wholePacket_.end(), replyAddress_.begin(), replyAddress_.end());
     }
     wholePacket_.insert(wholePacket_.end(), header_.begin(), header_.end());
     wholePacket_.insert(wholePacket_.end(), data_.begin(), data_.end());
@@ -107,7 +106,7 @@ class RMAPPacket : public SpaceWirePacket {
       }
 
       rmapIndex = i;
-      if(rmapIndex + 8 > length){
+      if (rmapIndex + 8 > length) {
         throw(RMAPPacketException("packet too short"));
       }
       if (packet[rmapIndex + 1] != RMAPProtocol::ProtocolIdentifier) {
@@ -252,7 +251,7 @@ class RMAPPacket : public SpaceWirePacket {
         }
       }
 
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       throw(RMAPPacketException("packet interpretation failed"));
     }
     const u32 previousHeaderCRCMode = headerCRCMode_;
@@ -279,49 +278,49 @@ class RMAPPacket : public SpaceWirePacket {
     setInitiatorLogicalAddress(rmapTargetNode->getInitiatorLogicalAddress());
   }
 
-  void setCommand() { instruction_ = instruction_ | RMAPPacket::BitMaskForCommandReply; }
-  void setReply() { instruction_ = instruction_ & (~RMAPPacket::BitMaskForCommandReply); }
-  void setWrite() { instruction_ = instruction_ | RMAPPacket::BitMaskForWriteRead; }
-  void setRead() { instruction_ = instruction_ & (~RMAPPacket::BitMaskForWriteRead); }
+  void setCommand() { instruction_ = instruction_ | RMAPPacket::BIT_MASK_COMMAND_REPLY; }
+  void setReply() { instruction_ = instruction_ & (~RMAPPacket::BIT_MASK_COMMAND_REPLY); }
+  void setWrite() { instruction_ = instruction_ | RMAPPacket::BIT_MASK_WRITE_READ; }
+  void setRead() { instruction_ = instruction_ & (~RMAPPacket::BIT_MASK_WRITE_READ); }
   void setVerifyFlag(bool mode) {
     if (mode) {
-      instruction_ = instruction_ | RMAPPacket::BitMaskForVerifyFlag;
+      instruction_ = instruction_ | RMAPPacket::BIT_MASK_VERIFY_FLAG;
     } else {
-      instruction_ = instruction_ & (~RMAPPacket::BitMaskForVerifyFlag);
+      instruction_ = instruction_ & (~RMAPPacket::BIT_MASK_VERIFY_FLAG);
     }
   }
 
   void setReplyFlag(bool mode) {
     if (mode) {
-      instruction_ = instruction_ | RMAPPacket::BitMaskForReplyFlag;
+      instruction_ = instruction_ | RMAPPacket::BIT_MASK_REPLY_FLAG;
     } else {
-      instruction_ = instruction_ & (~RMAPPacket::BitMaskForReplyFlag);
+      instruction_ = instruction_ & (~RMAPPacket::BIT_MASK_REPLY_FLAG);
     }
   }
 
   void setIncrementFlag(bool mode) {
     if (mode) {
-      instruction_ = instruction_ | RMAPPacket::BitMaskForIncrementFlag;
+      instruction_ = instruction_ | RMAPPacket::BIT_MASK_INCREMENT_FLAG;
     } else {
-      instruction_ = instruction_ & (~RMAPPacket::BitMaskForIncrementFlag);
+      instruction_ = instruction_ & (~RMAPPacket::BIT_MASK_INCREMENT_FLAG);
     }
   }
 
   void setReplyPathAddressLength(u8 pathAddressLength) {
     // TODO: verify the following logic
-    instruction_ = (instruction_ & ~(RMAPPacket::BitMaskForIncrementFlag)) + pathAddressLength &
-                  RMAPPacket::BitMaskForIncrementFlag;
+    instruction_ = (instruction_ & ~(RMAPPacket::BIT_MASK_INCREMENT_FLAG)) + pathAddressLength &
+                   RMAPPacket::BIT_MASK_INCREMENT_FLAG;
   }
 
-  bool isCommand() const { return (instruction_ & RMAPPacket::BitMaskForCommandReply) != 0; }
-  bool isReply() const { return (instruction_ & RMAPPacket::BitMaskForCommandReply) == 0; }
-  bool isWrite() const { return (instruction_ & RMAPPacket::BitMaskForWriteRead) != 0; }
-  bool isRead() const { return (instruction_ & RMAPPacket::BitMaskForWriteRead) == 0; }
-  bool isVerifyFlagSet() const { return (instruction_ & RMAPPacket::BitMaskForVerifyFlag) != 0; }
-  bool isReplyFlagSet() const { return (instruction_ & RMAPPacket::BitMaskForReplyFlag) != 0; }
-  bool isIncrementFlagSet() const { return (instruction_ & RMAPPacket::BitMaskForIncrementFlag) != 0; }
+  bool isCommand() const { return (instruction_ & RMAPPacket::BIT_MASK_COMMAND_REPLY) != 0; }
+  bool isReply() const { return (instruction_ & RMAPPacket::BIT_MASK_COMMAND_REPLY) == 0; }
+  bool isWrite() const { return (instruction_ & RMAPPacket::BIT_MASK_WRITE_READ) != 0; }
+  bool isRead() const { return (instruction_ & RMAPPacket::BIT_MASK_WRITE_READ) == 0; }
+  bool isVerifyFlagSet() const { return (instruction_ & RMAPPacket::BIT_MASK_VERIFY_FLAG) != 0; }
+  bool isReplyFlagSet() const { return (instruction_ & RMAPPacket::BIT_MASK_REPLY_FLAG) != 0; }
+  bool isIncrementFlagSet() const { return (instruction_ & RMAPPacket::BIT_MASK_INCREMENT_FLAG) != 0; }
 
-  u8 getReplyPathAddressLength() const { return instruction_ & RMAPPacket::BitMaskForReplyPathAddressLength; }
+  u8 getReplyPathAddressLength() const { return instruction_ & RMAPPacket::BIT_MASK_REPLY_PATH_ADDRESS_LENGTH; }
 
   u32 getAddress() const { return address_; }
 
@@ -343,13 +342,13 @@ class RMAPPacket : public SpaceWirePacket {
 
   u8 getDataCRC() const { return dataCRC_; }
   u32 getDataLength() const { return dataLength_; }
-  u32 getLength() const { return dataLength_; }
+  // u32 getLength() const { return dataLength_; }
   u8 getExtendedAddress() const { return extendedAddress_; }
   u8 getHeaderCRC() const { return headerCRC_; }
   u8 getInitiatorLogicalAddress() const { return initiatorLogicalAddress_; }
   u8 getInstruction() const { return instruction_; }
   u8 getKey() const { return key_; }
-  const std::vector<u8>& getReplyAddress() const { return replyAddress; }
+  const std::vector<u8>& getReplyAddress() const { return replyAddress_; }
   u16 getTransactionID() const { return transactionID_; }
   u8 getStatus() const { return status_; }
   u8 getTargetLogicalAddress() const { return targetLogicalAddress_; }
@@ -358,52 +357,47 @@ class RMAPPacket : public SpaceWirePacket {
   u32 getHeaderCRCMode() const { return headerCRCMode_; }
   u32 getDataCRCMode() const { return dataCRCMode_; }
 
-  void setAddress(u32 address) { this->address_ = address; }
-
+  void setAddress(u32 address) { address_ = address; }
   void setData(const u8* data, size_t length) {
-    this->data_.clear();
+    data_.clear();
     for (size_t i = 0; i < length; i++) {
-      this->data_.push_back(data[i]);
+      data_.push_back(data[i]);
     }
-    this->dataLength_ = length;
+    dataLength_ = length;
   }
 
-  void setDataCRC(u8 dataCRC) { this->dataCRC_ = dataCRC; }
-  void setDataLength(u32 dataLength) { this->dataLength_ = dataLength; }
-  void setLength(u32 dataLength) { this->dataLength_ = dataLength; }
-  void setExtendedAddress(u8 extendedAddress) { this->extendedAddress_ = extendedAddress; }
-  void setHeaderCRC(u8 headerCRC) { this->headerCRC_ = headerCRC; }
-  void setInitiatorLogicalAddress(u8 initiatorLogicalAddress) {
-    this->initiatorLogicalAddress_ = initiatorLogicalAddress;
-  }
-  void setInstruction(u8 instruction) { this->instruction_ = instruction; }
-  void setKey(u8 key) { this->key_ = key; }
+  void setDataCRC(u8 dataCRC) { dataCRC_ = dataCRC; }
+  void setDataLength(u32 dataLength) { dataLength_ = dataLength; }
+  // void setLength(u32 dataLength) { dataLength_ = dataLength; }
+  void setExtendedAddress(u8 extendedAddress) { extendedAddress_ = extendedAddress; }
+  void setHeaderCRC(u8 headerCRC) { headerCRC_ = headerCRC; }
+  void setInitiatorLogicalAddress(u8 initiatorLogicalAddress) { initiatorLogicalAddress_ = initiatorLogicalAddress; }
+  void setInstruction(u8 instruction) { instruction_ = instruction; }
+  void setKey(u8 key) { key_ = key; }
   void setReplyAddress(const std::vector<u8>& replyAddress,  //
                        bool automaticallySetPathAddressLengthToInstructionField = true) {
-    this->replyAddress = replyAddress;
+    replyAddress_ = replyAddress;
     if (automaticallySetPathAddressLengthToInstructionField) {
       if (replyAddress.size() % 4 == 0) {
-        instruction_ = (instruction_ & (~BitMaskForReplyPathAddressLength)) + replyAddress.size() / 4;
+        instruction_ = (instruction_ & (~BIT_MASK_REPLY_PATH_ADDRESS_LENGTH)) + replyAddress.size() / 4;
       } else {
-        instruction_ = (instruction_ & (~BitMaskForReplyPathAddressLength)) + (replyAddress.size() + 4) / 4;
+        instruction_ = (instruction_ & (~BIT_MASK_REPLY_PATH_ADDRESS_LENGTH)) + (replyAddress.size() + 4) / 4;
       }
     }
   }
 
-  void setTransactionID(u16 transactionID) { this->transactionID_ = transactionID; }
-  void setStatus(u8 status) { this->status_ = status; }
-  void setHeaderCRCMode(u32 headerCRCMode) { this->headerCRCMode_ = headerCRCMode; }
-  void setDataCRCMode(u32 dataCRCMode) { this->dataCRCMode_ = dataCRCMode; }
+  void setTransactionID(u16 transactionID) { transactionID_ = transactionID; }
+  void setStatus(u8 status) { status_ = status; }
+  void setHeaderCRCMode(u32 headerCRCMode) { headerCRCMode_ = headerCRCMode; }
+  void setDataCRCMode(u32 dataCRCMode) { dataCRCMode_ = dataCRCMode; }
 
-  void addData(u8 oneByte) { this->data_.push_back(oneByte); }
   void clearData() { data_.clear(); }
-  void addData(const std::vector<u8>& array) { data_.insert(data_.end(), array.begin(), array.end()); }
 
   std::string toString() { return isCommand() ? toStringCommandPacket() : toStringReplyPacket(); }
 
-  void setTargetLogicalAddress(u8 targetLogicalAddress) { this->targetLogicalAddress_ = targetLogicalAddress; }
+  void setTargetLogicalAddress(u8 targetLogicalAddress) { targetLogicalAddress_ = targetLogicalAddress; }
   void setTargetSpaceWireAddress(const std::vector<u8>& targetSpaceWireAddress) {
-    this->targetSpaceWireAddress_ = targetSpaceWireAddress;
+    targetSpaceWireAddress_ = targetSpaceWireAddress;
   }
 
   std::vector<u8>* getPacketBufferPointer() {
@@ -430,18 +424,10 @@ class RMAPPacket : public SpaceWirePacket {
 
   bool getDataCRCIsChecked() const { return dataCRCIsChecked_; }
   bool getHeaderCRCIsChecked() const { return headerCRCIsChecked_; }
-  void setDataCRCIsChecked(bool dataCRCIsChecked) { this->dataCRCIsChecked_ = dataCRCIsChecked; }
-  void setHeaderCRCIsChecked(bool headerCRCIsChecked) { this->headerCRCIsChecked_ = headerCRCIsChecked; }
+  void setDataCRCIsChecked(bool dataCRCIsChecked) { dataCRCIsChecked_ = dataCRCIsChecked; }
+  void setHeaderCRCIsChecked(bool headerCRCIsChecked) { headerCRCIsChecked_ = headerCRCIsChecked; }
 
   enum { AutoCRC, ManualCRC };
-
-  static const u8 BitMaskForReserved = 0x80;
-  static const u8 BitMaskForCommandReply = 0x40;
-  static const u8 BitMaskForWriteRead = 0x20;
-  static const u8 BitMaskForVerifyFlag = 0x10;
-  static const u8 BitMaskForReplyFlag = 0x08;
-  static const u8 BitMaskForIncrementFlag = 0x04;
-  static const u8 BitMaskForReplyPathAddressLength = 0x3;
 
  private:
   static std::vector<u8> removeLeadingZerosInReplyAddress(std::vector<u8> replyAddress) {
@@ -476,46 +462,41 @@ class RMAPPacket : public SpaceWirePacket {
     ss << "Initiator Logical Address : 0x" << right << setw(2) << setfill('0') << hex << (u32)(initiatorLogicalAddress_)
        << endl;
     // Target Logical Address
-    ss << "Target Logic. Address     : 0x" << right << setw(2) << setfill('0') << hex
-       << (unsigned int)(targetLogicalAddress_) << endl;
-    // Protocol Identifier
-    ss << "Protocol ID               : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(1) << endl;
-    // Instruction
-    ss << "Instruction               : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(instruction_)
+    ss << "Target Logic. Address     : 0x" << right << setw(2) << setfill('0') << hex << (u32)(targetLogicalAddress_)
        << endl;
+    // Protocol Identifier
+    ss << "Protocol ID               : 0x" << right << setw(2) << setfill('0') << hex << (u32)(1) << endl;
+    // Instruction
+    ss << "Instruction               : 0x" << right << setw(2) << setfill('0') << hex << (u32)(instruction_) << endl;
     toStringInstructionField(ss);
     // Key
-    ss << "Key                       : 0x" << setw(2) << setfill('0') << hex << (unsigned int)(key_) << endl;
+    ss << "Key                       : 0x" << setw(2) << setfill('0') << hex << (u32)(key_) << endl;
     // Reply Address
-    if (!replyAddress.empty()) {
+    if (!replyAddress_.empty()) {
       ss << "Reply Address             : ";
-      spacewire::util::dumpPacket(&ss, replyAddress.data(), replyAddress.size(), 1, 128);
+      spacewire::util::dumpPacket(&ss, replyAddress_.data(), replyAddress_.size(), 1, 128);
     } else {
       ss << "Reply Address         : --none--" << endl;
     }
-    ss << "Transaction Identifier    : 0x" << right << setw(4) << setfill('0') << hex << (unsigned int)(transactionID_)
+    ss << "Transaction Identifier    : 0x" << right << setw(4) << setfill('0') << hex << (u32)(transactionID_) << endl;
+    ss << "Extended Address          : 0x" << right << setw(2) << setfill('0') << hex << (u32)(extendedAddress_)
        << endl;
-    ss << "Extended Address          : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(extendedAddress_)
-       << endl;
-    ss << "Address                   : 0x" << right << setw(8) << setfill('0') << hex << (unsigned int)(address_)
-       << endl;
-    ss << "Data Length (bytes)       : 0x" << right << setw(6) << setfill('0') << hex << (unsigned int)(dataLength_)
-       << " (" << dec << dataLength_ << "dec)" << endl;
-    ss << "Header CRC                : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(headerCRC_)
-       << endl;
+    ss << "Address                   : 0x" << right << setw(8) << setfill('0') << hex << (u32)(address_) << endl;
+    ss << "Data Length (bytes)       : 0x" << right << setw(6) << setfill('0') << hex << (u32)(dataLength_) << " ("
+       << dec << dataLength_ << "dec)" << endl;
+    ss << "Header CRC                : 0x" << right << setw(2) << setfill('0') << hex << (u32)(headerCRC_) << endl;
     // Data Part
     ss << "---------  RMAP Data Part  ---------" << endl;
     if (isWrite()) {
       ss << "[data size = " << dec << dataLength_ << "bytes]" << endl;
       spacewire::util::dumpPacket(&ss, data_.data(), data_.size(), 1, 16);
-      ss << "Data CRC                  : " << right << setw(2) << setfill('0') << hex << (unsigned int)(dataCRC_)
-         << endl;
+      ss << "Data CRC                  : " << right << setw(2) << setfill('0') << hex << (u32)(dataCRC_) << endl;
     } else {
       ss << "--- none ---" << endl;
     }
     ss << endl;
-    this->constructPacket();
-    ss << "Total data (bytes)        : " << dec << this->getPacketBufferPointer()->size() << endl;
+    constructPacket();
+    ss << "Total data (bytes)        : " << dec << getPacketBufferPointer()->size() << endl;
     ss << dec << endl;
     return ss.str();
   }
@@ -524,16 +505,16 @@ class RMAPPacket : public SpaceWirePacket {
     using namespace std;
 
     stringstream ss;
-    this->constructPacket();
+    constructPacket();
     ///////////////////////////////
     // Reply
     ///////////////////////////////
     ss << "RMAP Packet Dump" << endl;
     // Reply Address
-    if (!replyAddress.empty()) {
+    if (!replyAddress_.empty()) {
       ss << "--------- Reply Address ---------" << endl;
       ss << "Reply Address       : ";
-      spacewire::util::dumpPacket(&ss, replyAddress.data(), replyAddress.size(), 1, 128);
+      spacewire::util::dumpPacket(&ss, replyAddress_.data(), replyAddress_.size(), 1, 128);
     }
     // Header
     ss << "--------- RMAP Header Part ---------" << endl;
@@ -541,13 +522,12 @@ class RMAPPacket : public SpaceWirePacket {
     ss << "Initiator Logical Address : 0x" << right << setw(2) << setfill('0') << hex << (u32)(initiatorLogicalAddress_)
        << endl;
     // Target Logical Address
-    ss << "Target Logical Address    : 0x" << right << setw(2) << setfill('0') << hex
-       << (unsigned int)(targetLogicalAddress_) << endl;
-    // Protocol Identifier
-    ss << "Protocol ID               : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(1) << endl;
-    // Instruction
-    ss << "Instruction               : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(instruction_)
+    ss << "Target Logical Address    : 0x" << right << setw(2) << setfill('0') << hex << (u32)(targetLogicalAddress_)
        << endl;
+    // Protocol Identifier
+    ss << "Protocol ID               : 0x" << right << setw(2) << setfill('0') << hex << (u32)(1) << endl;
+    // Instruction
+    ss << "Instruction               : 0x" << right << setw(2) << setfill('0') << hex << (u32)(instruction_) << endl;
     toStringInstructionField(ss);
     // Status
     std::string statusstring;
@@ -592,28 +572,26 @@ class RMAPPacket : public SpaceWirePacket {
         statusstring = "Reserved";
         break;
     }
-    ss << "Status                    : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(status_) << " ("
+    ss << "Status                    : 0x" << right << setw(2) << setfill('0') << hex << (u32)(status_) << " ("
        << statusstring << ")" << endl;
-    ss << "Transaction Identifier    : 0x" << right << setw(4) << setfill('0') << hex << (unsigned int)(transactionID_)
-       << endl;
+    ss << "Transaction Identifier    : 0x" << right << setw(4) << setfill('0') << hex << (u32)(transactionID_) << endl;
     if (isRead()) {
-      ss << "Data Length (bytes)       : 0x" << right << setw(6) << setfill('0') << hex << (unsigned int)(dataLength_)
-         << " (" << dec << dataLength_ << "dec)" << endl;
+      ss << "Data Length (bytes)       : 0x" << right << setw(6) << setfill('0') << hex << (u32)(dataLength_) << " ("
+         << dec << dataLength_ << "dec)" << endl;
     }
-    ss << "Header CRC                : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(headerCRC_)
-       << endl;
+    ss << "Header CRC                : 0x" << right << setw(2) << setfill('0') << hex << (u32)(headerCRC_) << endl;
     // Data Part
     ss << "---------  RMAP Data Part  ---------" << endl;
     if (isRead()) {
       ss << "[data size = " << dec << dataLength_ << "bytes]" << endl;
       spacewire::util::dumpPacket(&ss, data_.data(), data_.size(), 1, 128);
-      ss << "Data CRC    : 0x" << right << setw(2) << setfill('0') << hex << (unsigned int)(dataCRC_) << endl;
+      ss << "Data CRC    : 0x" << right << setw(2) << setfill('0') << hex << (u32)(dataCRC_) << endl;
     } else {
       ss << "--- none ---" << endl;
     }
     ss << endl;
-    this->constructPacket();
-    ss << "Total data (bytes)        : " << dec << this->getPacketBufferPointer()->size() << endl;
+    constructPacket();
+    ss << "Total data (bytes)        : " << dec << getPacketBufferPointer()->size() << endl;
     ss << dec << endl;
     return ss.str();
   }
@@ -640,17 +618,25 @@ class RMAPPacket : public SpaceWirePacket {
     ss << " " << (isIncrementFlagSet() ? "(Increment)" : "(No Increment)") << endl;
     // SPAL
     ss << " |R.A.L.      : " << setw(1) << setfill('0') << hex
-       << (u32)((instruction_ & BitMaskForReplyPathAddressLength)) << endl;
+       << (u32)((instruction_ & BIT_MASK_REPLY_PATH_ADDRESS_LENGTH)) << endl;
     ss << " |(R.A.L. = Reply Address Length)" << endl;
     ss << " ------------------------------" << endl;
   }
+
+  static constexpr u8 BIT_MASK_RESERVED = 0x80;
+  static constexpr u8 BIT_MASK_COMMAND_REPLY = 0x40;
+  static constexpr u8 BIT_MASK_WRITE_READ = 0x20;
+  static constexpr u8 BIT_MASK_VERIFY_FLAG = 0x10;
+  static constexpr u8 BIT_MASK_REPLY_FLAG = 0x08;
+  static constexpr u8 BIT_MASK_INCREMENT_FLAG = 0x04;
+  static constexpr u8 BIT_MASK_REPLY_PATH_ADDRESS_LENGTH = 0x3;
 
   std::vector<u8> targetSpaceWireAddress_{};
   u8 targetLogicalAddress_ = SpaceWireProtocol::DEFAULT_LOGICAL_ADDRESS;
 
   u8 instruction_{};
   u8 key_ = RMAPProtocol::DEFAULT_KEY;
-  std::vector<u8> replyAddress{};
+  std::vector<u8> replyAddress_{};
   u8 initiatorLogicalAddress_ = SpaceWireProtocol::DEFAULT_LOGICAL_ADDRESS;
   u8 extendedAddress_ = RMAPProtocol::DEFAULT_EXTENDED_ADDRESS;
   u32 address_{};

@@ -11,6 +11,8 @@
 #include <thread>
 #include <cassert>
 
+#include "spdlog/spdlog.h"
+
 /** SpaceWire IF class which transfers data over UART.
  */
 class SpaceWireIFOverUART : public SpaceWireIF {
@@ -57,13 +59,14 @@ class SpaceWireIFOverUART : public SpaceWireIF {
         throw SpaceWireIFException(SpaceWireIFException::EEP);
       }
     } catch (const SpaceWireSSDTPException& e) {
+      spdlog::error("SpaceWireIFOverUART::receive() SpaceWireSSDTPException::{} ({})", e.toString(), e.getStatus());
       if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
         throw SpaceWireIFException(SpaceWireIFException::Timeout);
       } else {
-        printf("SpaceWireIFOverUART::receive() e = %s (%d)\n", e.toString().c_str(), e.getStatus());
         throw SpaceWireIFException(SpaceWireIFException::ReceiveFailed);
       }
     } catch (const SerialPortException& e) {
+      spdlog::error("SpaceWireIFOverUART::receive() SerialPortException::{} ({})", e.toString(), e.getStatus());
       throw SpaceWireIFException(SpaceWireIFException::Timeout);
     }
   }
