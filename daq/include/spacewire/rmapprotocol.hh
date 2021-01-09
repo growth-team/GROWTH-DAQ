@@ -10,13 +10,13 @@ class RMAPProtocol {
   static const u8 DefaultVerifyMode = 0x01;
   static const u8 DefaultAckMode = 0x01;
   static const u8 DefaultIncrementMode = 0x01;
-  static const u16 DefaultTID = 0x00;
-  static const u8 DefaultExtendedAddress = 0x00;
+  static const u16 DEFAULT_TID = 0x00;
+  static const u8 DEFAULT_EXTENDED_ADDRESS = 0x00;
   static const u32 DefaultAddress = 0x00;
   static const u32 DefaultLength = 0x00;
   static const u8 DefaultHeaderCRC = 0x00;
   static const u8 DefaultDataCRC = 0x00;
-  static const u8 DefaultStatus = 0x00;
+  static const u8 DEFAULT_STATUS = 0x00;
 
   static const u8 PacketTypeCommand = 0x01;
   static const u8 PacketTypeReply = 0x00;
@@ -36,7 +36,7 @@ class RMAPProtocol {
   static const u8 PacketCRCDraftE = 0x00;
   static const u8 PacketCRCDraftF = 0x01;
 
-  static const u8 DefaultKey = 0x20;
+  static const u8 DEFAULT_KEY = 0x20;
 
   static const bool DefaultCRCCheckMode = true;
 
