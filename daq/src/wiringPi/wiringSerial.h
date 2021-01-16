@@ -24,14 +24,14 @@
 extern "C" {
 #endif
 
-extern int   serialOpen      (char *device, int baud) ;
-extern void  serialClose     (int fd) ;
-extern void  serialFlush     (int fd) ;
-extern void  serialPutchar   (int fd, unsigned char c) ;
-extern void  serialPuts      (int fd, char *s) ;
-extern void  serialPrintf    (int fd, char *message, ...) ;
-extern int   serialDataAvail (int fd) ;
-extern int   serialGetchar   (int fd) ;
+extern int serialOpen(char* device, int baud);
+extern void serialClose(int fd);
+extern void serialFlush(int fd);
+extern void serialPutchar(int fd, unsigned char c);
+extern void serialPuts(int fd, char* s);
+extern void serialPrintf(int fd, char* message, ...);
+extern int serialDataAvail(int fd);
+extern int serialGetchar(int fd);
 
 #ifdef __cplusplus
 }

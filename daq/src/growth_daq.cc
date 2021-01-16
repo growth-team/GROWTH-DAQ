@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
   const std::string configurationFile(argv[2]);
   const u32 exposureInSec = atoi(argv[3]);
 
-  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_level(spdlog::level::info);
   spdlog::info("Exposure = {} sec", exposureInSec);
 
   int dummyArgc = 0;

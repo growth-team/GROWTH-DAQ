@@ -30,9 +30,9 @@
 extern "C" {
 #endif
 
-extern void gertboardAnalogWrite (int chan, int value) ;
-extern int  gertboardAnalogRead  (int chan) ;
-extern int  gertboardSPISetup    (void) ;
+extern void gertboardAnalogWrite(int chan, int value);
+extern int gertboardAnalogRead(int chan);
+extern int gertboardSPISetup(void);
 
 #ifdef __cplusplus
 }

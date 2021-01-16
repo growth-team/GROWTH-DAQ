@@ -20,7 +20,7 @@ class RMAPInitiator;
 class RMAPEngineException : public Exception {
  public:
   enum {
-	  SpaceWireInterfaceIsNotSet,
+    SpaceWireInterfaceIsNotSet,
     RMAPEngineIsNotStarted,
     TransactionIDIsNotAvailable,
     TooManyConcurrentTransactions,
@@ -30,7 +30,7 @@ class RMAPEngineException : public Exception {
     UnexpectedRMAPReplyPacketWasReceived
   };
 
-  RMAPEngineException(u32 status) : Exception(status) {}
+  explicit RMAPEngineException(u32 status) : Exception(status) {}
   virtual ~RMAPEngineException() override = default;
   std::string toString() const override {
     std::string result;
@@ -69,7 +69,15 @@ class RMAPEngineException : public Exception {
 
 class RMAPEngine {
  public:
-  RMAPEngine(SpaceWireIF* spwif);
+  struct ReceivedPacketOption {
+    ReceivedPacketOption() {}
+    ReceivedPacketOption(bool _skipDataCrcCheck, bool _skipConstructingWholePacketVector)
+        : skipDataCrcCheck(_skipDataCrcCheck), skipConstructingWholePacketVector(_skipConstructingWholePacketVector) {}
+    bool skipDataCrcCheck = false;
+    bool skipConstructingWholePacketVector = false;
+  };
+
+  RMAPEngine(SpaceWireIF* spwif, const ReceivedPacketOption& receivedPacketOption = {});
   ~RMAPEngine();
   void start();
   void run();
@@ -124,6 +132,8 @@ class RMAPEngine {
   std::mutex freeRMAPPacketListMutex_;
 
   std::vector<u8> receivePacketBuffer_;
+
+  const ReceivedPacketOption receivedPacketOption_;
 };
 
 #endif

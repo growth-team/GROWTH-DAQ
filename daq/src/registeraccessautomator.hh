@@ -44,6 +44,7 @@ class RegisterAccessAutomator {
       executeCommand(entry);
       entryIndex++;
     }
+    spdlog::info("Processed all commands in the file.");
   }
 
  private:

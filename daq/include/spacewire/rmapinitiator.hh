@@ -162,7 +162,7 @@ class RMAPInitiator {
   void setIncrementMode(bool incrementMode) { incrementMode_ = incrementMode; }
   void setVerifyMode(bool verifyMode) { verifyMode_ = verifyMode; }
 
-  static constexpr i32 DDEFAULT_TIMEOUT_DURATION_MILLISEC = 1000;
+  static constexpr i32 DDEFAULT_TIMEOUT_DURATION_MILLISEC = 2000;
   static const bool DEFAULT_INCREMENT_MODE = true;
   static const bool DEFAULT_VERIFY_MODE = true;
   static const bool DEFAULT_REPLY_MODE = true;

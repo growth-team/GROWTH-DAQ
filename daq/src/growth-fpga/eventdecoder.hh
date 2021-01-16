@@ -59,8 +59,10 @@ class EventDecoder {
   }
 
   virtual ~EventDecoder() {
+    spdlog::info("Waiting for EventDecoder thread to join");
     stopDecodeThread_ = true;
     decodeThread_.join();
+    spdlog::info("EventDecoder thread joined");
   }
 
   void reset() {
@@ -135,12 +137,12 @@ class EventDecoder {
     std::vector<U8BufferPtr> localU8BufferListDecoded;
     EventListPtr currentEventList{};
     while (!stopDecodeThread_) {
-      decodeQueueCondition_.wait_for(lock, std::chrono::milliseconds(100),
+      decodeQueueCondition_.wait_for(lock, std::chrono::milliseconds(500),
                                      [&]() { return !u8BufferDecodeQueue_.empty(); });
       // Pop u8Buffer
       {
         if (u8BufferDecodeQueue_.empty()) {
-          spdlog::info("u8BufferDecodeQueue is empty()");
+          spdlog::debug("EventDecoder::decodeThread() u8BufferDecodeQueue is empty()");
           continue;
         }
         std::lock_guard<std::mutex> guard(u8BufferDecodeQueueMutex_);
@@ -287,7 +289,7 @@ class EventDecoder {
     }
   }
   void pushCurrentEventToEventList(EventList* eventList) {
-    EventPtr event;
+    EventPtr event{};
     if (eventInstanceResavoir_.empty()) {
       event = std::make_unique<growth_fpga::Event>(growth_fpga::MaxWaveformLength);
     } else {

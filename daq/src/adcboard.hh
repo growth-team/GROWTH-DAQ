@@ -267,7 +267,7 @@ class GROWTH_FY2015_ADC {
     return outputMap;
   }
 
-  void dumpThread();
+  void dumpThread(const std::chrono::seconds dumpInterval);
 
   // clang-format off
   static constexpr u32 AddressOfGPSTimeRegister          = 0x20000002;
@@ -301,6 +301,8 @@ class GROWTH_FY2015_ADC {
 
   std::thread dumpThread_{};
   std::atomic<bool> stopDumpThread_{false};
+  std::condition_variable dumpThreadWaitCondition_{};
+  std::mutex dumpThreadWaitMutex_{};
 
   std::thread eventPacketReadThread_;
   std::atomic<bool> stopEventPacketReadThread_{false};

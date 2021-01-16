@@ -93,6 +93,7 @@ void MainThread::run() {
     const auto currentTime = std::chrono::system_clock::now();
     // Read GPS register if necessary
     if (currentTime - timeOfLastGPSRegisterRead_ > GPSRegisterReadWaitInSec) {
+      spdlog::info("Reading GPS register");
       readAnsSaveGPSRegister();
     }
     // Update elapsed time
@@ -110,9 +111,7 @@ void MainThread::run() {
   spdlog::info("Stopping acquisition...");
   adcBoard_->stopAcquisition();
 
-  // Completely read the EventFIFO
-  readAndThenSaveEvents();
-  readAndThenSaveEvents();
+  // Completely flush already-received events
   readAndThenSaveEvents();
 
   // Close output file
@@ -189,17 +188,22 @@ size_t MainThread::readAndThenSaveEvents() {
     openOutputEventListFile();
     switchOutputFile_ = false;
   }
-
-  if (auto result = adcBoard_->getEventList()) {
+  size_t nEventsReceivedInThisCall = 0;
+  size_t loopCount = 0;
+  while (auto result = adcBoard_->getEventList()) {
     auto eventListPtr = std::move(result.value());
     eventListFile_->fillEvents(*eventListPtr);
 
     const size_t nReceivedEvents = eventListPtr->size();
+    nEventsReceivedInThisCall += nReceivedEvents;
     nEvents_ += nReceivedEvents;
     nEventsOfCurrentOutputFile_ += nReceivedEvents;
 
-    return nReceivedEvents;
-  } else {
-    return 0;
+    adcBoard_->returnEventList(std::move(eventListPtr));
+    loopCount++;
+    if(loopCount>10){
+      break;
+    }
   }
+  return nEventsReceivedInThisCall;
 }

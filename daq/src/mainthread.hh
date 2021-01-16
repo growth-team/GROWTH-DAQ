@@ -71,7 +71,7 @@ class MainThread {
 
   const std::chrono::milliseconds DEFAULT_EVENT_READ_WAIT_DURATION = std::chrono::milliseconds(50);
   std::chrono::milliseconds eventReadWaitDuration = DEFAULT_EVENT_READ_WAIT_DURATION;
-  const std::chrono::seconds GPSRegisterReadWaitInSec = std::chrono::seconds(30);
+  const std::chrono::seconds GPSRegisterReadWaitInSec = std::chrono::seconds(1);
   std::chrono::system_clock::time_point timeOfLastGPSRegisterRead_{};
 
   std::unique_ptr<GROWTH_FY2015_ADC> adcBoard_;

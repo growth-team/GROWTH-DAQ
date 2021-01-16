@@ -18,12 +18,10 @@
 #include <cassert>
 #include <chrono>
 
-void GROWTH_FY2015_ADC::dumpThread() {
+void GROWTH_FY2015_ADC::dumpThread(const std::chrono::seconds dumpInterval) {
   size_t nReceivedEvents_previous = 0;
   size_t delta = 0;
   size_t nReceivedEvents_latch;
-  using namespace std::chrono_literals;
-  constexpr auto dumpInterval = 5s;
   while (!stopDumpThread_) {
     nReceivedEvents_latch = nReceivedEvents_;
     delta = nReceivedEvents_latch - nReceivedEvents_previous;
@@ -40,9 +38,13 @@ void GROWTH_FY2015_ADC::dumpThread() {
       }
     }() / 1000.0;
 
-    spdlog::info("Time = {:.1f} sec, Received total = {} events, rate = {:.1f} Hz, available event instances = {}",  //
-                 elapsedTimeSec, nReceivedEvents_latch, rateHz, eventDecoder_->getNAllocatedEventInstances());
-    std::this_thread::sleep_for(dumpInterval);
+    spdlog::info(
+        "Elapsed time = {:5.1f} sec, Received total = {:5} events, rate = {:4.1f} Hz, "
+        "available event instances = {:5d}",  //
+        elapsedTimeSec, nReceivedEvents_latch, rateHz, eventDecoder_->getNAllocatedEventInstances());
+    std::unique_lock lock{dumpThreadWaitMutex_};
+    const auto timeoutTime = std::chrono::system_clock::now() + dumpInterval;
+    dumpThreadWaitCondition_.wait_until(lock, timeoutTime, [&]() { return stopDumpThread_.load(); });
   }
 }
 
@@ -52,7 +54,9 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
   const bool openResult = spwif_->open();
   assert(openResult);
 
-  rmapEngine_ = std::make_shared<RMAPEngine>(spwif_.get());
+  // Skip Data CRC check of reply packets sent from the board for faster processing.
+  const RMAPEngine::ReceivedPacketOption receivedPacketOption{false, false};
+  rmapEngine_ = std::make_shared<RMAPEngine>(spwif_.get(), receivedPacketOption);
   rmapEngine_->start();
 
   adcRMAPTargetNode_ = std::make_shared<RMAPTargetNode>();
@@ -74,15 +78,19 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
 }
 
 GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
+  spdlog::info("ADCBoard: Waiting for threads to join");
   stopDumpThread_ = true;
   stopEventPacketReadThread_ = true;
+  dumpThreadWaitCondition_.notify_one();
   dumpThread_.join();
+  spdlog::info("ADCBoard: Dump thread joined");
   eventPacketReadThread_.join();
+  spdlog::info("ADCBoard: Event-packet-read thread joined");
 }
 
 void GROWTH_FY2015_ADC::startDumpThread() {
   assert(!dumpThread_.joinable());
-  dumpThread_ = std::thread(&GROWTH_FY2015_ADC::dumpThread, this);
+  dumpThread_ = std::thread(&GROWTH_FY2015_ADC::dumpThread, this, std::chrono::seconds(1));
 }
 
 u32 GROWTH_FY2015_ADC::getFPGAType() const { return reg_->read32(AddressOfFPGATypeRegister_L); }

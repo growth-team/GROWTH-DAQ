@@ -87,7 +87,7 @@ class RMAPPacket : public SpaceWirePacket {
     }
   }
 
-  void interpretAsAnRMAPPacket(const u8* packet, size_t length) {
+  void interpretAsAnRMAPPacket(const u8* packet, size_t length, bool skipConstructingWhopePacketVector = false) {
     if (length < 8) {
       throw(RMAPPacketException("packet interpretation failed"));
     }
@@ -224,6 +224,7 @@ class RMAPPacket : public SpaceWirePacket {
           }
           dataIndex = rmapIndex + 12;
           data_.clear();
+          data_.reserve(lengthSpecifiedInPacket);
           for (u32 i = 0; i < lengthSpecifiedInPacket; i++) {
             if ((dataIndex + i) < (length - 1)) {
               data_.push_back(packet[dataIndex + i]);
@@ -254,20 +255,23 @@ class RMAPPacket : public SpaceWirePacket {
     } catch (const std::exception& e) {
       throw(RMAPPacketException("packet interpretation failed"));
     }
-    const u32 previousHeaderCRCMode = headerCRCMode_;
-    const u32 previousDataCRCMode = dataCRCMode_;
-    headerCRCMode_ = RMAPPacket::ManualCRC;
-    dataCRCMode_ = RMAPPacket::ManualCRC;
-    constructPacket();
-    headerCRCMode_ = previousHeaderCRCMode;
-    dataCRCMode_ = previousDataCRCMode;
+    if (!skipConstructingWhopePacketVector) {
+      const u32 previousHeaderCRCMode = headerCRCMode_;
+      const u32 previousDataCRCMode = dataCRCMode_;
+      headerCRCMode_ = RMAPPacket::ManualCRC;
+      dataCRCMode_ = RMAPPacket::ManualCRC;
+      constructPacket();
+      headerCRCMode_ = previousHeaderCRCMode;
+      dataCRCMode_ = previousDataCRCMode;
+    }
   }
 
-  void interpretAsAnRMAPPacket(const std::vector<u8>* data) {
+  void interpretAsAnRMAPPacket(const std::vector<u8>* data,
+                               bool skipConstructingWhopePacketVector = false) {
     if (data->empty()) {
       throw(RMAPPacketException("packet interpretation failed"));
     }
-    interpretAsAnRMAPPacket(data->data(), data->size());
+    interpretAsAnRMAPPacket(data->data(), data->size(), skipConstructingWhopePacketVector);
   }
 
   void setRMAPTargetInformation(const RMAPTargetNode* rmapTargetNode) {

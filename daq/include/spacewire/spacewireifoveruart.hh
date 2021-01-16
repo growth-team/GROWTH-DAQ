@@ -59,14 +59,14 @@ class SpaceWireIFOverUART : public SpaceWireIF {
         throw SpaceWireIFException(SpaceWireIFException::EEP);
       }
     } catch (const SpaceWireSSDTPException& e) {
-      spdlog::error("SpaceWireIFOverUART::receive() SpaceWireSSDTPException::{} ({})", e.toString(), e.getStatus());
+      spdlog::debug("SpaceWireIFOverUART::receive() SpaceWireSSDTPException::{} ({})", e.toString(), e.getStatus());
       if (e.getStatus() == SpaceWireSSDTPException::Timeout) {
         throw SpaceWireIFException(SpaceWireIFException::Timeout);
       } else {
         throw SpaceWireIFException(SpaceWireIFException::ReceiveFailed);
       }
     } catch (const SerialPortException& e) {
-      spdlog::error("SpaceWireIFOverUART::receive() SerialPortException::{} ({})", e.toString(), e.getStatus());
+      spdlog::debug("SpaceWireIFOverUART::receive() SerialPortException::{} ({})", e.toString(), e.getStatus());
       throw SpaceWireIFException(SpaceWireIFException::Timeout);
     }
   }
@@ -76,10 +76,7 @@ class SpaceWireIFOverUART : public SpaceWireIF {
   /** Cancels ongoing receive() method if any exist.
    */
   void cancelReceive() override {
-    using namespace std::chrono_literals;
-    static constexpr std::chrono::milliseconds WaitTimeAfterCancelReceive = 1500ms;
     ssdtp_->cancelReceive();
-    std::this_thread::sleep_for(WaitTimeAfterCancelReceive);
   }
 
  private:

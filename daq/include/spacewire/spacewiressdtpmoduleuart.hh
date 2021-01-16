@@ -56,6 +56,9 @@ class SpaceWireSSDTPModuleUART {
     size_t flagment_size = 0;
     size_t received_size = 0;
 
+    data->clear();
+    receiveCanceled_ = false;
+
     try {
       std::lock_guard<std::mutex> guard(receiveMutex_);
     // header
@@ -73,7 +76,6 @@ class SpaceWireSSDTPModuleUART {
               throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
             }
             if (receiveCanceled_) {
-              receiveCanceled_ = false;
               return 0;
             }
             const size_t result = serialPort_->receive(rheader_.data() + hsize, 12 - hsize);
@@ -102,7 +104,6 @@ class SpaceWireSSDTPModuleUART {
             long result;
           _loop_receiveDataPart:  //
             if (receiveCanceled_) {
-              receiveCanceled_ = false;
               return 0;
             }
             try {
@@ -171,7 +172,7 @@ class SpaceWireSSDTPModuleUART {
   std::mutex receiveMutex_;
 
   bool closed_ = false;
-  bool receiveCanceled_ = false;
+  std::atomic<bool> receiveCanceled_{false};
 
   std::array<u8, 12> rheader_{};
   std::array<u8, 12> sheader_{};

@@ -7,11 +7,17 @@
 
 #include "spdlog/spdlog.h"
 
-RMAPEngine::RMAPEngine(SpaceWireIF* spwif) : spwif(spwif) { initialize(); }
+RMAPEngine::RMAPEngine(SpaceWireIF* spwif, const ReceivedPacketOption& receivedPacketOption)
+    : spwif(spwif), receivedPacketOption_(receivedPacketOption) {
+  initialize();
+}
 RMAPEngine::~RMAPEngine() {
   stopped_ = true;
+  spwif->cancelReceive();
   if (runThread.joinable()) {
+    spdlog::info("Waiting for RMAPEngine receive thread to join");
     runThread.join();
+    spdlog::info("RMAPEngine receive thread joined");
   }
 }
 
@@ -38,9 +44,13 @@ void RMAPEngine::run() {
         }
       }
     } catch (const RMAPPacketException& e) {
-      printf("%s\n", e.what());
+      if (!stopped_) {
+        spdlog::warn("RMAPPacketException in RMAPEngine::run() {}", e.what());
+      }
     } catch (const RMAPEngineException& e) {
-      printf("%s\n", e.toString().c_str());
+      if (!stopped_) {
+        spdlog::warn("RMAPEngineException in RMAPEngine::run() {}", e.toString());
+      }
     }
   }
   stopped_ = true;
@@ -48,6 +58,7 @@ void RMAPEngine::run() {
 }
 
 void RMAPEngine::stop() {
+  spdlog::info("Stopping RMAPEngine");
   if (!stopped_) {
     stopped_ = true;
     spwif->cancelReceive();
@@ -57,6 +68,7 @@ void RMAPEngine::stop() {
       std::this_thread::sleep_for(50ms);
     }
   }
+  spdlog::info("RMAPEngine has stopped");
 }
 
 TransactionID RMAPEngine::initiateTransaction(RMAPPacket* commandPacket, RMAPInitiator* rmapInitiator) {
@@ -133,7 +145,7 @@ RMAPPacketPtr RMAPEngine::receivePacket() {
       throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
     } else {
       if (e.getStatus() == SpaceWireIFException::Timeout) {
-        return nullptr;
+        return {};
       } else {
         // tell run() that SpaceWireIF is disconnected
         throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
@@ -142,10 +154,12 @@ RMAPPacketPtr RMAPEngine::receivePacket() {
   }
   RMAPPacketPtr packet = reuseOrCreateRMAPPacket();
   try {
-    packet->interpretAsAnRMAPPacket(&receivePacketBuffer_);
+    packet->setDataCRCIsChecked(!receivedPacketOption_.skipDataCrcCheck);
+    packet->interpretAsAnRMAPPacket(&receivePacketBuffer_, receivedPacketOption_.skipConstructingWholePacketVector);
+
   } catch (const RMAPPacketException& e) {
     nDiscardedReceivedPackets++;
-    return nullptr;
+    return {};
   }
   return packet;
 }
