@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+
 require "pry"
 require "growth_controller/config"
 require "growth_controller/logger"
@@ -50,11 +51,13 @@ class DisplayUpdater
     #---------------------------------------------
     # Detector ID
     detector_id = @growth_config.detector_id()
-    detector_id_latter = detector_id.upcase().strip()
+    #detector_id_latter = detector_id.split("-")[1].upcase().strip()
+    detector_id_latter = detector_id
 
     # Date/time
     datetime = Time.now()
-    mmdd = "%04d%02d%02d" % [datetime.year, datetime.month, datetime.day]
+    yyyymmdd = "%04d%02d%02d" % [datetime.year, datetime.month, datetime.day]
+    #mmdd = "%02d%02d" % [datetime.month, datetime.day]
     hhmmss = "%02d:%02d:%02d" % [datetime.hour, datetime.min, datetime.sec]
 
     #---------------------------------------------
@@ -84,8 +87,7 @@ class DisplayUpdater
 	    	end
     	end
     	if daq_status["daqStatus"] != nil then
-	#daq_str = "DAQ %7s %3d Hz" % [daq_status["daqStatus"], count_rate]
-          daq_str = "DAQ %7s" % [daq_status["daqStatus"]]
+	    daq_str = "DAQ %7s %3d Hz" % [daq_status["daqStatus"], count_rate]
 	else
 	    daq_str = "DAQ Stopped"
 	end
@@ -97,6 +99,7 @@ class DisplayUpdater
     # Line 3/4
     #---------------------------------------------
     current_str = ""
+    temp_str = ""
     bme280_str = ""
     hk = nil
     
@@ -111,6 +114,10 @@ class DisplayUpdater
     	current_3v3 = hk["hk"]["slow_adc"]["4"]["converted_value"]
     	# Construct string
     	current_str = "12/5/3 %3d %3d %3d mA" % [current_12v, current_5v, current_3v3]
+        # FPGA temp
+        temp_fpga = hk["hk"]["slow_adc"]["0"]["converted_value"]
+        temp_dcdc = hk["hk"]["slow_adc"]["1"]["converted_value"]
+        temp_str = "FPGA %4.1f deg" % [temp_fpga]
 
         # If the slide switch is ON, show "AT" (automatic run) on Line 1.
 		if(hk["hk"]["slide_switch"]=="on")then
@@ -122,16 +129,16 @@ class DisplayUpdater
     end
 
     # Temperature/humidity/pressure
-    #begin
-    # 	bme280_str = "%4.1fdeg %4dhPa %4.1f%%" % [
-    #    	hk["hk"]["bme280"]["temperature"]["value"],
-    #	    	hk["hk"]["bme280"]["pressure"]["value"],
-    #	    	hk["hk"]["bme280"]["humidity"]["value"]
-    #		]
-    #rescue => e
-    #	@logger.debug e
-    #	bme280_str = "BME280 ERROR"
-    #end
+    begin
+    	bme280_str = "%4.1fdeg %4dhPa %4.1f%%" % [
+	    	hk["hk"]["bme280"]["temperature"]["value"],
+	    	hk["hk"]["bme280"]["pressure"]["value"],
+	    	hk["hk"]["bme280"]["humidity"]["value"]
+		]
+    rescue => e
+    	@logger.debug e
+    	bme280_str = "BME280 ERROR"
+    end
 
     #---------------------------------------------
     # Line 5
@@ -140,7 +147,8 @@ class DisplayUpdater
     begin
         hv_status = @hv.status()
         @logger.debug "HV status #{hv_status}"
-        hv_status_str = "%3dV %s %3dV %s" % [
+        #hv_status_str = "%3dV %s %3dV %s" % [
+        hv_status_str = "%4.1fV %s %4.1fV %s" % [
             @growth_config.to_hv_voltage(0, hv_status["0"]["value_in_mV"]),
             hv_status["0"]["status"].upcase,
             @growth_config.to_hv_voltage(1, hv_status["1"]["value_in_mV"]),
@@ -154,18 +162,31 @@ class DisplayUpdater
     #---------------------------------------------
     # Construct whole message
     #---------------------------------------------
+
+=begin
     str = <<EOS
-#{detector_id_latter}
-#{mmdd} #{hhmmss}
+#{detector_id_latter} #{mmdd} #{hhmmss}
 IP #{ip}
 #{daq_str}
 #{current_str}
+#{bme280_str}
 HV #{hv_status_str}
 EOS
     return str
+=end
+
+    str = <<EOS
+#{yyyymmdd} #{hhmmss}
+#{detector_id_latter}
+IP #{ip}
+#{daq_str}
+#{temp_str}
+HV#{hv_status_str}
+EOS
+    return str
+
   end
 end
-
 
 display_updater = DisplayUpdater.new()
 while(true)

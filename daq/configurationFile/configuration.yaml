@@ -1,10 +1,10 @@
-DetectorID: crreat-01
+DetectorID: Belisama-02
 PreTriggerSamples: 20
 PostTriggerSamples: 500
 SamplesInEventPacket: 1
 DownSamplingFactorForSavedWaveform: 1
 ChannelEnable: [yes,yes,no,yes]
 TriggerModes: [4, 4, 4, 4]
-TriggerThresholds: [15, 15, 15, 30]
+TriggerThresholds: [30, 30, 30, 30]
 TriggerCloseThresholds: [2050, 2050, 2050, 2050]
 
