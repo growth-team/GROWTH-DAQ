@@ -1,6 +1,6 @@
 require "yaml"
 require "logger"
-require "growth_controller/logger"
+require "/home/pi/git/GROWTH-DAQ/controller/lib/growth_controller/logger"
 
 module GROWTH
   class Config < LoggingInterface
@@ -23,7 +23,8 @@ module GROWTH
 
       # Construct a logger instance
       set_logger(logger, module_name: "config")
-      
+
+      #@growth_config_file="/home/pi/growth_config.yaml"
       log_info("growth_config = #{@growth_config_file}")
 
       # Set default values
@@ -35,6 +36,8 @@ module GROWTH
 
       # Set misc parameters
       @daq_run_dir = "#{GROWTH_DAQ_RUN_ROOT_DIR}/#{@detector_id}"
+
+
     end
 
     attr_accessor :detector_id
@@ -66,6 +69,12 @@ module GROWTH
       end
     end
 
+    def get_controlled_hv(ch,temp)
+      voltage=@hv_control[ch][2]+@hv_control[ch][0]*(temp-25.0)+@hv_control[ch][3]*100.0/(100.0+@hv_control[ch][1]*(temp-25.0))
+      dac_hv_mV = 3300.0*voltage/106.0
+      return dac_hv_mV
+    end
+    
     def get_detault_hv_DAC_mV(ch)
       if @has_hv_default then
         if(@hv_default_DAC_mV[ch]==nil)then
@@ -128,6 +137,7 @@ module GROWTH
 
       # HV-related configuration
       load_hv(yaml)
+      load_control(yaml)
 
       # Limits
       load_limits(yaml)
@@ -158,16 +168,40 @@ module GROWTH
         if(yaml["hv"]["default"]!=nil)then
           @has_hv_default = true
           for ch,default_DAC_mV in yaml["hv"]["default"]
-            @hv_default_DAC_mV[ch.to_i] = default_DAC_mV.to_i
-            log_info("HV Ch.#{ch} DAC_mV = #{default_DAC_mV.to_i}")
+            if default_DAC_mV==true then
+              @hv_default_DAC_mV[ch.to_i] = 100
+              log_info("HV Ch.#{ch} is on")
+            else
+              @hv_default_DAC_mV[ch.to_i] = 0
+              log_info("HV Ch.#{ch} is off")
+            end
           end
         else
           log_warn("No HV default value defined")
           @has_hv_default = false
         end
-
       else
         log_error("No HV configuration")
+        exit(-1)
+      end
+    end
+
+    private
+    def load_control(yaml)
+      @hv_control = Array.new(2){Array.new}
+      @has_hv_control = false
+      if(yaml["control"]!=nil)then
+        # DAC-HV conversion equation
+        @has_hv_conversion = true
+        for ch in [0,1]
+          @hv_control[ch][0] = yaml["control"]["constTemp"][ch].to_f
+          @hv_control[ch][1] = yaml["control"]["constCrys"][ch].to_f
+          @hv_control[ch][2] = yaml["control"]["voltBreak"][ch].to_f
+          @hv_control[ch][3] = yaml["control"]["deltaVolt"][ch].to_f
+        end
+      else
+        log_error("No HV configuration")
+        @has_hv_conversion = false
         exit(-1)
       end
     end

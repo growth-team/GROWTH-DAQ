@@ -175,12 +175,20 @@ EOS
     return str
 =end
 
+#    str = <<EOS
+##{yyyymmdd} #{hhmmss}
+##{detector_id_latter}
+#IP #{ip}
+##{daq_str}
+##{temp_str}
+#HV#{hv_status_str}
+#EOS
     str = <<EOS
 #{yyyymmdd} #{hhmmss}
 #{detector_id_latter}
 IP #{ip}
 #{daq_str}
-#{temp_str}
+#{bme280_str}
 HV#{hv_status_str}
 EOS
     return str

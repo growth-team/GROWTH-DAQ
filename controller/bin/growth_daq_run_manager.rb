@@ -141,7 +141,7 @@ class DAQRunManager
     for ch in [0,1]
       dac_mV = @growth_config.get_detault_hv_DAC_mV(ch)
       if(dac_mV!=0 and dac_mV>0)then
-        @hv.set(ch, dac_mV)
+      #@hv.set(ch, dac_mV)
         @hv.on(ch)
       end
     end

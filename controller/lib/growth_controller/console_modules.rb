@@ -1,6 +1,6 @@
 require "rbczmq"
 require "json"
-require "growth_controller/logger"
+require "/home/pi/git/GROWTH-DAQ/controller/lib/growth_controller/logger"
 
 DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER   = 10000
 
