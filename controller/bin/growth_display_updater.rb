@@ -148,7 +148,7 @@ class DisplayUpdater
         hv_status = @hv.status()
         @logger.debug "HV status #{hv_status}"
         #hv_status_str = "%3dV %s %3dV %s" % [
-        hv_status_str = "%4.1fV %s %4.1fV %s" % [
+        hv_status_str = "%4.2fV %s %4.2fV %s" % [
             @growth_config.to_hv_voltage(0, hv_status["0"]["value_in_mV"]),
             hv_status["0"]["status"].upcase,
             @growth_config.to_hv_voltage(1, hv_status["1"]["value_in_mV"]),
