@@ -71,7 +71,7 @@ module GROWTH
 
     def get_controlled_hv(ch,temp)
       voltage=@hv_control[ch][2]+@hv_control[ch][0]*(temp-25.0)+@hv_control[ch][3]*100.0/(100.0+@hv_control[ch][1]*(temp-25.0))
-      dac_hv_mV = 3300.0*voltage/106.0
+      dac_hv_mV = 3300.0*voltage/105.6
       return dac_hv_mV
     end
     
