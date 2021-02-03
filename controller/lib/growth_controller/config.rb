@@ -1,6 +1,6 @@
 require "yaml"
 require "logger"
-require "/home/pi/git/GROWTH-DAQ/controller/lib/growth_controller/logger"
+require "growth_controller/logger"
 
 module GROWTH
   class Config < LoggingInterface

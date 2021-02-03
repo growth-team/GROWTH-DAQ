@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
-require "/home/pi/git/GROWTH-DAQ/controller/lib/growth_controller/logger"
-require "/home/pi/git/GROWTH-DAQ/controller/lib/growth_controller/config"
-require "/home/pi/git/GROWTH-DAQ/controller/lib/growth_controller/console_modules"
+require "growth_controller/logger"
+require "growth_controller/config"
+require "growth_controller/console_modules"
 
 # This script control HV outputs for temperature compensation of SiPM sensors.
 
