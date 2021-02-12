@@ -138,16 +138,21 @@ class DAQRunManager
   private
   def hv_on()
     @logger.info("Turning on HV")
+    hk = @hk.read()
     for ch in [0,1]
       dac_mV = @growth_config.get_detault_hv_DAC_mV(ch)
       if(dac_mV!=0 and dac_mV>0)then
-      #@hv.set(ch, dac_mV)
-        @hv.on(ch)
+        temp=hk["hk"]["bme280"]["temperature"]["value"]
+        if (temp>=-10.0)&&(temp<50.0) then
+          hv_value=@growth_config.get_controlled_hv(ch, temp)
+          @hv.set(ch, hv_value)
+          @hv.on(ch)
+        end
       end
     end
     @logger.info("HV status: #{@hv.status()}")
   end
-
+  
 end
 
 daq_run_manager = DAQRunManager.new()

@@ -1,10 +1,10 @@
-DetectorID: Belisama-02
+DetectorID: Belisama
 PreTriggerSamples: 20
 PostTriggerSamples: 500
 SamplesInEventPacket: 1
 DownSamplingFactorForSavedWaveform: 1
-ChannelEnable: [yes,yes,no,yes]
+ChannelEnable: [yes,no,no,no]
 TriggerModes: [4, 4, 4, 4]
-TriggerThresholds: [30, 30, 30, 30]
+TriggerThresholds: [15, 30, 30, 30]
 TriggerCloseThresholds: [2050, 2050, 2050, 2050]
 
