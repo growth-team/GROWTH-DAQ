@@ -6,9 +6,11 @@ brew install \
 cmake \
 yaml-cpp \
 cfitsio \
-boost@1.60 \
 xerces-c \
 git-lfs
+
+brew tap growth-team/homebrew-growth
+brew install growth-team/growth/boost@1.60
 
 # Run git-lfs install command
 git lfs install
