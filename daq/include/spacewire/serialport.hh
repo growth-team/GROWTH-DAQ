@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <atomic>
 
 class SerialPortException : public Exception {
  public:
@@ -82,37 +83,42 @@ class SerialPortBoostAsio : public SerialPort {
   size_t receive(u8* buffer, size_t length) override;
 
  private:
-//  void read_callback(const asio::error_code& e, std::size_t size, boost::array<char, ReadBufferSize> r) {
-//    spdlog::info("read_callback size = {} bytes", size);
-//  }
-//  void write_callback(const asio::error_code& e, std::size_t size) {
-//    spdlog::info("write_callback size = {} bytes, error = ", size);
-//  }
+  //  void read_callback(const asio::error_code& e, std::size_t size, boost::array<char, ReadBufferSize> r) {
+  //    spdlog::info("read_callback size = {} bytes", size);
+  //  }
+  //  void write_callback(const asio::error_code& e, std::size_t size) {
+  //    spdlog::info("write_callback size = {} bytes, error = ", size);
+  //  }
 
-//  // TODO: not used?
-//  void send(std::vector<uint8_t>& sendBuffer) { port->write_some(asio::buffer(sendBuffer)); }
+  //  // TODO: not used?
+  //  void send(std::vector<uint8_t>& sendBuffer) { port->write_some(asio::buffer(sendBuffer)); }
 
   template <typename MutableBufferSequence>
   void receiveWithTimeout(MutableBufferSequence& buffers, size_t& nReceivedBytes,
                           const asio::steady_timer::duration& expiry_time) {
     std::optional<asio::error_code> timer_result;
-    asio::steady_timer timer(port->get_io_service());
+    auto& io_service = port_->get_io_service();
+    asio::steady_timer timer(io_service);
     timer.expires_from_now(expiry_time);
     timer.async_wait([&timer_result](const asio::error_code& error) { timer_result = error; });
 
     std::optional<asio::error_code> read_result;
-    port->async_read_some(
-        buffers, [&read_result, &nReceivedBytes](const asio::error_code& error, size_t _nReceivedBytes) {
-          read_result = error;
-          nReceivedBytes = _nReceivedBytes;
-        });
+    port_->async_read_some(buffers,
+                           [&read_result, &nReceivedBytes](const asio::error_code& error, size_t _nReceivedBytes) {
+                             read_result = error;
+                             nReceivedBytes = _nReceivedBytes;
+                           });
 
-    port->get_io_service().reset();
-    while (port->get_io_service().run_one()) {
-      if (read_result){
+    io_service.reset();
+    while (io_service.run_one()) {
+      if (read_result) {
         timer.cancel();
-      }else if (timer_result){
-        port->cancel();
+      } else if (timer_result) {
+        port_->cancel();
+        if (anythingHasBeenSent_) {
+          spdlog::error("UART receive timeout timer expired");
+          openDevice();
+        }
       }
     }
 
@@ -122,9 +128,15 @@ class SerialPortBoostAsio : public SerialPort {
   }
 
  private:
-  std::unique_ptr<asio::serial_port> port;
-  asio::io_service io;
+  const std::string deviceName_;
+  size_t baudRate_{};
+  void openDevice();
+
+  std::unique_ptr<asio::serial_port> port_;
+  asio::io_service io_;
   asio::streambuf receive_buffer_;
+  size_t nSerialPortOpen_ = 0;
+  std::atomic<bool> anythingHasBeenSent_{false};
 };
 
 #endif

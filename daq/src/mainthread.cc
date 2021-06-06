@@ -201,7 +201,7 @@ size_t MainThread::readAndThenSaveEvents() {
 
     adcBoard_->returnEventList(std::move(eventListPtr));
     loopCount++;
-    if(loopCount>10){
+    if (loopCount > 10) {
       break;
     }
   }

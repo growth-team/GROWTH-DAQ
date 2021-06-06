@@ -40,8 +40,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
    */
   void getEventData(std::vector<u8>& receiveBuffer) {
     receiveBuffer.resize(RECEIVE_BUFFER_SIZE_BYTES);
-    size_t receivedSize = 0;
-    receivedSize = readEventFIFO(receiveBuffer.data(), RECEIVE_BUFFER_SIZE_BYTES);
+    const auto receivedSize = readEventFIFO(receiveBuffer.data(), RECEIVE_BUFFER_SIZE_BYTES);
     receiveBuffer.resize(receivedSize);
     receivedBytes_ += receivedSize;
   }
@@ -91,7 +90,7 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   static constexpr u32 AddressOf_EventFIFO_DataCount_Register = 0x20000000;
 
   static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 1024 * 32;
-  static constexpr size_t SINGLE_READ_MAX_SIZE_BYTES = 4096*3;
+  static constexpr size_t SINGLE_READ_MAX_SIZE_BYTES = 4096 * 16; // 4096 * 2;
 
   static constexpr size_t NUM_RECEIVE_BUFFERS = 1024;
   static constexpr size_t EVENT_FIFIO_SIZE_BYTES = 2 * 16 * 1024;  // 16-bit wide * 16-k depth

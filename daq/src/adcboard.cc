@@ -49,7 +49,7 @@ void GROWTH_FY2015_ADC::dumpThread(const std::chrono::seconds dumpInterval) {
 }
 
 GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
-    : eventDecoder_(new EventDecoder), gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
+    : eventDecoder_(std::make_unique<EventDecoder>()), gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
   spwif_ = std::make_unique<SpaceWireIFOverUART>(deviceName);
   const bool openResult = spwif_->open();
   assert(openResult);
@@ -69,11 +69,12 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
   // create instances of ADCChannelRegister
   for (size_t i = 0; i < growth_fpga::NumberOfChannels; i++) {
     channelModules_.emplace_back(
-        new ChannelModule(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_, i));
+        std::make_unique<ChannelModule>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_, i));
   }
 
   reg_ = std::make_shared<RegisterAccessInterface>(std::make_shared<RMAPInitiator>(rmapEngine_), adcRMAPTargetNode_);
 
+  eventDecoder_->pauseEventDecoding();
   eventPacketReadThread_ = std::thread(&GROWTH_FY2015_ADC::eventPacketReadThread, this);
 }
 
@@ -138,9 +139,11 @@ const std::vector<u8>& GROWTH_FY2015_ADC::readGPSDataFIFO() {
 void GROWTH_FY2015_ADC::reset() {
   channelManager_->stopAcquisition();
   channelManager_->reset();
+  eventDecoder_->pauseEventDecoding();
   consumerManager_->disableEventOutput();  // stop event recording in FIFO
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   eventDecoder_->reset();
+  eventDecoder_->resumeEventDecoding();
   consumerManager_->enableEventOutput();  // start event recording in FIFO
 }
 
@@ -226,6 +229,7 @@ void GROWTH_FY2015_ADC::turnOffADCPower(size_t chNumber) {
 
 void GROWTH_FY2015_ADC::startAcquisition(std::vector<bool> channelsToBeStarted) {
   reset();
+  eventDecoder_->resumeEventDecoding();
   acquisitionStartTime_ = std::chrono::system_clock::now();
   channelManager_->startAcquisition(channelsToBeStarted);
 }
@@ -396,6 +400,12 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
       turnOnADCPower(ch);
     }
     spdlog::info("Device configuration is done");
+  } catch (const std::exception& e) {
+    spdlog::error("Device configuration has failed ({})", e.what());
+    throw;
+  }catch(const RMAPInitiatorException& e){
+    spdlog::error("Communication failed ({})", e.toString());
+    throw;
   } catch (...) {
     spdlog::error("Device configuration has failed");
     throw;

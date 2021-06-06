@@ -48,22 +48,18 @@ void SerialPortLibSerial::send(const u8* buffer, size_t length) { serial_->write
 size_t SerialPortLibSerial::receive(u8* buffer, size_t length) { return serial_->read(buffer, length); }
 
 //------------------------------------------------------------------------------------------
-SerialPortBoostAsio::SerialPortBoostAsio(const std::string& deviceName, size_t baudRate) {
-  port.reset(new asio::serial_port(io, deviceName.c_str()));
-  port->set_option(asio::serial_port_base::baud_rate(baudRate));
-  port->set_option(asio::serial_port_base::character_size(8));
-  port->set_option(asio::serial_port_base::flow_control(asio::serial_port_base::flow_control::none));
-  port->set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
-  port->set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
-
+SerialPortBoostAsio::SerialPortBoostAsio(const std::string& deviceName, size_t baudRate)
+    : deviceName_(deviceName), baudRate_(baudRate) {
+  openDevice();
   // for non-blocking
   // boost::thread thr_io(boost::bind(&asio::io_service::run, &io));
 }
 
-void SerialPortBoostAsio::close() { port->close(); }
+void SerialPortBoostAsio::close() { port_->close(); }
 
 void SerialPortBoostAsio::send(const u8* sendBuffer, size_t length) {
-  asio::write(*port, asio::buffer(sendBuffer, length));
+  asio::write(*port_, asio::buffer(sendBuffer, length));
+  anythingHasBeenSent_=true;
 }
 
 size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
@@ -78,9 +74,8 @@ size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
     receiveWithTimeout(buffer, nReceivedBytes, std::chrono::milliseconds(1000));
 
     if (nReceivedBytes > length) {
-      using namespace std;
-      cerr << "SerialPort::receive(): too long data (" << nReceivedBytes << " bytes) received against specified "
-           << length << " bytes" << endl;
+      spdlog::error("SerialPort::receive(): too long data ({} bytes) received against specified ({} bytes)",
+                    nReceivedBytes, length);
       throw SerialPortException(SerialPortException::TooLargeDataReceived);
     }
 
@@ -88,4 +83,23 @@ size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
   } catch (asio::system_error& e) {
     throw SerialPortException(SerialPortException::Timeout);
   }
+}
+
+void SerialPortBoostAsio::openDevice() {
+  nSerialPortOpen_++;
+  if (nSerialPortOpen_ == 1) {
+    spdlog::info("Opening serial port ({})", nSerialPortOpen_);
+
+  } else {
+    spdlog::warn("Re-opening serial port ({})", nSerialPortOpen_);
+  }
+  if(port_){
+    port_->close();
+  }
+  port_ = std::make_unique<asio::serial_port>(io_, deviceName_.c_str());
+  port_->set_option(asio::serial_port_base::baud_rate(baudRate_));
+  port_->set_option(asio::serial_port_base::character_size(8));
+  port_->set_option(asio::serial_port_base::flow_control(asio::serial_port_base::flow_control::none));
+  port_->set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
+  port_->set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
 }

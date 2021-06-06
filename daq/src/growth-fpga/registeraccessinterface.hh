@@ -157,7 +157,7 @@ class RegisterAccessInterface {
   }
 
  private:
-  void timeoutSleep() { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); }
+  void timeoutSleep() { std::this_thread::sleep_for(std::chrono::milliseconds(1000)); }
   std::shared_ptr<RMAPInitiator> rmapInitiator_{};
   std::shared_ptr<RMAPTargetNode> rmapTargetNode_{};
   static constexpr size_t MAX_RETRIES = 5;

@@ -79,7 +79,7 @@ class RMAPInitiator {
 
     if (replyPacket_) {
       rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket_));
-      replyPacketSet_=false;
+      replyPacketSet_ = false;
     }
 
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
@@ -122,7 +122,7 @@ class RMAPInitiator {
 
     if (replyPacket_) {
       rmapEngine_->putBackRMAPPacketInstnce(std::move(replyPacket_));
-      replyPacketSet_=false;
+      replyPacketSet_ = false;
     }
 
     std::unique_lock<std::mutex> lock(replyWaitMutex_);
@@ -148,7 +148,7 @@ class RMAPInitiator {
   void replyReceived(RMAPPacketPtr packet) {
     std::lock_guard<std::mutex> guard(replyWaitMutex_);
     replyPacket_ = std::move(packet);
-    replyPacketSet_=true;
+    replyPacketSet_ = true;
     replyWaitCondition_.notify_one();
   }
 

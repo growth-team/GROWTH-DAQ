@@ -127,6 +127,9 @@ class EventDecoder {
    */
   size_t getNAllocatedEventInstances() const { return eventInstanceResavoir_.size(); }
 
+  void pauseEventDecoding() { pauseEventDecoding_ = true; }
+  void resumeEventDecoding() { pauseEventDecoding_ = false; }
+
   static constexpr size_t INITIAL_NUM_EVENT_INSTANCES = 10000;
 
  private:
@@ -164,8 +167,10 @@ class EventDecoder {
           }
         }();
       }
-      for (auto& u8Buffer : localU8BufferList) {
-        decodeEvent(u8Buffer.get(), currentEventList.get());
+      if (!pauseEventDecoding_) {
+        for (auto& u8Buffer : localU8BufferList) {
+          decodeEvent(u8Buffer.get(), currentEventList.get());
+        }
       }
       if (!currentEventList->empty()) {
         std::lock_guard<std::mutex> guard(eventListQueueMutex_);
@@ -192,7 +197,7 @@ class EventDecoder {
     const size_t numBytes = readDataUint8Array->size();
     assert(numBytes % 2 == 0);
     const size_t numWords = numBytes / 2;
-    readDataUint16Array_.reserve(numWords);
+    readDataUint16Array_.resize(numWords);
 
     // fill data
     for (size_t i = 0; i < numWords; i++) {
@@ -339,6 +344,8 @@ class EventDecoder {
   std::deque<EventPtr> eventInstanceResavoir_{};
   std::mutex eventInstanceResavoirMutex_;
   size_t waveformLength_{};
+
+  std::atomic<bool> pauseEventDecoding_{false};
 
   std::atomic<bool> stopDecodeThread_{false};
   std::thread decodeThread_;

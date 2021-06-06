@@ -134,6 +134,8 @@ class RMAPEngine {
   std::vector<u8> receivePacketBuffer_;
 
   const ReceivedPacketOption receivedPacketOption_;
+
+  bool packetDumpEnabled_{};
 };
 
 #endif

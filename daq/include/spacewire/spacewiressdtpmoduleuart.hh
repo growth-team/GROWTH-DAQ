@@ -5,6 +5,8 @@
 #include <exception>
 #include <mutex>
 
+#include "spdlog/spdlog.h"
+
 #include "spacewire/serialport.hh"
 #include "spacewire/spacewireif.hh"
 #include "spacewire/spacewiressdtpmodule.hh"
@@ -15,8 +17,7 @@
  */
 class SpaceWireSSDTPModuleUART {
  public:
-  SpaceWireSSDTPModuleUART(SerialPort* serialPort)
-      : serialPort_(serialPort), sendBuffer_(BufferSize), receiveBuffer_(BufferSize) {
+  SpaceWireSSDTPModuleUART(SerialPort* serialPort) : serialPort_(serialPort), sendBuffer_(MAX_RECEIVE_SIZE_BYTES) {
     if (!serialPort) {
       throw std::runtime_error("serialPort pointer must not be nullptr");
     }
@@ -43,84 +44,84 @@ class SpaceWireSSDTPModuleUART {
       asize = asize / 0x100;
     }
     try {
-      serialPort_->send(sheader_.data(), 12);
+      serialPort_->send(sheader_.data(), HEADER_LENGTH_BYTES);
       serialPort_->send(data, length);
     } catch (...) {
       throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
     }
   }
 
-  size_t receive(std::vector<u8>* data, EOPType& eopType) {
-    size_t size = 0;
-    size_t hsize = 0;
-    size_t flagment_size = 0;
-    size_t received_size = 0;
-
-    data->clear();
+  size_t receive(std::vector<u8>* receiveBuffer, EOPType& eopType) {
+    receiveBuffer->clear();
     receiveCanceled_ = false;
 
     try {
       std::lock_guard<std::mutex> guard(receiveMutex_);
-    // header
-    receive_header:  //
+      // header
       rheader_[0] = 0xFF;
       rheader_[1] = 0x00;
+
       while (rheader_[0] != DataFlag_Complete_EOP && rheader_[0] != DataFlag_Complete_EEP) {
-        hsize = 0;
-        flagment_size = 0;
-        received_size = 0;
         // flag and size part
         try {
-          while (hsize != 12) {
+          size_t receivedHeaderSizeBytes = 0;
+          while (receivedHeaderSizeBytes != HEADER_LENGTH_BYTES) {
             if (closed_) {
               throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
             }
             if (receiveCanceled_) {
               return 0;
             }
-            const size_t result = serialPort_->receive(rheader_.data() + hsize, 12 - hsize);
-            hsize += result;
+            receivedHeaderSizeBytes += serialPort_->receive(rheader_.data() + receivedHeaderSizeBytes,
+                                                            HEADER_LENGTH_BYTES - receivedHeaderSizeBytes);
           }
         } catch (const SerialPortException& e) {
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
         } catch (...) {
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
         }
-        u8* data_pointer = receiveBuffer_.data();
-
         // data or control code part
         if (rheader_[0] == DataFlag_Complete_EOP || rheader_[0] == DataFlag_Complete_EEP ||
             rheader_[0] == DataFlag_Flagmented) {
           // data
-          for (size_t i = 2; i < 12; i++) {
-            flagment_size = flagment_size * 0x100 + rheader_[i];
+          size_t payloadSizeBytes = 0;
+          for (size_t i = 2; i < HEADER_LENGTH_BYTES; i++) {
+            payloadSizeBytes = (payloadSizeBytes << 8) + rheader_[i];
           }
           // verify fragment size
-          if (flagment_size > BufferSize) {
+          if (atLeastOnePacketSuccessfulyReceived_ && payloadSizeBytes > MAX_RECEIVE_SIZE_BYTES) {
+            // When the connected node (e.g. FPGA) is not properly initialized (e.g. the last communication was abruptly
+            // terminated due to an error), the connected node might send corrupted data, but those should be ignored
+            // until a valid packet is successfully received.
+            spdlog::error("Too large SSDTP segment size requested by the peer ({:d} bytes)", payloadSizeBytes);
             throw SpaceWireSSDTPException(SpaceWireSSDTPException::DataSizeTooLarge);
           }
 
-          while (received_size != flagment_size) {
-            long result;
-          _loop_receiveDataPart:  //
+          // Resize receive buffer
+          const size_t alreadyReceivedBytes = receiveBuffer->size();
+          receiveBuffer->resize(receiveBuffer->size() + payloadSizeBytes);
+
+          size_t receivedPayloadSizeBytes = 0;
+          while (receivedPayloadSizeBytes != payloadSizeBytes) {
             if (receiveCanceled_) {
               return 0;
             }
             try {
-              result = serialPort_->receive(data_pointer + size + received_size, flagment_size - received_size);
+              auto bufferPointer = receiveBuffer->data() + alreadyReceivedBytes + receivedPayloadSizeBytes;
+              receivedPayloadSizeBytes +=
+                  serialPort_->receive(bufferPointer, payloadSizeBytes - receivedPayloadSizeBytes);
             } catch (const SerialPortException& e) {
               throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
             }
-            received_size += result;
           }
-          size += received_size;
         } else if (rheader_[0] == ControlFlag_SendTimeCode || rheader_[0] == ControlFlag_GotTimeCode) {
-          std::array<u8, 2> timecodeReceiveBuffer{};
+          constexpr size_t timeCodeDataSizeBytes = 2;
+          std::array<u8, timeCodeDataSizeBytes> timecodeReceiveBuffer{};
           size_t receivedSize = 0;
           try {
-            while (receivedSize < 2) {
-              int result = serialPort_->receive(timecodeReceiveBuffer.data() + receivedSize, 2 - receivedSize);
-              receivedSize += result;
+            while (receivedSize < timeCodeDataSizeBytes) {
+              receivedSize += serialPort_->receive(timecodeReceiveBuffer.data() + receivedSize,
+                                                   timeCodeDataSizeBytes - receivedSize);
             }
           } catch (const SerialPortException& e) {
             throw SpaceWireSSDTPException(SpaceWireSSDTPException::TimecodeReceiveError);
@@ -129,12 +130,7 @@ class SpaceWireSSDTPModuleUART {
           throw SpaceWireSSDTPException(SpaceWireSSDTPException::ReceiveFailed);
         }
       }
-      data->resize(size);
-      if (size != 0) {
-        memcpy(data->data(), receiveBuffer_.data(), size);
-      } else {
-        goto receive_header;
-      }
+
       if (rheader_[0] == DataFlag_Complete_EOP) {
         eopType = EOPType::EOP;
       } else if (rheader_[0] == DataFlag_Complete_EEP) {
@@ -142,8 +138,8 @@ class SpaceWireSSDTPModuleUART {
       } else {
         eopType = EOPType::Continued;
       }
-
-      return size;
+      atLeastOnePacketSuccessfulyReceived_ = true;
+      return receiveBuffer->size();
     } catch (const SpaceWireSSDTPException& e) {
       throw e;
     } catch (const SerialPortException& e) {
@@ -165,20 +161,20 @@ class SpaceWireSSDTPModuleUART {
  private:
   SerialPort* serialPort_;
   std::vector<u8> sendBuffer_{};
-  std::vector<u8> receiveBuffer_{};
   u8 internalTimecode_{};
   u32 latestSendSize_{};
   std::mutex sendMutex_;
   std::mutex receiveMutex_;
-
+  bool atLeastOnePacketSuccessfulyReceived_ = false;
   bool closed_ = false;
   std::atomic<bool> receiveCanceled_{false};
 
-  std::array<u8, 12> rheader_{};
-  std::array<u8, 12> sheader_{};
+  static constexpr size_t HEADER_LENGTH_BYTES = 12;
+  std::array<u8, HEADER_LENGTH_BYTES> rheader_{};
+  std::array<u8, HEADER_LENGTH_BYTES> sheader_{};
 
  public:
-  static constexpr u32 BufferSize = 100 * 1024;
+  static constexpr u32 MAX_RECEIVE_SIZE_BYTES = 100 * 1024;
 
   /* for SSDTP2 */
   static constexpr u8 DataFlag_Complete_EOP = 0x00;

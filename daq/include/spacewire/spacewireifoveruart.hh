@@ -23,9 +23,8 @@ class SpaceWireIFOverUART : public SpaceWireIF {
   ~SpaceWireIFOverUART() override = default;
 
   bool open() override {
-    serial_ = std::make_unique<SerialPortBoostAsio>(deviceName_, BAUD_RATE);
-    setTimeoutDuration(500000);
 
+    serial_ = std::make_unique<SerialPortBoostAsio>(deviceName_, BAUD_RATE);
     ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(serial_.get());
     isOpen_ = true;
     return isOpen_;

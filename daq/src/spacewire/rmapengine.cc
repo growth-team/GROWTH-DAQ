@@ -88,6 +88,7 @@ TransactionID RMAPEngine::initiateTransaction(RMAPPacket* commandPacket, RMAPIni
   commandPacket->setTransactionID(transactionID);
   commandPacket->constructPacket();
   const auto packet = commandPacket->getPacketBufferPointer();
+
   spwif->send(packet->data(), packet->size());
   return transactionID;
 }
@@ -140,23 +141,12 @@ RMAPPacketPtr RMAPEngine::receivePacket() {
   try {
     spwif->receive(&receivePacketBuffer_);
   } catch (const SpaceWireIFException& e) {
-    if (e.getStatus() == SpaceWireIFException::Disconnected) {
-      // tell run() that SpaceWireIF is disconnected
-      throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
-    } else {
-      if (e.getStatus() == SpaceWireIFException::Timeout) {
-        return {};
-      } else {
-        // tell run() that SpaceWireIF is disconnected
-        throw RMAPEngineException(RMAPEngineException::SpaceWireIFDisconnected);
-      }
-    }
   }
+
   RMAPPacketPtr packet = reuseOrCreateRMAPPacket();
   try {
     packet->setDataCRCIsChecked(!receivedPacketOption_.skipDataCrcCheck);
     packet->interpretAsAnRMAPPacket(&receivePacketBuffer_, receivedPacketOption_.skipConstructingWholePacketVector);
-
   } catch (const RMAPPacketException& e) {
     nDiscardedReceivedPackets++;
     return {};
