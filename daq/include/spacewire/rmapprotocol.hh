@@ -2,45 +2,46 @@
 #define SPACEWIRE_RMAPPROTOCOL_HH_
 
 #include "spacewire/types.hh"
+
 class RMAPProtocol {
  public:
-  static const u8 ProtocolIdentifier = 0x01;
-  static const u8 DefaultPacketType = 0x01;
-  static const u8 DefaultWriteOrRead = 0x01;
-  static const u8 DefaultVerifyMode = 0x01;
-  static const u8 DefaultAckMode = 0x01;
-  static const u8 DefaultIncrementMode = 0x01;
-  static const u16 DEFAULT_TID = 0x00;
-  static const u8 DEFAULT_EXTENDED_ADDRESS = 0x00;
-  static const u32 DefaultAddress = 0x00;
-  static const u32 DefaultLength = 0x00;
-  static const u8 DefaultHeaderCRC = 0x00;
-  static const u8 DefaultDataCRC = 0x00;
-  static const u8 DEFAULT_STATUS = 0x00;
+  static constexpr u8 ProtocolIdentifier = 0x01;
+  static constexpr u8 DefaultPacketType = 0x01;
+  static constexpr u8 DefaultWriteOrRead = 0x01;
+  static constexpr u8 DefaultVerifyMode = 0x01;
+  static constexpr u8 DefaultAckMode = 0x01;
+  static constexpr u8 DefaultIncrementMode = 0x01;
+  static constexpr u16 DEFAULT_TID = 0x00;
+  static constexpr u8 DEFAULT_EXTENDED_ADDRESS = 0x00;
+  static constexpr u32 DefaultAddress = 0x00;
+  static constexpr u32 DefaultLength = 0x00;
+  static constexpr u8 DefaultHeaderCRC = 0x00;
+  static constexpr u8 DefaultDataCRC = 0x00;
+  static constexpr u8 DEFAULT_STATUS = 0x00;
 
-  static const u8 PacketTypeCommand = 0x01;
-  static const u8 PacketTypeReply = 0x00;
+  static constexpr u8 PacketTypeCommand = 0x01;
+  static constexpr u8 PacketTypeReply = 0x00;
 
-  static const u8 PacketWriteMode = 0x01;
-  static const u8 PacketReadMode = 0x00;
+  static constexpr u8 PacketWriteMode = 0x01;
+  static constexpr u8 PacketReadMode = 0x00;
 
-  static const u8 PacketVerifyMode = 0x01;
-  static const u8 PacketNoVerifyMode = 0x00;
+  static constexpr u8 PacketVerifyMode = 0x01;
+  static constexpr u8 PacketNoVerifyMode = 0x00;
 
-  static const u8 PacketAckMode = 0x01;
-  static const u8 PacketNoAckMode = 0x00;
+  static constexpr u8 PacketAckMode = 0x01;
+  static constexpr u8 PacketNoAckMode = 0x00;
 
-  static const u8 PacketIncrementMode = 0x01;
-  static const u8 PacketNoIncrementMode = 0x00;
+  static constexpr u8 PacketIncrementMode = 0x01;
+  static constexpr u8 PacketNoIncrementMode = 0x00;
 
-  static const u8 PacketCRCDraftE = 0x00;
-  static const u8 PacketCRCDraftF = 0x01;
+  static constexpr u8 PacketCRCDraftE = 0x00;
+  static constexpr u8 PacketCRCDraftF = 0x01;
 
-  static const u8 DEFAULT_KEY = 0x20;
+  static constexpr u8 DEFAULT_KEY = 0x20;
 
-  static const bool DefaultCRCCheckMode = true;
+  static constexpr bool DefaultCRCCheckMode = true;
 
-  static const u8 DefaultLogicalAddress = 0xFE;
+  static constexpr u8 DefaultLogicalAddress = 0xFE;
 };
 
 #endif

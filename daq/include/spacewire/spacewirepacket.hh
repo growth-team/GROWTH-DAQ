@@ -13,10 +13,11 @@ class SpaceWirePacket {
   virtual ~SpaceWirePacket() = default;
   void setProtocolID(u8 protocolID) { protocolID_ = protocolID; }
   u8 getProtocolID() const { return protocolID_; }
-  EOPType getEOPType() { return eopType_; }
+  EOPType getEOPType() const { return eopType_; }
   void setEOPType(EOPType eopType) { eopType_ = eopType; }
 
-  std::vector<u8> data{};
+  /// Underlying buffer to store packet data.
+  std::vector<u8> data_{};
 
  protected:
   u8 protocolID_ = SpaceWireProtocol::DefaultProtocolID;

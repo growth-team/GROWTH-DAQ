@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <cmath>
 
 #include "spacewire/types.hh"
 

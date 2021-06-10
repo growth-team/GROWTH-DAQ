@@ -31,7 +31,16 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "build type")
 file(GLOB_RECURSE HEADER_FILES src/*.hh)
 file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 
-file(GLOB_RECURSE SPW_SOURCE_FILES src/spacewire/*.cc)
+# file(GLOB_RECURSE SPW_SOURCE_FILES src/spacewire/*.cc)
+set(SPW_SOURCE_FILES
+  src/spacewire/rmapengine.cc
+  src/spacewire/rmapinitiator.cc
+  src/spacewire/rmappacket.cc
+  src/spacewire/rmapreplystatus.cc
+  src/spacewire/spacewireifoveruart.cc
+  src/spacewire/spacewiressdtpmodule.cc
+  src/spacewire/spacewireutil.cc
+)
 
 SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
 add_subdirectory(external/libzmq)
