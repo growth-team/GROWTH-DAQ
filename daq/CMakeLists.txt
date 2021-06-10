@@ -31,6 +31,8 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "build type")
 file(GLOB_RECURSE HEADER_FILES src/*.hh)
 file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 
+file(GLOB_RECURSE SPW_SOURCE_FILES src/spacewire/*.cc)
+
 SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
 add_subdirectory(external/libzmq)
 add_subdirectory(external/yaml-cpp)
@@ -74,19 +76,17 @@ add_executable(growth_daq
   src/mainthread.cc
   src/messageserver.cc
   src/serialport.cc
-  src/spacewire/rmapengine.cc
-  src/spacewire/spacewireutil.cc
   src/stringutil.cc
   src/timeutil.cc
+  ${SPW_SOURCE_FILES}
 )
 
 add_executable(growth_reg
   cli/growth_reg.cc
   src/serialport.cc
-  src/spacewire/rmapengine.cc
-  src/spacewire/spacewireutil.cc
   src/stringutil.cc
   src/timeutil.cc
+  ${SPW_SOURCE_FILES}
 )
 
 #---------------------------------------------
