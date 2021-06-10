@@ -5,7 +5,6 @@
 #include <chrono>
 #include <thread>
 #include <cassert>
-#include <vector>
 
 SpaceWireIFOverUART::SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
 

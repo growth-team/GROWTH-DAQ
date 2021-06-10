@@ -1,9 +1,9 @@
 #ifndef SPACEWIRE_SPACEWIREIF_HH_
 #define SPACEWIRE_SPACEWIREIF_HH_
 
-#include <cstring>
-
 #include "spacewire/types.hh"
+
+#include <vector>
 
 class SpaceWireIF;
 
