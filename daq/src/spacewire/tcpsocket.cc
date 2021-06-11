@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <cmath>
+#include <cassert>
 
 TCPSocket::TCPSocket(i16 port) : port(port) {}
 
