@@ -32,7 +32,6 @@ class SpaceWireIFOverUART : public SpaceWireIF {
  private:
   const std::string deviceName_;
   std::unique_ptr<SpaceWireSSDTPModuleUART> ssdtp_;
-  std::unique_ptr<SerialPort> serial_;
 };
 
 #endif

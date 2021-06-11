@@ -6,18 +6,17 @@
 #include <thread>
 #include <cassert>
 
-SpaceWireIFOverUART::SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
+SpaceWireIFOverUART::SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(),deviceName_(deviceName) {}
 
 bool SpaceWireIFOverUART::open() {
-  serial_ = std::make_unique<SerialPortBoostAsio>(deviceName_, BAUD_RATE);
-  ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(serial_.get());
+  auto serial = std::make_unique<SerialPortBoostAsio>(deviceName_, BAUD_RATE);
+  ssdtp_ = std::make_unique<SpaceWireSSDTPModuleUART>(std::move(serial));
   isOpen_ = true;
   return isOpen_;
 }
 
 void SpaceWireIFOverUART::close() {
   ssdtp_->cancelReceive();
-  serial_->close();
   isOpen_ = false;
 }
 

@@ -39,7 +39,9 @@ set(SPW_SOURCE_FILES
   src/spacewire/rmapreplystatus.cc
   src/spacewire/spacewireifoveruart.cc
   src/spacewire/spacewiressdtpmodule.cc
+  src/spacewire/spacewiressdtpmoduleuart.cc
   src/spacewire/spacewireutil.cc
+  src/spacewire/tcpsocket.cc
 )
 
 SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)

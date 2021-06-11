@@ -1,6 +1,8 @@
 #include "spacewire/spacewiressdtpmodule.hh"
 #include "spacewire/tcpsocket.hh"
 
+#include <cstring>
+
 std::string SpaceWireSSDTPException::toString() const {
   std::string result;
   switch (status_) {

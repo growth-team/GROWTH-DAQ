@@ -122,8 +122,6 @@ class SpaceWireSSDTPModule {
   static const u32 BufferSize = 10 * 1024 * 1024;
 
  private:
-  size_t receivedsize{};
-
   bool closed_ = false;
   bool receiveCanceled_ = false;
 
@@ -135,8 +133,6 @@ class SpaceWireSSDTPModule {
 
   std::mutex sendMutex_;
   std::mutex receiveMutex_;
-
-
 };
 
 #endif
