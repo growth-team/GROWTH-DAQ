@@ -1,8 +1,8 @@
 #include "spdlog/spdlog.h"
+#include "registeraccessautomator.hh"
 
 #include <iostream>
 #include <string>
-#include "registeraccessautomator.hh"
 
 int main(int argc, char* argv[]) {
   // TODO: use CLI argument parsing library

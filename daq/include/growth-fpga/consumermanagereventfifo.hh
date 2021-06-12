@@ -31,20 +31,19 @@ class ConsumerManagerEventFIFO : public RegisterAccessInterface {
   size_t readEventFIFO(u8* buffer, size_t length);
 
   // Addresses of Consumer Manager Module
-  static constexpr u32 InitialAddressOf_ConsumerMgr = 0x01010000;
-  static constexpr u32 ConsumerMgrBA = InitialAddressOf_ConsumerMgr;
-  static constexpr u32 AddressOf_EventOutputDisableRegister = ConsumerMgrBA + 0x0100;
-  static constexpr u32 AddressOf_GateSize_FastGate_Register = ConsumerMgrBA + 0x010e;
-  static constexpr u32 AddressOf_GateSize_SlowGate_Register = ConsumerMgrBA + 0x0110;
-  static constexpr u32 AddressOf_NumberOf_BaselineSample_Register = ConsumerMgrBA + 0x0112;
-  static constexpr u32 AddressOf_ConsumerMgr_ResetRegister = ConsumerMgrBA + 0x0114;
-  static constexpr u32 AddressOf_EventPacket_NumberOfWaveform_Register = ConsumerMgrBA + 0x0116;
-  static constexpr u32 AddressOf_EventPacket_WaveformDownSampling_Register = ConsumerMgrBA + 0xFFFF;
+  static constexpr u32 BASE_ADDRESS = 0x01010000;
+  static constexpr u32 ADDRESS_EVENT_OUTPUT_DISABLE_REGISTER = BASE_ADDRESS + 0x0100;
+  static constexpr u32 ADDRESS_GATE_SIZE_FAST_GATE_REGISTER = BASE_ADDRESS + 0x010e;
+  static constexpr u32 ADDRESS_GATE_SIZE_SLOW_GATE_REGISTER = BASE_ADDRESS + 0x0110;
+  static constexpr u32 ADDRESS_NUMBER_OF_BASELINE_SAMPLE_REGISTER = BASE_ADDRESS + 0x0112;
+  static constexpr u32 ADDRESS_CONSUMER_MGR_RESET_REGISTER = BASE_ADDRESS + 0x0114;
+  static constexpr u32 ADDRESS_EVENT_PACKET_NUMBER_OF_WAVEFORM_REGISTER = BASE_ADDRESS + 0x0116;
+  static constexpr u32 ADDRESS_EVENT_PACKET_WAVEFORM_DOWN_SAMPLING_REGISTER = BASE_ADDRESS + 0xFFFF;
 
   // Addresses of EventFIFO
-  static constexpr u32 InitialAddressOf_EventFIFO = 0x10000000;
-  static constexpr u32 FinalAddressOf_EventFIFO = 0x1000FFFF;
-  static constexpr u32 AddressOf_EventFIFO_DataCount_Register = 0x20000000;
+  static constexpr u32 INITIAL_ADDRESS_EVENT_FIFO = 0x10000000;
+  static constexpr u32 FINAL_ADDRESS_EVENT_FIFO = 0x1000FFFF;
+  static constexpr u32 ADDRESS_EVENT_FIFO_DATA_COUNT_REGISTER= 0x20000000;
 
   static constexpr size_t RECEIVE_BUFFER_SIZE_BYTES = 1024 * 32;
   static constexpr size_t SINGLE_READ_MAX_SIZE_BYTES = 4096 * 16;  // 4096 * 2;

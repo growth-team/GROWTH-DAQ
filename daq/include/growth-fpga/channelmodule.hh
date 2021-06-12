@@ -7,8 +7,8 @@
 /// A class which represents a ChannelModule on VHDL logic.
 class ChannelModule : public RegisterAccessInterface {
  public:
-  static constexpr u32 InitialAddressOf_ChModule_0 = 0x01011000;
-  static constexpr u32 AddressOffsetBetweenChannels = 0x100;
+  static constexpr u32 INITIAL_ADDRESS_CH_MODULE_CH0 = 0x01011000;
+  static constexpr u32 ADDRESS_OFFSET_PER_CHANNEL = 0x100;
 
  public:
   ChannelModule(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode, u8 chNumber);
@@ -56,42 +56,34 @@ class ChannelModule : public RegisterAccessInterface {
    */
   void setDepthOfDelay(u16 depthOfDelay);
 
-  /** Gets Livetime.
-   * @return elapsed livetime in 10ms unit
-   */
+  /// Returns elapsed livetime in 10ms unit.
   u32 getLivetime() const;
 
-  /** Get current ADC value.
-   * @return temporal ADC value
-   */
+  /// Returns current ADC value.
   u16 getCurrentADCValue() const;
 
-  /** Reads TriggerCountRegister.
-   * @return trigger count
-   */
+  /// Reads TriggerCountRegister.
   size_t getTriggerCount() const;
 
-  /** Reads Status Register. Result will be returned as string.
-   * @return stringified status
-   */
+  /// Reads Status Register. Result will be returned as string.
   std::string getStatus() const;
 
  private:
-  u8 chNumber_{};
-
-  u32 AddressOf_TriggerModeRegister;
-  u32 AddressOf_NumberOfSamplesRegister;
-  u32 AddressOf_ThresholdStartingRegister;
-  u32 AddressOf_ThresholdClosingRegister;
-  u32 AddressOf_AdcPowerDownModeRegister;
-  u32 AddressOf_DepthOfDelayRegister;
-  u32 AddressOf_LivetimeRegisterL;
-  u32 AddressOf_LivetimeRegisterH;
-  u32 AddressOf_CurrentAdcDataRegister;
-  u32 AddressOf_CPUTriggerRegister;
-  u32 AddressOf_Status1Register;
-  u32 AddressOf_TriggerCountRegisterL;
-  u32 AddressOf_TriggerCountRegisterH;
+  const u8 chNumber_{};
+  const u32 BASE_ADDRESS;
+  const u32 ADDRESS_TRIGGER_MODE_REGISTER;
+  const u32 ADDRESS_NUMBER_OF_SAMPLES_REGISTER;
+  const u32 ADDRESS_THRESHOLD_STARTING_REGISTER;
+  const u32 ADDRESS_THRESHOLD_CLOSING_REGISTER;
+  const u32 ADDRESS_ADC_POWER_DOWN_MODE_REGISTER;
+  const u32 ADDRESS_DEPTH_OF_DELAY_REGISTER;
+  const u32 ADDRESS_LIVETIME_REGISTER_L;
+  const u32 ADDRESS_LIVETIME_REGISTER_H;
+  const u32 ADDRESS_CURRENT_ADC_DATA_REGISTER;
+  const u32 ADDRESS_CPU_TRIGGER_REGISTER;
+  const u32 ADDRESS_STATUS1_REGISTER;
+  const u32 ADDRESS_TRIGGER_COUNT_REGISTER_L;
+  const u32 ADDRESS_TRIGGER_COUNT_REGISTER_H;
 };
 
 #endif /* CHANNELMODULE_HH_ */

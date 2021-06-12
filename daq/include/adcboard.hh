@@ -245,17 +245,17 @@ class GROWTH_FY2015_ADC {
   void loadConfigurationFile(const std::string& inputFileName);
 
   const size_t nChannels = 4;
-  std::string DetectorID{};
-  size_t PreTriggerSamples = 4;
-  size_t PostTriggerSamples = 1000;
-  std::vector<enum TriggerMode> TriggerModes{
+  std::string detectorID{};
+  size_t preTriggerSamples = 4;
+  size_t postTriggerSamples = 1000;
+  std::vector<enum TriggerMode> triggerModes{
       TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold,
       TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold};
-  size_t SamplesInEventPacket = 1000;
-  size_t DownSamplingFactorForSavedWaveform = 1;
-  std::vector<bool> ChannelEnable{};
-  std::vector<u16> TriggerThresholds{};
-  std::vector<u16> TriggerCloseThresholds{};
+  size_t samplesInEventPacket = 1000;
+  size_t downSamplingFactorForSavedWaveform = 1;
+  std::vector<bool> channelEnable{};
+  std::vector<u16> triggerThresholds{};
+  std::vector<u16> triggerCloseThresholds{};
 
  private:
   template <typename T, typename Y>
@@ -270,15 +270,15 @@ class GROWTH_FY2015_ADC {
   void dumpThread(const std::chrono::seconds dumpInterval);
 
   // clang-format off
-  static constexpr u32 AddressOfGPSTimeRegister          = 0x20000002;
-  static constexpr u32 AddressOfGPSDataFIFOResetRegister = 0x20001000;
-  static constexpr u32 InitialAddressOfGPSDataFIFO       = 0x20001002;
-  static constexpr u32 FinalAddressOfGPSDataFIFO         = 0x20001FFF;
+  static constexpr u32 ADDRESS_GPS_TIME_REGISTER            = 0x20000002;
+  static constexpr u32 ADDRESS_GPS_DATA_FIFO_RESET_REGISTER = 0x20001000;
+  static constexpr u32 INITIAL_ADDRESS_GPS_DATA_FIFO        = 0x20001002;
+  static constexpr u32 FINAL_ADDRESS_GPS_DATA_FIFO          = 0x20001FFF;
 
-  static constexpr u32 AddressOfFPGATypeRegister_L    = 0x30000000;
-  static constexpr u32 AddressOfFPGATypeRegister_H    = 0x30000002;
-  static constexpr u32 AddressOfFPGAVersionRegister_L = 0x30000004;
-  static constexpr u32 AddressOfFPGAVersionRegister_H = 0x30000006;
+  static constexpr u32 ADDRESS_FPGA_TYPE_REGISTER_L    = 0x30000000;
+  static constexpr u32 ADDRESS_FPGA_TYPE_REGISTER_H    = 0x30000002;
+  static constexpr u32 ADDRESS_FPGA_VERSION_REGISTER_L = 0x30000004;
+  static constexpr u32 ADDRESS_FPGA_VERSION_REGISTER_H = 0x30000006;
   // clang-format on
 
   std::unique_ptr<SpaceWireIFOverUART> spwif_{};
@@ -293,7 +293,7 @@ class GROWTH_FY2015_ADC {
   std::shared_ptr<RegisterAccessInterface> reg_{};
 
   size_t nReceivedEvents_ = 0;
-  const size_t GPS_DATA_FIFO_DEPTH_BYTES = 1024;
+  static constexpr size_t GPS_DATA_FIFO_DEPTH_BYTES = 1024;
   std::unique_ptr<u8[]> gpsDataFIFOReadBuffer_{};
   std::vector<u8> gpsDataFIFOData_{};
 
@@ -304,7 +304,7 @@ class GROWTH_FY2015_ADC {
   std::condition_variable dumpThreadWaitCondition_{};
   std::mutex dumpThreadWaitMutex_{};
 
-  std::thread eventPacketReadThread_;
+  std::thread eventPacketReadThread_{};
   std::atomic<bool> stopEventPacketReadThread_{false};
 };
 

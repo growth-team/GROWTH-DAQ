@@ -108,8 +108,9 @@ class TCPSocket {
   enum class State { TCPSocketInitialized, TCPSocketCreated, TCPSocketBound, TCPSocketListening, TCPSocketConnected };
 
   TCPSocket() = default;
-  TCPSocket(i16 port);
+  TCPSocket(u16 port);
   virtual ~TCPSocket() = default;
+  virtual void close(){};
 
   /** Sends data stored in the data buffer for a specified length.
    * @param[in] data uint8_t buffer that contains sent data
@@ -134,7 +135,7 @@ class TCPSocket {
    */
   size_t receive(u8* data, size_t length, bool waitUntilSpecifiedLengthCompletes = false);
 
-  void setSocketDescriptor(u32 socketdescriptor) { this->socketdescriptor = socketdescriptor; }
+  void setSocketDescriptor(u32 socketdescriptor) { this->socketDescriptor_ = socketdescriptor; }
 
   /** Sets time out duration in millisecond.
    * This method can be called only after a connection is opened.
@@ -144,15 +145,15 @@ class TCPSocket {
   void setNoDelay();
 
   f64 getTimeoutDuration() const { return timeoutDurationInMilliSec_; }
-  u16 getPort() const { return port; }
-  void setPort(u16 port) { this->port = port; }
-  TCPSocket::State getStatus() const { return status; }
-  bool isConnected() const { return status == State::TCPSocketConnected; }
+  u16 getPort() const { return port_; }
+  void setPort(u16 port) { port_ = port; }
+  TCPSocket::State getStatus() const { return status_; }
+  bool isConnected() const { return status_ == State::TCPSocketConnected; }
 
  protected:
-  State status{State::TCPSocketInitialized};
-  i32 socketdescriptor{};
-  i32 port{};
+  State status_{State::TCPSocketInitialized};
+  i32 socketDescriptor_{};
+  u16 port_{};
 
  private:
   f64 timeoutDurationInMilliSec_{};
@@ -172,7 +173,7 @@ class TCPServerAcceptedSocket : public TCPSocket {
   /** Clones an instance.
    * This method is just for debugging purposes and not for ordinary user application.
    */
-  void close();
+  void close() override;
 
   void setAddress(const sockaddr_in& address);
 
@@ -184,11 +185,11 @@ class TCPServerAcceptedSocket : public TCPSocket {
  */
 class TCPServerSocket : public TCPSocket {
  public:
-  TCPServerSocket(i32 portNumber);
+  TCPServerSocket(u16 port);
   ~TCPServerSocket() override = default;
 
   void open();
-  void close();
+  void close() override;
   TCPServerAcceptedSocket* accept();
   TCPServerAcceptedSocket* accept(f64 timeoutDurationInMilliSec);
 
@@ -202,17 +203,17 @@ class TCPServerSocket : public TCPSocket {
 
 class TCPClientSocket : public TCPSocket {
  public:
-  TCPClientSocket(std::string url, i32 port);
+  TCPClientSocket(std::string ipHostname, u16 port);
   ~TCPClientSocket() override = default;
 
   void open(f64 timeoutDurationInMilliSec = 1000);
-  void close();
+  void close() override;
 
  private:
   void create();
   void connect(f64 timeoutDurationInMilliSec);
 
-  std::string url;
+  std::string ipHostname_;
 };
 
 #endif /* SPACEWIRE_TCPSOCKET_HH_ */

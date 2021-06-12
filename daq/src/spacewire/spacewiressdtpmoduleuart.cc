@@ -12,11 +12,11 @@ void SpaceWireSSDTPModuleUART::send(const u8* data, size_t length, EOPType eopTy
     return;
   }
   if (eopType == EOPType::EOP) {
-    sheader_[0] = DataFlag_Complete_EOP;
+    sheader_[0] = DATA_FLAG_COMPLETE_EOP;
   } else if (eopType == EOPType::EEP) {
-    sheader_[0] = DataFlag_Complete_EEP;
+    sheader_[0] = DATA_FLAG_COMPLETE_EEP;
   } else if (eopType == EOPType::Continued) {
-    sheader_[0] = DataFlag_Flagmented;
+    sheader_[0] = DATA_FLAG_FLAGMENTED;
   }
   sheader_[1] = 0x00;
   size_t asize = length;
@@ -42,7 +42,7 @@ size_t SpaceWireSSDTPModuleUART::receive(std::vector<u8>* receiveBuffer, EOPType
     rheader_[0] = 0xFF;
     rheader_[1] = 0x00;
 
-    while (rheader_[0] != DataFlag_Complete_EOP && rheader_[0] != DataFlag_Complete_EEP) {
+    while (rheader_[0] != DATA_FLAG_COMPLETE_EOP && rheader_[0] != DATA_FLAG_COMPLETE_EEP) {
       // flag and size part
       try {
         size_t receivedHeaderSizeBytes = 0;
@@ -62,8 +62,8 @@ size_t SpaceWireSSDTPModuleUART::receive(std::vector<u8>* receiveBuffer, EOPType
         throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
       }
       // data or control code part
-      if (rheader_[0] == DataFlag_Complete_EOP || rheader_[0] == DataFlag_Complete_EEP ||
-          rheader_[0] == DataFlag_Flagmented) {
+      if (rheader_[0] == DATA_FLAG_COMPLETE_EOP || rheader_[0] == DATA_FLAG_COMPLETE_EEP ||
+          rheader_[0] == DATA_FLAG_FLAGMENTED) {
         // data
         size_t payloadSizeBytes = 0;
         for (size_t i = 2; i < HEADER_LENGTH_BYTES; i++) {
@@ -95,7 +95,7 @@ size_t SpaceWireSSDTPModuleUART::receive(std::vector<u8>* receiveBuffer, EOPType
             throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
           }
         }
-      } else if (rheader_[0] == ControlFlag_SendTimeCode || rheader_[0] == ControlFlag_GotTimeCode) {
+      } else if (rheader_[0] == CONTROL_FLAG_SEND_TIME_CODE || rheader_[0] == CONTROL_FLAG_GOT_TIME_CODE) {
         constexpr size_t timeCodeDataSizeBytes = 2;
         std::array<u8, timeCodeDataSizeBytes> timecodeReceiveBuffer{};
         size_t receivedSize = 0;
@@ -112,9 +112,9 @@ size_t SpaceWireSSDTPModuleUART::receive(std::vector<u8>* receiveBuffer, EOPType
       }
     }
 
-    if (rheader_[0] == DataFlag_Complete_EOP) {
+    if (rheader_[0] == DATA_FLAG_COMPLETE_EOP) {
       eopType = EOPType::EOP;
-    } else if (rheader_[0] == DataFlag_Complete_EEP) {
+    } else if (rheader_[0] == DATA_FLAG_COMPLETE_EEP) {
       eopType = EOPType::EEP;
     } else {
       eopType = EOPType::Continued;

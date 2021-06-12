@@ -102,24 +102,24 @@ class SpaceWireSSDTPModule {
    */
   size_t receive(std::vector<u8>* data, EOPType& eopType);
 
-  void close() { this->closed_ = true; }
-  void cancelReceive() { this->receiveCanceled_ = true; }
+  void close() { closed_ = true; }
+  void cancelReceive() { receiveCanceled_ = true; }
 
  public:
   /* for SSDTP2 */
-  static const u8 DataFlag_Complete_EOP = 0x00;
-  static const u8 DataFlag_Complete_EEP = 0x01;
-  static const u8 DataFlag_Flagmented = 0x02;
-  static const u8 ControlFlag_SendTimeCode = 0x30;
-  static const u8 ControlFlag_GotTimeCode = 0x31;
-  static const u8 ControlFlag_ChangeTxSpeed = 0x38;
-  static const u8 ControlFlag_RegisterAccess_ReadCommand = 0x40;
-  static const u8 ControlFlag_RegisterAccess_ReadReply = 0x41;
-  static const u8 ControlFlag_RegisterAccess_WriteCommand = 0x50;
-  static const u8 ControlFlag_RegisterAccess_WriteReply = 0x51;
-  static const u32 LengthOfSizePart = 10;
+  static constexpr u8 DATA_FLAG_COMPLETE_EOP = 0x00;
+  static constexpr u8 DATA_FLAG_COMPLETE_EEP = 0x01;
+  static constexpr u8 DATA_FLAG_FLAGMENTED = 0x02;
+  static constexpr u8 CONTROL_FLAG_SEND_TIME_CODE = 0x30;
+  static constexpr u8 CONTROL_FLAG_GOT_TIME_CODE = 0x31;
+  static constexpr u8 CONTROL_FLAG_CHANGE_TX_SPEED = 0x38;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_READ_COMMAND = 0x40;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_READ_REPLY = 0x41;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_WRITE_COMMAND = 0x50;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_WRITE_REPLY = 0x51;
+  static constexpr u32 LENGTH_OF_SIZE_PART = 10;
 
-  static const u32 BufferSize = 10 * 1024 * 1024;
+  static constexpr u32 BUFFER_SIZE_BYTES = 10 * 1024 * 1024;
 
  private:
   bool closed_ = false;

@@ -4,10 +4,10 @@
 #include <cmath>
 #include <cassert>
 
-TCPSocket::TCPSocket(i16 port) : port(port) {}
+TCPSocket::TCPSocket(u16 port) : port_(port) {}
 
 size_t TCPSocket::send(const u8* data, size_t length) {
-  const i32 result = ::send(socketdescriptor, reinterpret_cast<const void*>(data), length, 0);
+  const auto result = ::send(socketDescriptor_, reinterpret_cast<const void*>(data), length, 0);
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::TCPSocketError);
   }
@@ -19,12 +19,11 @@ size_t TCPSocket::receiveLoopUntilSpecifiedLengthCompletes(u8* data, size_t leng
 }
 
 size_t TCPSocket::receive(u8* data, size_t length, bool waitUntilSpecifiedLengthCompletes) {
-  i32 result = 0;
   size_t remainingLength = length;
   i32 readDoneLength = 0;
 
 _tcpocket_receive_loop:  //
-  result = ::recv(socketdescriptor, reinterpret_cast<void*>(data + readDoneLength), remainingLength, 0);
+  const auto result = ::recv(socketDescriptor_, reinterpret_cast<void*>(data + readDoneLength), remainingLength, 0);
 
   if (result <= 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -85,7 +84,7 @@ _tcpocket_receive_loop:  //
  * @param[in] durationInMilliSec time out duration in ms
  */
 void TCPSocket::setTimeout(f64 durationInMilliSec) {
-  if (socketdescriptor != 0) {
+  if (socketDescriptor_ != 0) {
     timeoutDurationInMilliSec_ = durationInMilliSec;
     struct timeval tv;
     tv.tv_sec = static_cast<u32>(std::floor(durationInMilliSec / 1000.));
@@ -94,21 +93,21 @@ void TCPSocket::setTimeout(f64 durationInMilliSec) {
     } else {
       tv.tv_usec = (i32)(durationInMilliSec * 1000);
     }
-    setsockopt(socketdescriptor, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof tv);
+    setsockopt(socketDescriptor_, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof tv);
   } else {
     throw TCPSocketException(TCPSocketException::TimeoutDurationCannotBeSetToDisconnectedSocket);
   }
 }
 
 void TCPSocket::setNoDelay() {
-  const i32 flag = 1;
-  setsockopt(socketdescriptor, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&flag), sizeof(i32));
+  constexpr i32 flag = 1;
+  setsockopt(socketDescriptor_, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&flag), sizeof(i32));
 }
 
 TCPServerAcceptedSocket::TCPServerAcceptedSocket() {
 #ifdef SO_NOSIGPIPE
-  const i32 n = 1;
-  ::setsockopt(this->socketdescriptor, SOL_SOCKET, SO_NOSIGPIPE, &n, sizeof(n));
+  constexpr i32 n = 1;
+  ::setsockopt(this->socketDescriptor_, SOL_SOCKET, SO_NOSIGPIPE, &n, sizeof(n));
 #endif
 }
 
@@ -116,17 +115,17 @@ TCPServerAcceptedSocket::TCPServerAcceptedSocket() {
  * This method is just for debugging purposes and not for ordinary user application.
  */
 void TCPServerAcceptedSocket::close() {
-  switch (status) {
+  switch (status_) {
     case State::TCPSocketCreated:
     case State::TCPSocketBound:
     case State::TCPSocketListening:
     case State::TCPSocketConnected:
-      ::close(socketdescriptor);
+      ::close(socketDescriptor_);
       break;
     default:
       break;
   }
-  status = State::TCPSocketInitialized;
+  status_ = State::TCPSocketInitialized;
 }
 
  void TCPServerAcceptedSocket::setAddress(const sockaddr_in& address) {
@@ -136,7 +135,7 @@ void TCPServerAcceptedSocket::close() {
 ///////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-TCPServerSocket::TCPServerSocket(i32 portNumber) : TCPSocket(portNumber) {}
+TCPServerSocket::TCPServerSocket(u16 port) : TCPSocket(port) {}
 
 void TCPServerSocket::open() {
   if (getPort() < 0) {
@@ -145,30 +144,30 @@ void TCPServerSocket::open() {
   create();
   bind();
   listen();
-  const i32 n = 1;
+  constexpr i32 n = 1;
 #ifdef SO_NOSIGPIPE
-  ::setsockopt(this->socketdescriptor, SOL_SOCKET, SO_NOSIGPIPE, &n, sizeof(n));
+  ::setsockopt(this->socketDescriptor_, SOL_SOCKET, SO_NOSIGPIPE, &n, sizeof(n));
 #endif
 }
 
 void TCPServerSocket::close() {
-  switch (status) {
+  switch (status_) {
     case State::TCPSocketCreated:
     case State::TCPSocketBound:
     case State::TCPSocketListening:
     case State::TCPSocketConnected:
-      ::close(socketdescriptor);
+      ::close(socketDescriptor_);
       break;
     default:
       break;
   }
-  status = State::TCPSocketInitialized;
+  status_ = State::TCPSocketInitialized;
 }
 
 TCPServerAcceptedSocket* TCPServerSocket::accept() {
   struct ::sockaddr_in clientaddress;
-  const auto length = sizeof(clientaddress);
-  const auto result = ::accept(socketdescriptor, (struct ::sockaddr*)&clientaddress, (::socklen_t*)&length);
+  constexpr auto length = sizeof(clientaddress);
+  const auto result = ::accept(socketDescriptor_, (struct ::sockaddr*)&clientaddress, (::socklen_t*)&length);
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::AcceptException);
   } else {
@@ -181,15 +180,15 @@ TCPServerAcceptedSocket* TCPServerSocket::accept() {
 }
 
 TCPServerAcceptedSocket* TCPServerSocket::accept(f64 timeoutDurationInMilliSec) {
-  fd_set mask;
+  fd_set mask{};
   FD_ZERO(&mask);
-  FD_SET(socketdescriptor, &mask);
+  FD_SET(socketDescriptor_, &mask);
   struct timeval tv;
   tv.tv_sec = (unsigned int)(floor(timeoutDurationInMilliSec / 1000.));
   tv.tv_usec = (int)(timeoutDurationInMilliSec * 1000 /* us */
                      - ((int)((timeoutDurationInMilliSec * 1000)) / 10000));
 
-  auto result = select(socketdescriptor + 1, &mask, NULL, NULL, &tv);
+  auto result = select(socketDescriptor_ + 1, &mask, NULL, NULL, &tv);
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::AcceptException);
   }
@@ -199,9 +198,8 @@ TCPServerAcceptedSocket* TCPServerSocket::accept(f64 timeoutDurationInMilliSec) 
 
   struct ::sockaddr_in clientaddress;
 
-  const auto length = sizeof(clientaddress);
-  result = 0;
-  result = ::accept(socketdescriptor, (struct ::sockaddr*)&clientaddress, (::socklen_t*)&length);
+  constexpr auto length = sizeof(clientaddress);
+  result = ::accept(socketDescriptor_, (struct ::sockaddr*)&clientaddress, (::socklen_t*)&length);
 
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::AcceptException);
@@ -219,8 +217,8 @@ void TCPServerSocket::create() {
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::TCPSocketError);
   } else {
-    status = State::TCPSocketCreated;
-    socketdescriptor = result;
+    status_ = State::TCPSocketCreated;
+    socketDescriptor_ = result;
   }
 }
 
@@ -230,29 +228,29 @@ void TCPServerSocket::bind() {
   serveraddress.sin_family = AF_INET;
   serveraddress.sin_addr.s_addr = htonl(INADDR_ANY);
   serveraddress.sin_port = htons(getPort());
-  const i32 yes = 1;
-  setsockopt(socketdescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
-  const auto result = ::bind(socketdescriptor, (struct ::sockaddr*)&serveraddress, sizeof(struct ::sockaddr_in));
+  constexpr i32 yes = 1;
+  setsockopt(socketDescriptor_, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
+  const auto result = ::bind(socketDescriptor_, (struct ::sockaddr*)&serveraddress, sizeof(struct ::sockaddr_in));
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::BindError);
   } else {
-    status = State::TCPSocketBound;
+    status_ = State::TCPSocketBound;
   }
 }
 
 void TCPServerSocket::listen() {
-  const i32 result = ::listen(socketdescriptor, maxofconnections);
+  const auto result = ::listen(socketDescriptor_, maxofconnections);
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::ListenError);
   } else {
-    status = State::TCPSocketListening;
+    status_ = State::TCPSocketListening;
   }
 }
 
-TCPClientSocket::TCPClientSocket(std::string url, i32 port) : TCPSocket(port), url(url) {}
+TCPClientSocket::TCPClientSocket(std::string url, u16 port) : TCPSocket(port), ipHostname_(url) {}
 
 void TCPClientSocket::open(f64 timeoutDurationInMilliSec) {
-  if (url.empty()) {
+  if (ipHostname_.empty()) {
     throw TCPSocketException(TCPSocketException::OpenException);
   }
   create();
@@ -260,33 +258,31 @@ void TCPClientSocket::open(f64 timeoutDurationInMilliSec) {
 }
 
 void TCPClientSocket::close() {
-  switch (status) {
+  switch (status_) {
     case State::TCPSocketCreated:
     case State::TCPSocketBound:
     case State::TCPSocketListening:
     case State::TCPSocketConnected:
-      ::close(socketdescriptor);
+      ::close(socketDescriptor_);
       break;
     default:
       break;
   }
-  status = State::TCPSocketInitialized;
+  status_ = State::TCPSocketInitialized;
 }
 
 void TCPClientSocket::create() {
-  int result = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  const auto result = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (result < 0) {
     throw TCPSocketException(TCPSocketException::CreateException);
   } else {
-    status = State::TCPSocketCreated;
-    socketdescriptor = result;
+    status_ = State::TCPSocketCreated;
+    socketDescriptor_ = result;
   }
 }
 
 void TCPClientSocket::connect(f64 timeoutDurationInMilliSec) {
-  using namespace std;
-  i32 result;
-  if (status == State::TCPSocketConnected) {
+  if (status_ == State::TCPSocketConnected) {
     return;
   }
   struct ::sockaddr_in serveraddress;
@@ -295,23 +291,22 @@ void TCPClientSocket::connect(f64 timeoutDurationInMilliSec) {
   serveraddress.sin_port = htons(getPort());
   // set url or ip address
   struct ::hostent* hostentry;
-  hostentry = ::gethostbyname(url.c_str());
+  hostentry = ::gethostbyname(ipHostname_.c_str());
   if (hostentry == NULL) {
     throw TCPSocketException(TCPSocketException::HostEntryError);
   } else {
     serveraddress.sin_addr.s_addr = *((unsigned long*)hostentry->h_addr_list[0]);
   }
 
-  result = 0;
-  i32 flag = fcntl(socketdescriptor, F_GETFL, 0);
+  const auto flag = fcntl(socketDescriptor_, F_GETFL, 0);
   if (flag < 0) {
     throw TCPSocketException(TCPSocketException::ConnectExceptionWhenChangingSocketModeToNonBlocking);
   }
-  if (fcntl(socketdescriptor, F_SETFL, flag | O_NONBLOCK) < 0) {
+  if (fcntl(socketDescriptor_, F_SETFL, flag | O_NONBLOCK) < 0) {
     throw TCPSocketException(TCPSocketException::ConnectExceptionWhenChangingSocketModeToNonBlocking);
   }
 
-  result = ::connect(socketdescriptor, (struct ::sockaddr*)&serveraddress, sizeof(struct ::sockaddr_in));
+  auto result = ::connect(socketDescriptor_, (struct ::sockaddr*)&serveraddress, sizeof(struct ::sockaddr_in));
 
   if (result < 0) {
     if (errno == EINPROGRESS) {
@@ -321,8 +316,8 @@ void TCPClientSocket::connect(f64 timeoutDurationInMilliSec) {
       fd_set rmask, wmask;
       FD_ZERO(&rmask);
       FD_ZERO(&wmask);
-      FD_SET(socketdescriptor, &wmask);
-      result = select(socketdescriptor + 1, NULL, &wmask, NULL, &tv);
+      FD_SET(socketDescriptor_, &wmask);
+      result = select(socketDescriptor_ + 1, NULL, &wmask, NULL, &tv);
       if (result < 0) {
         throw TCPSocketException(TCPSocketException::ConnectExceptionWhenWaitingForConnection);
       } else if (result == 0) {
@@ -331,11 +326,11 @@ void TCPClientSocket::connect(f64 timeoutDurationInMilliSec) {
       } else {
         struct sockaddr_in name;
         socklen_t len = sizeof(name);
-        if (getpeername(socketdescriptor, (struct sockaddr*)&name, &len) >= 0) {
+        if (getpeername(socketDescriptor_, (struct sockaddr*)&name, &len) >= 0) {
           // connected
-          status = State::TCPSocketConnected;
+          status_ = State::TCPSocketConnected;
           // reset flag
-          if (fcntl(socketdescriptor, F_SETFL, flag) < 0) {
+          if (fcntl(socketDescriptor_, F_SETFL, flag) < 0) {
             throw TCPSocketException(TCPSocketException::ConnectExceptionWhenChangingSocketModeToBlocking);
           }
           return;

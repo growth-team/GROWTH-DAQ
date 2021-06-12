@@ -83,16 +83,6 @@ class SerialPortBoostAsio : public SerialPort {
   size_t receive(u8* buffer, size_t length) override;
 
  private:
-  //  void read_callback(const asio::error_code& e, std::size_t size, boost::array<char, ReadBufferSize> r) {
-  //    spdlog::info("read_callback size = {} bytes", size);
-  //  }
-  //  void write_callback(const asio::error_code& e, std::size_t size) {
-  //    spdlog::info("write_callback size = {} bytes, error = ", size);
-  //  }
-
-  //  // TODO: not used?
-  //  void send(std::vector<uint8_t>& sendBuffer) { port->write_some(asio::buffer(sendBuffer)); }
-
   template <typename MutableBufferSequence>
   void receiveWithTimeout(MutableBufferSequence& buffers, size_t& nReceivedBytes,
                           const asio::steady_timer::duration& expiry_time) {
@@ -128,10 +118,10 @@ class SerialPortBoostAsio : public SerialPort {
   }
 
  private:
-  const std::string deviceName_;
-  size_t baudRate_{};
   void openDevice();
 
+  const std::string deviceName_;
+  size_t baudRate_{};
   std::unique_ptr<asio::serial_port> port_;
   asio::io_service io_;
   asio::streambuf receive_buffer_;

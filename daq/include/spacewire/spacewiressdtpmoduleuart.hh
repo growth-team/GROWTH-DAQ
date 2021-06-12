@@ -42,21 +42,20 @@ class SpaceWireSSDTPModuleUART {
   std::array<u8, HEADER_LENGTH_BYTES> rheader_{};
   std::array<u8, HEADER_LENGTH_BYTES> sheader_{};
 
- public:
   static constexpr u32 MAX_RECEIVE_SIZE_BYTES = 100 * 1024;
 
   /* for SSDTP2 */
-  static constexpr u8 DataFlag_Complete_EOP = 0x00;
-  static constexpr u8 DataFlag_Complete_EEP = 0x01;
-  static constexpr u8 DataFlag_Flagmented = 0x02;
-  static constexpr u8 ControlFlag_SendTimeCode = 0x30;
-  static constexpr u8 ControlFlag_GotTimeCode = 0x31;
-  static constexpr u8 ControlFlag_ChangeTxSpeed = 0x38;
-  static constexpr u8 ControlFlag_RegisterAccess_ReadCommand = 0x40;
-  static constexpr u8 ControlFlag_RegisterAccess_ReadReply = 0x41;
-  static constexpr u8 ControlFlag_RegisterAccess_WriteCommand = 0x50;
-  static constexpr u8 ControlFlag_RegisterAccess_WriteReply = 0x51;
-  static constexpr u32 LengthOfSizePart = 10;
+  static constexpr u8 DATA_FLAG_COMPLETE_EOP = 0x00;
+  static constexpr u8 DATA_FLAG_COMPLETE_EEP = 0x01;
+  static constexpr u8 DATA_FLAG_FLAGMENTED = 0x02;
+  static constexpr u8 CONTROL_FLAG_SEND_TIME_CODE = 0x30;
+  static constexpr u8 CONTROL_FLAG_GOT_TIME_CODE = 0x31;
+  static constexpr u8 CONTROL_FLAG_CHANGE_TX_SPEED = 0x38;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_READ_COMMAND = 0x40;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_READ_REPLY = 0x41;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_WRITE_COMMAND = 0x50;
+  static constexpr u8 CONTROL_FLAG_REGISTER_ACCESS_WRITE_REPLY = 0x51;
+  static constexpr u32 LENGTH_OF_SIZE_PART = 10;
 };
 
 #endif

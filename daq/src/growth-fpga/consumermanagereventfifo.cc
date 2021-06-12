@@ -15,16 +15,16 @@ ConsumerManagerEventFIFO::~ConsumerManagerEventFIFO() {
 
 void ConsumerManagerEventFIFO::enableEventOutput() {
   constexpr u16 disableFlag = 0;
-  write(AddressOf_EventOutputDisableRegister, disableFlag);
+  write(ADDRESS_EVENT_OUTPUT_DISABLE_REGISTER, disableFlag);
   spdlog::debug("ConsumerManager::enableEventOutput() disable register readback = {}",
-                read16(AddressOf_EventOutputDisableRegister));
+                read16(ADDRESS_EVENT_OUTPUT_DISABLE_REGISTER));
 }
 
 void ConsumerManagerEventFIFO::disableEventOutput() {
   constexpr u16 disableFlag = 0xFFFF;
-  write(AddressOf_EventOutputDisableRegister, disableFlag);
+  write(ADDRESS_EVENT_OUTPUT_DISABLE_REGISTER, disableFlag);
   spdlog::debug("ConsumerManager::enableEventOutput() disable register readback = {}",
-                read16(AddressOf_EventOutputDisableRegister));
+                read16(ADDRESS_EVENT_OUTPUT_DISABLE_REGISTER));
 }
 
 void ConsumerManagerEventFIFO::getEventData(std::vector<u8>& receiveBuffer) {
@@ -35,14 +35,14 @@ void ConsumerManagerEventFIFO::getEventData(std::vector<u8>& receiveBuffer) {
 }
 
 void ConsumerManagerEventFIFO::setEventPacket_NumberOfWaveform(u16 nSamples) {
-  write(AddressOf_EventPacket_NumberOfWaveform_Register, nSamples);
+  write(ADDRESS_EVENT_PACKET_NUMBER_OF_WAVEFORM_REGISTER, nSamples);
   spdlog::debug("setEventPacket_NumberOfWaveform write value = {:d}, readback = {:d}", nSamples,
-                read16(AddressOf_EventPacket_NumberOfWaveform_Register));
+                read16(ADDRESS_EVENT_PACKET_NUMBER_OF_WAVEFORM_REGISTER));
 }
 
 size_t ConsumerManagerEventFIFO::readEventFIFO(u8* buffer, size_t length) {
   const size_t totalReadSizeInBytes = [&]() {
-    const size_t dataCountsInWords = read16(AddressOf_EventFIFO_DataCount_Register);
+    const size_t dataCountsInWords = read16(ADDRESS_EVENT_FIFO_DATA_COUNT_REGISTER);
     const size_t dataCountInBytes = dataCountsInWords * sizeof(u16);
     return std::min(length, dataCountInBytes);
   }();
@@ -52,7 +52,7 @@ size_t ConsumerManagerEventFIFO::readEventFIFO(u8* buffer, size_t length) {
     const size_t remainingReadSizeInBytes = totalReadSizeInBytes - receivedSizeInBytes;
     const size_t singleReadSize = std::min(remainingReadSizeInBytes, SINGLE_READ_MAX_SIZE_BYTES);
     assert(singleReadSize != 0);
-    read(InitialAddressOf_EventFIFO, singleReadSize, buffer + receivedSizeInBytes);
+    read(INITIAL_ADDRESS_EVENT_FIFO, singleReadSize, buffer + receivedSizeInBytes);
     receivedSizeInBytes += singleReadSize;
   }
   return totalReadSizeInBytes;

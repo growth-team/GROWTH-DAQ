@@ -5,6 +5,7 @@
 #include "growth-fpga/constants.hh"
 
 #include <memory>
+#include <vector>
 
 namespace growth_fpga {
 enum class TriggerMode : u32 {

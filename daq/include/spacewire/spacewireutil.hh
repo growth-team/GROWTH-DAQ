@@ -17,8 +17,9 @@ static constexpr size_t DEFAULT_BYTES_PER_LINE = 8;
 void dumpPacket(std::ostream* ofs, const u8* data, size_t length, size_t wordwidth = 16,
                 size_t bytesPerLine = DEFAULT_BYTES_PER_LINE);
 
-    /** Converts a packet content to std::string. */
-    std::string packetToString(const u8* data, size_t length, size_t nBytesDisplayed = 16);
+/** Converts a packet content to std::string. */
+std::string packetToString(const u8* data, size_t length, size_t nBytesDisplayed = 16);
+
 /** Dumps a packet content with addresses to the screen.
  * @param address initial address.
  * @param data packet content to be dumped.

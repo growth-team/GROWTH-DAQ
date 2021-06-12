@@ -94,13 +94,13 @@ void GROWTH_FY2015_ADC::startDumpThread() {
   dumpThread_ = std::thread(&GROWTH_FY2015_ADC::dumpThread, this, std::chrono::seconds(1));
 }
 
-u32 GROWTH_FY2015_ADC::getFPGAType() const { return reg_->read32(AddressOfFPGATypeRegister_L); }
+u32 GROWTH_FY2015_ADC::getFPGAType() const { return reg_->read32(ADDRESS_FPGA_TYPE_REGISTER_L); }
 
-u32 GROWTH_FY2015_ADC::getFPGAVersion() const { return reg_->read32(AddressOfFPGAVersionRegister_L); }
+u32 GROWTH_FY2015_ADC::getFPGAVersion() const { return reg_->read32(ADDRESS_FPGA_VERSION_REGISTER_L); }
 
 std::string GROWTH_FY2015_ADC::getGPSRegister() const {
   std::array<u8, GPS_TIME_REG_SIZE_BYTES + 1> gpsTimeRegister{};
-  reg_->read(AddressOfGPSTimeRegister, GPS_TIME_REG_SIZE_BYTES, gpsTimeRegister.data());
+  reg_->read(ADDRESS_GPS_TIME_REGISTER, GPS_TIME_REG_SIZE_BYTES, gpsTimeRegister.data());
   std::stringstream ss;
   for (size_t i = 0; i < GPS_TIME_REG_SIZE_BYTES; i++) {
     if (i < 14) {
@@ -117,21 +117,21 @@ std::string GROWTH_FY2015_ADC::getGPSRegister() const {
 
 std::array<u8, GROWTH_FY2015_ADC::GPS_TIME_REG_SIZE_BYTES + 1> GROWTH_FY2015_ADC::getGPSRegisterUInt8() const {
   std::array<u8, GPS_TIME_REG_SIZE_BYTES + 1> gpsTimeRegister{};
-  reg_->read(AddressOfGPSTimeRegister, GPS_TIME_REG_SIZE_BYTES, gpsTimeRegister.data());
+  reg_->read(ADDRESS_GPS_TIME_REGISTER, GPS_TIME_REG_SIZE_BYTES, gpsTimeRegister.data());
   gpsTimeRegister.at(GPS_TIME_REG_SIZE_BYTES) = 0x00;
   return gpsTimeRegister;
 }
 
 void GROWTH_FY2015_ADC::clearGPSDataFIFO() {
   u8 dummy[2];
-  reg_->read(AddressOfGPSDataFIFOResetRegister, 2, dummy);
+  reg_->read(ADDRESS_GPS_DATA_FIFO_RESET_REGISTER, 2, dummy);
 }
 
 const std::vector<u8>& GROWTH_FY2015_ADC::readGPSDataFIFO() {
   if (gpsDataFIFOData_.size() != GPS_DATA_FIFO_DEPTH_BYTES) {
     gpsDataFIFOData_.resize(GPS_DATA_FIFO_DEPTH_BYTES);
   }
-  reg_->read(AddressOfGPSDataFIFOResetRegister, GPS_DATA_FIFO_DEPTH_BYTES, gpsDataFIFOReadBuffer_.get());
+  reg_->read(ADDRESS_GPS_DATA_FIFO_RESET_REGISTER, GPS_DATA_FIFO_DEPTH_BYTES, gpsDataFIFOReadBuffer_.get());
   memcpy(gpsDataFIFOData_.data(), gpsDataFIFOReadBuffer_.get(), GPS_DATA_FIFO_DEPTH_BYTES);
   return gpsDataFIFOData_;
 }
@@ -234,7 +234,7 @@ void GROWTH_FY2015_ADC::startAcquisition(std::vector<bool> channelsToBeStarted) 
   channelManager_->startAcquisition(channelsToBeStarted);
 }
 
-void GROWTH_FY2015_ADC::startAcquisition() { startAcquisition(ChannelEnable); }
+void GROWTH_FY2015_ADC::startAcquisition() { startAcquisition(channelEnable); }
 
 bool GROWTH_FY2015_ADC::isAcquisitionCompleted() const { return channelManager_->isAcquisitionCompleted(); }
 
@@ -254,7 +254,7 @@ void GROWTH_FY2015_ADC::sendCPUTrigger(size_t chNumber) {
 
 void GROWTH_FY2015_ADC::sendCPUTrigger() {
   for (size_t chNumber = 0; chNumber < growth_fpga::NumberOfChannels; chNumber++) {
-    if (ChannelEnable[chNumber]) {  // if enabled
+    if (channelEnable[chNumber]) {  // if enabled
       spdlog::info("CPU Trigger to Channel {}", chNumber);
       channelModules_[chNumber]->sendCPUTrigger();
     }
@@ -292,7 +292,7 @@ growth_fpga::HouseKeepingData GROWTH_FY2015_ADC::getHouseKeepingData() const {
 }
 
 size_t GROWTH_FY2015_ADC::getNSamplesInEventListFile() const {
-  return SamplesInEventPacket / DownSamplingFactorForSavedWaveform;
+  return samplesInEventPacket / downSamplingFactorForSavedWaveform;
 }
 
 void GROWTH_FY2015_ADC::dumpMustExistKeywords() {
@@ -337,61 +337,61 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
   //---------------------------------------------
   // load parameter values from the file
   //---------------------------------------------
-  this->DetectorID = yaml_root["DetectorID"].as<std::string>();
-  this->PreTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
-  this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
+  this->detectorID = yaml_root["DetectorID"].as<std::string>();
+  this->preTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
+  this->postTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
   {
     // Convert integer-type trigger mode to TriggerMode enum type
     const std::vector<size_t> triggerModeInt = yaml_root["TriggerModes"].as<std::vector<size_t>>();
     for (size_t i = 0; i < triggerModeInt.size(); i++) {
-      this->TriggerModes[i] = static_cast<enum growth_fpga::TriggerMode>(triggerModeInt.at(i));
+      this->triggerModes[i] = static_cast<enum growth_fpga::TriggerMode>(triggerModeInt.at(i));
     }
   }
-  this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
-  this->DownSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
-  this->ChannelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
-  this->TriggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<u16>>();
-  this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<u16>>();
+  this->samplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
+  this->downSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
+  this->channelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
+  this->triggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<u16>>();
+  this->triggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<u16>>();
 
   //---------------------------------------------
   // dump setting
   //---------------------------------------------
   spdlog::info("Configuration");
-  spdlog::info("  DetectorID                        : {}", DetectorID);
-  spdlog::info("  PreTriggerSamples                 : {}", PreTriggerSamples);
-  spdlog::info("  PostTriggerSamples                : {}", PostTriggerSamples);
+  spdlog::info("  DetectorID                        : {}", detectorID);
+  spdlog::info("  PreTriggerSamples                 : {}", preTriggerSamples);
+  spdlog::info("  PostTriggerSamples                : {}", postTriggerSamples);
 
   const std::string triggerModeListStr = [&]() {
     std::vector<size_t> triggerModeInt{};
-    for (const auto mode : TriggerModes) {
+    for (const auto mode : triggerModes) {
       triggerModeInt.push_back(static_cast<size_t>(mode));
     }
     return stringutil::join(triggerModeInt, ", ");
   }();
   spdlog::info("  TriggerModes                      : [{}]", triggerModeListStr);
 
-  spdlog::info("  SamplesInEventPacket              : {}", SamplesInEventPacket);
-  spdlog::info("  DownSamplingFactorForSavedWaveform: {}", DownSamplingFactorForSavedWaveform);
-  spdlog::info("  ChannelEnable                     : [{}]", stringutil::join(ChannelEnable, ", "));
-  spdlog::info("  TriggerThresholds                 : [{}]", stringutil::join(TriggerThresholds, ", "));
-  spdlog::info("  TriggerCloseThresholds            : [{}]", stringutil::join(TriggerCloseThresholds, ", "));
+  spdlog::info("  SamplesInEventPacket              : {}", samplesInEventPacket);
+  spdlog::info("  DownSamplingFactorForSavedWaveform: {}", downSamplingFactorForSavedWaveform);
+  spdlog::info("  ChannelEnable                     : [{}]", stringutil::join(channelEnable, ", "));
+  spdlog::info("  TriggerThresholds                 : [{}]", stringutil::join(triggerThresholds, ", "));
+  spdlog::info("  TriggerCloseThresholds            : [{}]", stringutil::join(triggerCloseThresholds, ", "));
 
   spdlog::info("Programming the digitizer");
   try {
     // record length
-    setNumberOfSamples(PreTriggerSamples + PostTriggerSamples);
-    setNumberOfSamplesInEventPacket(SamplesInEventPacket);
+    setNumberOfSamples(preTriggerSamples + postTriggerSamples);
+    setNumberOfSamplesInEventPacket(samplesInEventPacket);
     for (size_t ch = 0; ch < nChannels; ch++) {
       // pre-trigger (delay)
-      setDepthOfDelay(ch, PreTriggerSamples);
+      setDepthOfDelay(ch, preTriggerSamples);
 
       // trigger mode
-      const auto triggerMode = TriggerModes.at(ch);
+      const auto triggerMode = triggerModes.at(ch);
       setTriggerMode(ch, triggerMode);
 
       // threshold
-      setStartingThreshold(ch, TriggerThresholds[ch]);
-      setClosingThreshold(ch, TriggerCloseThresholds[ch]);
+      setStartingThreshold(ch, triggerThresholds[ch]);
+      setClosingThreshold(ch, triggerCloseThresholds[ch]);
 
       // adc clock 50MHz
       setAdcClock(growth_fpga::ADCClockFrequency::ADCClock50MHz);

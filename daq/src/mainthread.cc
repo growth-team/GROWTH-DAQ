@@ -161,10 +161,10 @@ void MainThread::openOutputEventListFile() {
   nEventsOfCurrentOutputFile_ = 0;
 #ifdef USE_ROOT
   outputFileName_ = timeutil::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
-  eventListFile_.reset(new EventListFileROOT(outputFileName_, adcBoard_->DetectorID, configurationFile_));
+  eventListFile_.reset(new EventListFileROOT(outputFileName_, adcBoard_->detectorID, configurationFile_));
 #else
   outputFileName_ = timeutil::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
-  eventListFile_.reset(new EventListFileFITS(outputFileName_, adcBoard_->DetectorID, configurationFile_,       //
+  eventListFile_.reset(new EventListFileFITS(outputFileName_, adcBoard_->detectorID, configurationFile_,       //
                                              adcBoard_->getNSamplesInEventListFile(), exposureInSec_.count(),  //
                                              fpgaType_, fpgaVersion_));
 #endif

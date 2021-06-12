@@ -28,32 +28,32 @@ class HitPatternModule : public RegisterAccessInterface {
 
  private:
   static constexpr size_t NUM_CHANNELS = 4;
-  static constexpr u32 BASE_HIT_PATTERN_REGISTERS = 0x01014000;
+  static constexpr u32 BASE_ADDRESS = 0x01014000;
   static constexpr std::array<u32, NUM_CHANNELS> ADDRESS_THRESHOLD_LOW = {
-      BASE_HIT_PATTERN_REGISTERS + 0x02,
-      BASE_HIT_PATTERN_REGISTERS + 0x06,
-      BASE_HIT_PATTERN_REGISTERS + 0x0a,
-      BASE_HIT_PATTERN_REGISTERS + 0x0e,
+      BASE_ADDRESS + 0x02,
+      BASE_ADDRESS + 0x06,
+      BASE_ADDRESS + 0x0a,
+      BASE_ADDRESS + 0x0e,
   };
   static constexpr std::array<u32, NUM_CHANNELS> ADDRESS_THRESHOLD_HIGH = {
-      BASE_HIT_PATTERN_REGISTERS + 0x00,
-      BASE_HIT_PATTERN_REGISTERS + 0x04,
-      BASE_HIT_PATTERN_REGISTERS + 0x08,
-      BASE_HIT_PATTERN_REGISTERS + 0x0c,
+      BASE_ADDRESS + 0x00,
+      BASE_ADDRESS + 0x04,
+      BASE_ADDRESS + 0x08,
+      BASE_ADDRESS + 0x0c,
   };
   static constexpr std::array<u32, NUM_CHANNELS> ADDRESS_HIT_PATTERN_WIDTH = {
-      BASE_HIT_PATTERN_REGISTERS + 0x10,
-      BASE_HIT_PATTERN_REGISTERS + 0x12,
-      BASE_HIT_PATTERN_REGISTERS + 0x14,
-      BASE_HIT_PATTERN_REGISTERS + 0x16,
+      BASE_ADDRESS + 0x10,
+      BASE_ADDRESS + 0x12,
+      BASE_ADDRESS + 0x14,
+      BASE_ADDRESS + 0x16,
   };
   static constexpr std::array<u32, NUM_CHANNELS> ADDRESS_HIT_PATTERN_DELAY = {
-      BASE_HIT_PATTERN_REGISTERS + 0x18,
-      BASE_HIT_PATTERN_REGISTERS + 0x1a,
-      BASE_HIT_PATTERN_REGISTERS + 0x1c,
-      BASE_HIT_PATTERN_REGISTERS + 0x1e,
+      BASE_ADDRESS + 0x18,
+      BASE_ADDRESS + 0x1a,
+      BASE_ADDRESS + 0x1c,
+      BASE_ADDRESS + 0x1e,
   };
-  static constexpr u32 ADDRESS_HIT_PATTERN_OR_SWITCH = BASE_HIT_PATTERN_REGISTERS + 0x20;
+  static constexpr u32 ADDRESS_HIT_PATTERN_OR_SWITCH = BASE_ADDRESS + 0x20;
 
   static constexpr u16 MAX_THRESHOLD = 4095;
   static constexpr u16 MAX_WIDTH = 1023;

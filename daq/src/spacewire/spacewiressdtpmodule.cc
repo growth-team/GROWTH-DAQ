@@ -46,7 +46,7 @@ std::string SpaceWireSSDTPException::toString() const {
   return result;
 }
 
-SpaceWireSSDTPModule::SpaceWireSSDTPModule(std::unique_ptr<TCPSocket> socket): socket_(std::move(socket)), receiveBuffer_(SpaceWireSSDTPModule::BufferSize) {
+SpaceWireSSDTPModule::SpaceWireSSDTPModule(std::unique_ptr<TCPSocket> socket): socket_(std::move(socket)), receiveBuffer_(SpaceWireSSDTPModule::BUFFER_SIZE_BYTES) {
 }
 
 void SpaceWireSSDTPModule::send(std::vector<u8>* data, EOPType eopType) {
@@ -56,11 +56,11 @@ void SpaceWireSSDTPModule::send(std::vector<u8>* data, EOPType eopType) {
   }
   size_t size = data->size();
   if (eopType == EOPType ::EOP) {
-    sendHeader_[0] = DataFlag_Complete_EOP;
+    sendHeader_[0] = DATA_FLAG_COMPLETE_EOP;
   } else if (eopType == EOPType ::EEP) {
-    sendHeader_[0] = DataFlag_Complete_EEP;
+    sendHeader_[0] = DATA_FLAG_COMPLETE_EEP;
   } else if (eopType == EOPType ::Continued) {
-    sendHeader_[0] = DataFlag_Flagmented;
+    sendHeader_[0] = DATA_FLAG_FLAGMENTED;
   }
   sendHeader_[1] = 0x00;
   for (size_t i = 11; i > 1; i--) {
@@ -81,11 +81,11 @@ void SpaceWireSSDTPModule::send(const u8* data, size_t length, EOPType eopType) 
     return;
   }
   if (eopType == EOPType::EOP) {
-    sendHeader_[0] = DataFlag_Complete_EOP;
+    sendHeader_[0] = DATA_FLAG_COMPLETE_EOP;
   } else if (eopType == EOPType::EEP) {
-    sendHeader_[0] = DataFlag_Complete_EEP;
+    sendHeader_[0] = DATA_FLAG_COMPLETE_EEP;
   } else if (eopType == EOPType::Continued) {
-    sendHeader_[0] = DataFlag_Flagmented;
+    sendHeader_[0] = DATA_FLAG_FLAGMENTED;
   }
   sendHeader_[1] = 0x00;
   size_t asize = length;
@@ -124,7 +124,7 @@ size_t SpaceWireSSDTPModule::receive(std::vector<u8>* data, EOPType& eopType) {
   receive_header:  //
     receiveHeader_[0] = 0xFF;
     receiveHeader_[1] = 0x00;
-    while (receiveHeader_[0] != DataFlag_Complete_EOP && receiveHeader_[0] != DataFlag_Complete_EEP) {
+    while (receiveHeader_[0] != DATA_FLAG_COMPLETE_EOP && receiveHeader_[0] != DATA_FLAG_COMPLETE_EEP) {
       hsize = 0;
       flagment_size = 0;
       received_size = 0;
@@ -154,8 +154,8 @@ size_t SpaceWireSSDTPModule::receive(std::vector<u8>* data, EOPType& eopType) {
       }
 
       // data or control code part
-      if (receiveHeader_[0] == DataFlag_Complete_EOP || receiveHeader_[0] == DataFlag_Complete_EEP ||
-          receiveHeader_[0] == DataFlag_Flagmented) {
+      if (receiveHeader_[0] == DATA_FLAG_COMPLETE_EOP || receiveHeader_[0] == DATA_FLAG_COMPLETE_EEP ||
+          receiveHeader_[0] == DATA_FLAG_FLAGMENTED) {
         // data
         for (u32 i = 2; i < 12; i++) {
           flagment_size = flagment_size * 0x100 + receiveHeader_[i];
@@ -175,7 +175,7 @@ size_t SpaceWireSSDTPModule::receive(std::vector<u8>* data, EOPType& eopType) {
           received_size += result;
         }
         size += received_size;
-      } else if (receiveHeader_[0] == ControlFlag_SendTimeCode || receiveHeader_[0] == ControlFlag_GotTimeCode) {
+      } else if (receiveHeader_[0] == CONTROL_FLAG_SEND_TIME_CODE || receiveHeader_[0] == CONTROL_FLAG_GOT_TIME_CODE) {
         // control
         u8 timecode_and_reserved[2];
         u32 tmp_size = 0;
@@ -197,9 +197,9 @@ size_t SpaceWireSSDTPModule::receive(std::vector<u8>* data, EOPType& eopType) {
     } else {
       goto receive_header;
     }
-    if (receiveHeader_[0] == DataFlag_Complete_EOP) {
+    if (receiveHeader_[0] == DATA_FLAG_COMPLETE_EOP) {
       eopType = EOPType::EOP;
-    } else if (receiveHeader_[0] == DataFlag_Complete_EEP) {
+    } else if (receiveHeader_[0] == DATA_FLAG_COMPLETE_EEP) {
       eopType = EOPType::EEP;
     } else {
       eopType = EOPType::Continued;

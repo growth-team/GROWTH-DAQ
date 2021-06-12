@@ -88,45 +88,43 @@ class RMAPEngine {
   bool hasStopped() const { return hasStopped_; }
   bool isTransactionIDAvailable(u16 transactionID);
   void putBackRMAPPacketInstnce(RMAPPacketPtr packet);
-  size_t getNTransactions() const { return transactions.size(); }
-  size_t getNAvailableTransactionIDs() const { return availableTransactionIDList.size(); }
+  size_t getNTransactions() const { return transactions_.size(); }
+  size_t getNAvailableTransactionIDs() const { return availableTransactionIDList_.size(); }
 
  protected:
-  void receivedCommandPacketDiscarded() { nErrorneousCommandPackets++; }
-  void replyToReceivedCommandPacketCouldNotBeSent() { nTransactionsAbortedWhenReplying++; }
+  void receivedCommandPacketDiscarded() { nErrorneousCommandPackets_++; }
+  void replyToReceivedCommandPacketCouldNotBeSent() { nTransactionsAbortedWhenReplying_++; }
 
  private:
   void initialize();
   u16 getNextAvailableTransactionID();
   void deleteTransactionIDFromDB(TransactionID transactionID);
-
   void releaseTransactionID(u16 transactionID);
   RMAPPacketPtr receivePacket();
-
   RMAPInitiator* resolveTransaction(const RMAPPacket* packet);
   void rmapReplyPacketReceived(RMAPPacketPtr packet);
   RMAPPacketPtr reuseOrCreateRMAPPacket();
 
-  static const size_t MaximumTIDNumber = 65536;
-  static constexpr double DefaultReceiveTimeoutDurationInMicroSec = 200000;  // 200ms
+  static constexpr size_t MAX_TID_NUMBER = 65536;
+  static constexpr f64 DEFAULT_RECEIVE_TIMEOUT_DURATION_MICROSEC = 200000;  // 200ms
 
   std::atomic<bool> stopped_{true};
-  std::atomic<bool> hasStopped_{};
+  std::atomic<bool> hasStopped_{false};
 
-  size_t nDiscardedReceivedCommandPackets{};
-  size_t nDiscardedReceivedPackets{};
-  size_t nErrorneousReplyPackets{};
-  size_t nErrorneousCommandPackets{};
-  size_t nTransactionsAbortedWhenReplying{};
-  size_t nErrorInRMAPReplyPacketProcessing{};
+  size_t nDiscardedReceivedCommandPackets_{};
+  size_t nDiscardedReceivedPackets_{};
+  size_t nErrorneousReplyPackets_{};
+  size_t nErrorneousCommandPackets_{};
+  size_t nTransactionsAbortedWhenReplying_{};
+  size_t nErrorInRMAPReplyPacketProcessing_{};
 
-  std::map<u16, RMAPInitiator*> transactions;
-  std::recursive_mutex transactionIDMutex;
-  std::list<u16> availableTransactionIDList;
-  u16 latestAssignedTransactionID;
+  std::map<u16, RMAPInitiator*> transactions_;
+  std::recursive_mutex transactionIDMutex_;
+  std::list<u16> availableTransactionIDList_;
+  u16 latestAssignedTransactionID_;
 
-  SpaceWireIF* spwif;
-  std::thread runThread{};
+  SpaceWireIF* spwif_;
+  std::thread runThread_{};
 
   std::deque<RMAPPacketPtr> freeRMAPPacketList_;
   std::mutex freeRMAPPacketListMutex_;

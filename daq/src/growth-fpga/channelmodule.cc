@@ -2,57 +2,56 @@
 
 ChannelModule::ChannelModule(RMAPInitiatorPtr rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode,
                              u8 chNumber)
-    : RegisterAccessInterface(std::move(rmapInitiator), rmapTargetNode), chNumber_(chNumber) {
-  const u32 BA = InitialAddressOf_ChModule_0 + chNumber * AddressOffsetBetweenChannels;
-  AddressOf_TriggerModeRegister = BA + 0x0002;
-  AddressOf_NumberOfSamplesRegister = BA + 0x0004;
-  AddressOf_ThresholdStartingRegister = BA + 0x0006;
-  AddressOf_ThresholdClosingRegister = BA + 0x0008;
-  AddressOf_AdcPowerDownModeRegister = BA + 0x000a;
-  AddressOf_DepthOfDelayRegister = BA + 0x000c;
-  AddressOf_LivetimeRegisterL = BA + 0x000e;
-  AddressOf_LivetimeRegisterH = BA + 0x0010;
-  AddressOf_CurrentAdcDataRegister = BA + 0x0012;
-  AddressOf_CPUTriggerRegister = BA + 0x0014;
-  AddressOf_TriggerCountRegisterL = BA + 0x0016;
-  AddressOf_TriggerCountRegisterH = BA + 0x0018;
-  AddressOf_Status1Register = BA + 0x0030;
-  AddressOf_TriggerCountRegisterL = AddressOf_TriggerCountRegisterH;
-}
+    : RegisterAccessInterface(std::move(rmapInitiator), rmapTargetNode),
+      chNumber_(chNumber),
+      BASE_ADDRESS(INITIAL_ADDRESS_CH_MODULE_CH0 + chNumber * ADDRESS_OFFSET_PER_CHANNEL),
+      ADDRESS_TRIGGER_MODE_REGISTER(BASE_ADDRESS + 0x0002),
+      ADDRESS_NUMBER_OF_SAMPLES_REGISTER(BASE_ADDRESS + 0x0004),
+      ADDRESS_THRESHOLD_STARTING_REGISTER(BASE_ADDRESS + 0x0006),
+      ADDRESS_THRESHOLD_CLOSING_REGISTER(BASE_ADDRESS + 0x0008),
+      ADDRESS_ADC_POWER_DOWN_MODE_REGISTER(BASE_ADDRESS + 0x000a),
+      ADDRESS_DEPTH_OF_DELAY_REGISTER(BASE_ADDRESS + 0x000c),
+      ADDRESS_LIVETIME_REGISTER_L(BASE_ADDRESS + 0x000e),
+      ADDRESS_LIVETIME_REGISTER_H(BASE_ADDRESS + 0x0010),
+      ADDRESS_CURRENT_ADC_DATA_REGISTER(BASE_ADDRESS + 0x0012),
+      ADDRESS_CPU_TRIGGER_REGISTER(BASE_ADDRESS + 0x0014),
+      ADDRESS_TRIGGER_COUNT_REGISTER_L(BASE_ADDRESS + 0x0016),
+      ADDRESS_TRIGGER_COUNT_REGISTER_H(BASE_ADDRESS + 0x0018),
+      ADDRESS_STATUS1_REGISTER(BASE_ADDRESS + 0x0030) {}
 
 void ChannelModule::setTriggerMode(growth_fpga::TriggerMode triggerMode) {
-  write(AddressOf_TriggerModeRegister, static_cast<u16>(triggerMode));
+  write(ADDRESS_TRIGGER_MODE_REGISTER, static_cast<u16>(triggerMode));
 }
 
-u32 ChannelModule::getTriggerMode() const { return read16(AddressOf_TriggerModeRegister); }
+u32 ChannelModule::getTriggerMode() const { return read16(ADDRESS_TRIGGER_MODE_REGISTER); }
 
 void ChannelModule::sendCPUTrigger() {
   constexpr u16 TRIG_FIRE = 0xFFFF;
-  write(AddressOf_CPUTriggerRegister, TRIG_FIRE);
+  write(ADDRESS_CPU_TRIGGER_REGISTER, TRIG_FIRE);
 }
 
-void ChannelModule::setNumberOfSamples(u16 nSamples) { write(AddressOf_NumberOfSamplesRegister, nSamples); }
+void ChannelModule::setNumberOfSamples(u16 nSamples) { write(ADDRESS_NUMBER_OF_SAMPLES_REGISTER, nSamples); }
 
-void ChannelModule::setStartingThreshold(u16 threshold) { write(AddressOf_ThresholdStartingRegister, threshold); }
+void ChannelModule::setStartingThreshold(u16 threshold) { write(ADDRESS_THRESHOLD_STARTING_REGISTER, threshold); }
 
-void ChannelModule::setClosingThreshold(u16 threshold) { write(AddressOf_ThresholdClosingRegister, threshold); }
+void ChannelModule::setClosingThreshold(u16 threshold) { write(ADDRESS_THRESHOLD_CLOSING_REGISTER, threshold); }
 
 void ChannelModule::turnADCPower(bool trueifon) {
   constexpr u16 POWER_DOWN = 0xFFFF;
   constexpr u16 POWER_UP = 0x0000;
-  write(AddressOf_AdcPowerDownModeRegister, trueifon ? POWER_UP : POWER_DOWN);
+  write(ADDRESS_ADC_POWER_DOWN_MODE_REGISTER, trueifon ? POWER_UP : POWER_DOWN);
 }
 
-void ChannelModule::setDepthOfDelay(u16 depthOfDelay) { write(AddressOf_DepthOfDelayRegister, depthOfDelay); }
+void ChannelModule::setDepthOfDelay(u16 depthOfDelay) { write(ADDRESS_DEPTH_OF_DELAY_REGISTER, depthOfDelay); }
 
-u32 ChannelModule::getLivetime() const { return read32(AddressOf_LivetimeRegisterL); }
+u32 ChannelModule::getLivetime() const { return read32(ADDRESS_LIVETIME_REGISTER_L); }
 
-u16 ChannelModule::getCurrentADCValue() const { return read16(AddressOf_CurrentAdcDataRegister); }
+u16 ChannelModule::getCurrentADCValue() const { return read16(ADDRESS_CURRENT_ADC_DATA_REGISTER); }
 
-size_t ChannelModule::getTriggerCount() const { return read32(AddressOf_TriggerCountRegisterL); }
+size_t ChannelModule::getTriggerCount() const { return read32(ADDRESS_TRIGGER_COUNT_REGISTER_L); }
 
 std::string ChannelModule::getStatus() const {
-  const auto statusRegister = read16(AddressOf_Status1Register);
+  const auto statusRegister = read16(ADDRESS_STATUS1_REGISTER);
   std::stringstream ss;
   /*
    Status1Register <= (                             --
