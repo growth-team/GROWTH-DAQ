@@ -5,11 +5,13 @@
 #include "growth-fpga/types.hh"
 
 #include <array>
+#include <atomic>
 #include <deque>
 #include <mutex>
 #include <thread>
 #include <optional>
 #include <vector>
+#include <condition_variable>
 
 /** Decodes event data received from the GROWTH ADC Board.
  * Decoded event instances will be stored in a queue.
