@@ -4,6 +4,8 @@
 #include "types.h"
 #include "growth-fpga/constants.hh"
 
+#include <memory>
+
 namespace growth_fpga {
 enum class TriggerMode : u32 {
   StartThreshold_NSamples_AutoClose = 1,       //

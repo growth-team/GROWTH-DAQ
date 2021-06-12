@@ -44,6 +44,17 @@ set(SPW_SOURCE_FILES
   src/spacewire/tcpsocket.cc
 )
 
+set(GROWTH_FPGA_SOURCE_FILES
+  src/growth-fpga/channelmanager.cc
+  src/growth-fpga/channelmodule.cc
+  src/growth-fpga/consumermanagereventfifo.cc
+  src/growth-fpga/eventdecoder.cc
+  src/growth-fpga/hitpatternmodule.cc
+  src/growth-fpga/registeraccessinterface.cc
+  src/growth-fpga/semaphoreregister.cc
+  src/growth-fpga/slowadcdac.cc
+)
+
 SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
 add_subdirectory(external/libzmq)
 add_subdirectory(external/yaml-cpp)
@@ -90,6 +101,7 @@ add_executable(growth_daq
   src/stringutil.cc
   src/timeutil.cc
   ${SPW_SOURCE_FILES}
+  ${GROWTH_FPGA_SOURCE_FILES}
 )
 
 add_executable(growth_reg
@@ -97,7 +109,9 @@ add_executable(growth_reg
   src/serialport.cc
   src/stringutil.cc
   src/timeutil.cc
+  src/registeraccessautomator.cc
   ${SPW_SOURCE_FILES}
+  ${GROWTH_FPGA_SOURCE_FILES}
 )
 
 #---------------------------------------------

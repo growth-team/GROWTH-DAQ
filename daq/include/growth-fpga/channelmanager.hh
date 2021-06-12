@@ -6,8 +6,6 @@
 #include "growth-fpga/registeraccessinterface.hh"
 #include "growth-fpga/semaphoreregister.hh"
 
-#include <array>
-#include <bitset>
 #include <memory>
 
 /** A class which represents ChannelManager module on VHDL logic.
@@ -16,59 +14,22 @@
  */
 class ChannelManager : public RegisterAccessInterface {
  public:
-  ChannelManager(std::shared_ptr<RMAPInitiator> rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode)
-      : RegisterAccessInterface(rmapInitiator, rmapTargetNode),
-        startStopSemaphore_(rmapInitiator, rmapTargetNode, AddressOf_StartStopSemaphoreRegister) {}
-
+  ChannelManager(std::shared_ptr<RMAPInitiator> rmapInitiator, std::shared_ptr<RMAPTargetNode> rmapTargetNode);
   /// Starts data acquisition.
   /// Configuration of registers of individual channels should be completed before invoking this method.
   /// @param channelsToBeStarted vector of bool, true if the channel should be started
-  void startAcquisition(const std::vector<bool>& channelsToBeStarted) {
-    // Prepare register value for StartStopRegister
-    const u16 value = [&]() {
-      std::bitset<growth_fpga::NumberOfChannels> value{0};
-      size_t bitIndex{0};
-      for (const auto enabled : channelsToBeStarted) {
-        if (enabled) {
-          value.set(bitIndex);
-        }
-        bitIndex++;
-      }
-      return value.to_ulong();
-    }();
-    // write the StartStopRegister (semaphore is needed)
-    SemaphoreLock lock(startStopSemaphore_);
-    write(AddressOf_StartStopRegister, value);
-    spdlog::debug("ChannelManager::startAcquisition() readback = {:08b}", read16(AddressOf_StartStopRegister));
-  }
+  void startAcquisition(const std::vector<bool>& channelsToBeStarted) ;
 
   /// Checks if all data acquisition is completed in all channels.
-  bool isAcquisitionCompleted() const {
-    const u16 value = read16(AddressOf_StartStopRegister);
-    return value == 0x0000;
-  }
+  bool isAcquisitionCompleted() const ;
 
   /// Checks if data acquisition of single channel is completed.
-  bool isAcquisitionCompleted(size_t chNumber) const {
-    const u16 value = read16(AddressOf_StartStopRegister);
-    if (chNumber < growth_fpga::NumberOfChannels) {
-      const std::bitset<16> bits(value);
-      return bits[chNumber] == 0;
-    } else {
-      // if chNumber is out of the allowed range
-      return false;
-    }
-  }
+  bool isAcquisitionCompleted(size_t chNumber) const ;
 
   /** Stops data acquisition regardless of the preset mode of
    * the acquisition.
    */
-  void stopAcquisition() {
-    constexpr u16 STOP = 0x00;
-    SemaphoreLock lock(startStopSemaphore_);
-    write(AddressOf_StartStopRegister, STOP);
-    spdlog::debug("ChannelManager::stopAcquisition() readback = {:08b}", read16(AddressOf_StartStopRegister));
-  }
+  void stopAcquisition() ;
 
   /** Sets Preset Mode.
    * Available preset modes are:<br>
@@ -77,9 +38,7 @@ class ChannelManager : public RegisterAccessInterface {
    * PresetMode::NonStop (Forever)
    * @param presetMode preset mode value (see also enum class PresetMode )
    */
-  void setPresetMode(growth_fpga::PresetMode presetMode) {
-    write(AddressOf_PresetModeRegister, static_cast<u16>(presetMode));
-  }
+  void setPresetMode(growth_fpga::PresetMode presetMode);
 
   /** Sets ADC Clock.
    * - ADCClockFrequency::ADCClock200MHz <br>
@@ -87,32 +46,26 @@ class ChannelManager : public RegisterAccessInterface {
    * - ADCClockFrequency::ADCClock50MHz <br>
    * @param adcClockFrequency enum class ADCClockFrequency
    */
-  void setAdcClock(growth_fpga::ADCClockFrequency adcClockFrequency) {
-    write(AddressOf_ADCClock_Register, static_cast<u16>(adcClockFrequency));
-  }
+  void setAdcClock(growth_fpga::ADCClockFrequency adcClockFrequency) ;
 
   /** Sets Livetime preset value.
    * @param livetimeIn10msUnit live time to be set (in a unit of 10ms)
    */
-  void setPresetLivetime(u32 livetimeIn10msUnit) { write(AddressOf_PresetLivetimeRegisterL, livetimeIn10msUnit); }
+  void setPresetLivetime(u32 livetimeIn10msUnit) ;
 
-  /** Get Realtime which is elapsed time since the data acquisition was started.
+  /** Get realtime which is elapsed time since the data acquisition was started.
    * @return elapsed real time in 10ms unit
    */
-  f64 getRealtime() const { return static_cast<f64>(read48(AddressOf_RealtimeRegisterL)); }
+  f64 getRealtime() const;
 
   /** Resets ChannelManager module on VHDL logic.
    * This method clear all internal registers in the logic module.
    */
-  void reset() {
-    constexpr u16 RESET = 0x01;
-    write(AddressOf_ResetRegister, RESET);
-  }
-
+  void reset() ;
   /** Sets PresetnEventsRegister.
    * @param nEvents number of event to be taken
    */
-  void setPresetnEvents(u32 nEvents) { write(AddressOf_PresetLivetimeRegisterL, nEvents); }
+  void setPresetnEvents(u32 nEvents) ;
 
   /** Sets ADC clock counter.<br>
    * ADC Clock = 50MHz/(ADC Clock Counter+1)<br>
@@ -122,7 +75,7 @@ class ChannelManager : public RegisterAccessInterface {
    * ADC Clock 10MHz when ADC Clock Counter=4
    * @param adcClockCounter ADC Clock Counter value
    */
-  void setadcClockCounter(u16 adcClockCounter) { write(AddressOf_ADCClock_Register, adcClockCounter); }
+  void setadcClockCounter(u16 adcClockCounter) ;
 
   // Addresses of Channel Manager Module
   // clang-format off

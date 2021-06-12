@@ -24,9 +24,6 @@ int main(int argc, char* argv[]) {
   spdlog::set_level(spdlog::level::info);
   spdlog::info("Exposure = {} sec", exposureInSec);
 
-  int dummyArgc = 0;
-  const char* dummyArgv[] = {""};
-
   // Instantiate
   auto mainThread = std::make_shared<MainThread>(deviceName, configurationFile, exposureInSec);
   auto messageServer = std::make_unique<MessageServer>(mainThread);
