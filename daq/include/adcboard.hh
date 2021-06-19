@@ -284,9 +284,9 @@ class GROWTH_FY2015_ADC {
   std::unique_ptr<SpaceWireIFOverUART> spwif_{};
   RMAPEnginePtr rmapEngine_{};
   std::shared_ptr<RMAPTargetNode> adcRMAPTargetNode_;
-  std::unique_ptr<EventDecoder> eventDecoder_{};
-  std::unique_ptr<ChannelManager> channelManager_{};
-  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager_{};
+  std::unique_ptr<EventDecoder> eventDecoder_;
+  std::unique_ptr<ChannelManager> channelManager_;
+  std::unique_ptr<ConsumerManagerEventFIFO> consumerManager_;
   using ChannelModulePtr = std::unique_ptr<ChannelModule>;
   std::vector<ChannelModulePtr> channelModules_;
 
