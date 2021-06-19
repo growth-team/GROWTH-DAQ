@@ -35,3 +35,11 @@ RUN apt install -y \
   texinfo \
   wget \
   zlib1g-dev
+RUN apt install -y \
+  gcc-8 \
+  g++-8 \
+  && apt remove -y gcc-9 g++-9
+RUN ln -sf /usr/bin/g++-8 /usr/bin/g++ && \
+  ln -sf /usr/bin/g++-8 /usr/bin/c++ && \
+  ln -sf /usr/bin/gcc-8 /usr/bin/gcc && \
+  ln -sf /usr/bin/gcc-8 /usr/bin/cc
