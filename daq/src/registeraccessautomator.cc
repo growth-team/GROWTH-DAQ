@@ -57,6 +57,10 @@ void RegisterAccessAutomator::executeCommand(const YAML::Node& entry) {
     if (command == "set") {
       executeHitPatternSet(arguments);
     }
+  } else if (module == "hitpatternorswitch") {
+    if (command == "set") {
+      executeHitPatternOrSwitch(arguments);
+    }
   } else if (module == "slowdac") {
     if (command == "set") {
       executeSlowDacSet(arguments);
@@ -80,9 +84,16 @@ void RegisterAccessAutomator::executeHitPatternSet(const YAML::Node& arguments) 
   spdlog::info("==> DONE");
 }
 
+void RegisterAccessAutomator::executeHitPatternOrSwitch(const YAML::Node& arguments) {
+  const u16 orSwitch = arguments["orSwitch"].as<u16>();
+  spdlog::info("Setting hit-pattern-or-switch register (orSwitch = {})", orSwitch);
+  hitPatternModule_->setOrSwitch(orSwitch);
+  spdlog::info("==> DONE");
+}
+
 void RegisterAccessAutomator::executeSlowDacSet(const YAML::Node& arguments) {
   const auto ch = arguments["ch"].as<std::size_t>();
-  const u16 gain = arguments["ch"].as<u16>();
+  const u16 gain = arguments["gain"].as<u16>();
   const u16 outputValue = arguments["outputValue"].as<u16>();
   spdlog::info("Setting DAC (Ch.{}, gain = {}, outputValue = {})", ch, gain, outputValue);
   slowAdcDacModule_->setDac(ch, gain, outputValue);

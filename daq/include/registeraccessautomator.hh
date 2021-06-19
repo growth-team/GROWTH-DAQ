@@ -20,6 +20,7 @@ class RegisterAccessAutomator {
   void checkMustHaveKeys(const YAML::Node& entry) const;
   void executeCommand(const YAML::Node& entry);
   void executeHitPatternSet(const YAML::Node& arguments);
+  void executeHitPatternOrSwitch(const YAML::Node& arguments);
   void executeSlowDacSet(const YAML::Node& arguments);
   void executeHighvoltageControlSet(const YAML::Node& arguments);
 
@@ -31,4 +32,5 @@ class RegisterAccessAutomator {
   std::unique_ptr<HighvoltageControlGpio> highvoltageControlGpioModule_{};
   std::unique_ptr<HitPatternModule> hitPatternModule_{};
 };
+
 #endif
