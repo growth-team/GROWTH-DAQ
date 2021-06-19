@@ -12,35 +12,35 @@
 #include "TH1D.h"
 #include "TROOT.h"
 
-static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
+static const u32 AddressOf_EventFIFO_DataCountRegister = 0x20000000;
 
 #define DRAW_CANVAS 1
 
 class MainThread : public CxxUtilities::StoppableThread {
  public:
-  std::string deviceName;
+  std::string deviceName_;
   size_t nEventsMax;
   TApplication* app;
 
  public:
   MainThread(std::string deviceName, size_t nEventsMax, TApplication* app) {
-    this->deviceName = deviceName;
+    this->deviceName_ = deviceName;
     this->nEventsMax = nEventsMax;
-    this->app        = app;
+    this->app = app;
   }
 
  public:
   void run() {
     using namespace std;
-    auto adcBoard                           = new GROWTH_FY2015_ADC(deviceName);
-    const size_t nChannels                  = 4;
-    const size_t NumberOfSamples            = 1000;
+    auto adcBoard = new GROWTH_FY2015_ADC(deviceName_);
+    const size_t nChannels = 4;
+    const size_t NumberOfSamples = 1000;
     const size_t NumberOfSamplesEventPacket = 2;
-    const size_t PreTriggerSamples          = 4;
-    const size_t TriggerThresholds[1][4]    = {{900, 530, 900, 900}};
+    const size_t PreTriggerSamples = 4;
+    const size_t TriggerThresholds[1][4] = {{900, 530, 900, 900}};
 
     std::vector<size_t> enabledChannels = {0, 1, 2, 3};
-    uint16_t ChannelEnableMask          = 0x0F;  // enable all 4 channels
+    u16 ChannelEnableMask = 0x0F;  // enable all 4 channels
 
 #ifdef DRAW_CANVAS
     //---------------------------------------------
@@ -64,14 +64,14 @@ class MainThread : public CxxUtilities::StoppableThread {
         adcBoard->setDepthOfDelay(ch, PreTriggerSamples);
 
         // trigger mode
-        adcBoard->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+        adcBoard->setTriggerMode(ch, GROWTH_FY2015_ADC_Type::TriggerMode::StartThreshold_NSamples_CloseThreshold);
 
         // threshold
         adcBoard->setStartingThreshold(ch, TriggerThresholds[0][ch]);
         adcBoard->setClosingThreshold(ch, TriggerThresholds[0][ch]);
 
         // adc clock 50MHz
-        adcBoard->setAdcClock(SpaceFibreADC::ADCClockFrequency::ADCClock50MHz);
+        adcBoard->setAdcClock(GROWTH_FY2015_ADC_Type::ADCClockFrequency::ADCClock50MHz);
 
         // turn on ADC
         adcBoard->turnOnADCPower(ch);
@@ -86,7 +86,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     // Start acquisition
     //---------------------------------------------
     std::vector<bool> startStopRegister(nChannels);
-    uint16_t mask = 0x0001;
+    u16 mask = 0x0001;
     for (size_t i = 0; i < nChannels; i++) {
       if ((ChannelEnableMask & mask) == 0) {
         startStopRegister[i] = false;
@@ -128,7 +128,7 @@ class MainThread : public CxxUtilities::StoppableThread {
     // Read events
     //---------------------------------------------
     size_t nEvents = 0;
-    TH1D* hist     = new TH1D("h", "Histogram", 1024, 0, 1024);
+    TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
     CxxUtilities::Condition c;
 
 #ifdef DRAW_CANVAS
@@ -140,18 +140,18 @@ class MainThread : public CxxUtilities::StoppableThread {
     //	RootEventLoop eventloop(app);
     //	eventloop.start();
 
-    size_t canvasUpdateCounter          = 0;
+    size_t canvasUpdateCounter = 0;
     const size_t canvasUpdateCounterMax = 10;
 #endif
 
     while (nEvents < nEventsMax) {
-      std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
+      std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEventList();
       cout << "Received " << events.size() << " events" << endl;
       for (auto event : events) {
         /*
-         cout << (uint32_t) event->ch << endl;
+         cout << (u32) event->ch << endl;
          for (size_t i = 0; i < event->nSamples; i++) {
-         cout << dec << (uint32_t) event->waveform[i] << " ";
+         cout << dec << (u32) event->waveform[i] << " ";
          }
          cout << dec << endl;
          */

@@ -1,7 +1,7 @@
 BasedOnStyle: Google
-AlignConsecutiveAssignments: true
 AlignTrailingComments: true
-AllowShortBlocksOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
 ColumnLimit: 120
-IndentCaseLabels: true
+DerivePointerBinding: false
+PointerBindsToType: true
+SortIncludes: false

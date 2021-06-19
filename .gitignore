@@ -9,6 +9,5 @@ CMakeCache
 *.fits
 *.fits.gz
 *.text.gz
-a
-b
-aaa
+**/*-e
+.vscode
