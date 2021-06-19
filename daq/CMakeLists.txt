@@ -56,6 +56,7 @@ set(GROWTH_FPGA_SOURCE_FILES
 )
 
 SET(ZeroMQ_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/libzmq)
+SET(ZMQ_BUILD_TESTS off)
 add_subdirectory(external/libzmq)
 add_subdirectory(external/yaml-cpp)
 add_subdirectory(external) # For cfitsio and serial
