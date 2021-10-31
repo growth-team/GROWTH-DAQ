@@ -49,7 +49,8 @@ void GROWTH_FY2015_ADC::dumpThread(const std::chrono::seconds dumpInterval) {
 }
 
 GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
-    : eventDecoder_(std::make_unique<EventDecoder>()), gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
+    : eventDecoder_(std::make_unique<EventDecoder>()),
+      gpsDataFIFOReadBuffer_(std::make_unique<u8[]>(GPS_DATA_FIFO_DEPTH_BYTES)) {
   spwif_ = std::make_unique<SpaceWireIFOverUART>(deviceName);
   const bool openResult = spwif_->open();
   assert(openResult);
@@ -320,6 +321,7 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
                                                       "SamplesInEventPacket",
                                                       "DownSamplingFactorForSavedWaveform",
                                                       "ChannelEnable",
+                                                      "TriggerModes",
                                                       "TriggerThresholds",
                                                       "TriggerCloseThresholds"};
 
@@ -403,7 +405,7 @@ void GROWTH_FY2015_ADC::loadConfigurationFile(const std::string& inputFileName) 
   } catch (const std::exception& e) {
     spdlog::error("Device configuration has failed ({})", e.what());
     throw;
-  }catch(const RMAPInitiatorException& e){
+  } catch (const RMAPInitiatorException& e) {
     spdlog::error("Communication failed ({})", e.toString());
     throw;
   } catch (...) {

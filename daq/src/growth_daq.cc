@@ -29,9 +29,7 @@ int main(int argc, char* argv[]) {
   auto messageServer = std::make_unique<MessageServer>(mainThread);
 
   // Run
-  if (exposureInSec > 0) {
-    mainThread->start();
-  }
+  mainThread->start();
   if (exposureInSec <= 0) {
     messageServer->start();
     messageServer->join();

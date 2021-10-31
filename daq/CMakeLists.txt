@@ -118,6 +118,30 @@ add_executable(growth_reg
 #---------------------------------------------
 # Linked libraries
 #---------------------------------------------
+
+# Test that filesystem header actually is there and works
+try_compile(HAS_FS_WITHOUT_STDCPP_FS
+  "${CMAKE_BINARY_DIR}/temp"
+  "${CMAKE_SOURCE_DIR}/test/check_filesystem.cc"
+  CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+)
+
+try_compile(HAS_FS_WITH_STDCPP_FS
+  "${CMAKE_BINARY_DIR}/temp"
+  "${CMAKE_SOURCE_DIR}/test/check_filesystem.cc"
+  CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+  LINK_LIBRARIES stdc++fs
+)
+
+if(HAS_FS_WITHOUT_STDCPP_FS)
+    message(STATUS "Compiler has filesystem support. std++fs is not needed")
+endif(HAS_FS_WITHOUT_STDCPP_FS)
+
+if(HAS_FS_WITH_STDCPP_FS)
+    message(STATUS "Adding std++fs to the link_libraries")
+    set(STD_CPLUSPLUS_FS stdc++fs)
+endif(HAS_FS_WITH_STDCPP_FS)
+
 target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
@@ -126,13 +150,14 @@ target_link_libraries(growth_daq
   ${ROOT_LIBRARIES}
   pthread
   z
+  ${STD_CPLUSPLUS_FS}
 )
 
 target_link_libraries(growth_reg
   yaml-cpp
   serial
+  ${STD_CPLUSPLUS_FS}
 )
-
 #=============================================
 # Installs
 #=============================================
