@@ -46,8 +46,8 @@ std::string SpaceWireSSDTPException::toString() const {
   return result;
 }
 
-SpaceWireSSDTPModule::SpaceWireSSDTPModule(std::unique_ptr<TCPSocket> socket): socket_(std::move(socket)), receiveBuffer_(SpaceWireSSDTPModule::BUFFER_SIZE_BYTES) {
-}
+SpaceWireSSDTPModule::SpaceWireSSDTPModule(std::unique_ptr<TCPSocket> socket)
+    : socket_(std::move(socket)), receiveBuffer_(SpaceWireSSDTPModule::BUFFER_SIZE_BYTES) {}
 
 void SpaceWireSSDTPModule::send(std::vector<u8>* data, EOPType eopType) {
   std::lock_guard<std::mutex> guard(sendMutex_);

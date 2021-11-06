@@ -59,7 +59,7 @@ void SerialPortBoostAsio::close() { port_->close(); }
 
 void SerialPortBoostAsio::send(const u8* sendBuffer, size_t length) {
   asio::write(*port_, asio::buffer(sendBuffer, length));
-  anythingHasBeenSent_=true;
+  anythingHasBeenSent_ = true;
 }
 
 size_t SerialPortBoostAsio::receive(u8* data, size_t length) {
@@ -93,7 +93,7 @@ void SerialPortBoostAsio::openDevice() {
   } else {
     spdlog::warn("Re-opening serial port ({})", nSerialPortOpen_);
   }
-  if(port_){
+  if (port_) {
     port_->close();
   }
   port_ = std::make_unique<asio::serial_port>(io_, deviceName_.c_str());

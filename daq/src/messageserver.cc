@@ -2,6 +2,7 @@
 #include "mainthread.hh"
 
 #include <iostream>
+#include "spdlog/spdlog.h"
 
 MessageServer::MessageServer(std::shared_ptr<MainThread> mainThread)
     :  //
@@ -17,23 +18,18 @@ void MessageServer::run() {
   const int timeout = TimeOutInMilisecond;
   socket_.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
   socket_.bind(ss.str().c_str());
-  std::cout << "MessageServer has started to accept IPC commands." << std::endl;
+  spdlog::info("MessageServer has started to accept IPC commands.");
 
   while (!stopped_) {
     zmq::message_t request{};
     //  Wait for next request from client
     if (socket_.recv(&request)) {
-#ifdef DEBUG_MESSAGESERVER
-      std::cout << "MessageServer: Received " << std::endl;
-#endif
+      spdlog::info("MessageServer: A request is received");
     } else {
       if (errno != EAGAIN) {
-        std::cerr << "Error: MessageServer::run(): receive failed." << std::endl;
+        spdlog::error("MessageServer::run(): receive failed");
         ::exit(-1);
       } else {
-#ifdef DEBUG_MESSAGESERVER
-        std::cout << "MessageServer::run(): timed out. continue." << std::endl;
-#endif
         continue;
       }
     }
@@ -41,11 +37,7 @@ void MessageServer::run() {
     // Construct a string from received data
     std::string messagePayload{};
     messagePayload.assign(static_cast<char*>(request.data()), request.size());
-#ifdef DEBUG_MESSAGESERVER
-    std::cout << "MessageServer::run(): received message" << std::endl;
-    std::cout << messagePayload << std::endl;
-    std::cout << std::endl;
-#endif
+    spdlog::info("MessageServer::run(): received message '{}", messagePayload);
 
     // Process received message
     const auto replyJSON = processMessage(messagePayload);
@@ -60,13 +52,7 @@ picojson::object MessageServer::processMessage(const std::string& messagePayload
   picojson::value v;
   picojson::parse(v, messagePayload);
   if (v.is<picojson::object>()) {
-#ifdef DEBUG_MESSAGESERVER
-    std::cout << "MessageServer::processMessage(): received object is: {" << std::endl;
-#endif
     for (auto& it : v.get<picojson::object>()) {
-#ifdef DEBUG_MESSAGESERVER
-      std::cout << it.first << ": " << it.second.to_str() << std::endl;
-#endif
       if (it.first == "command") {
         if (it.second.to_str() == "ping") {
           return processPingCommand();
@@ -80,12 +66,11 @@ picojson::object MessageServer::processMessage(const std::string& messagePayload
           return processGetStatusCommand();
         } else if (it.second.to_str() == "startNewOutputFile") {
           return processStartNewOutputFileCommand();
+        } else if (it.second.to_str() == "registerRead") {
+          return processRegisterRead(v.get<picojson::object>());
         }
       }
     }
-#ifdef DEBUG_MESSAGESERVER
-    std::cout << "}";
-#endif
   }
   // Return error message if the received command is invalid
   picojson::object errorMessage{};
@@ -96,9 +81,7 @@ picojson::object MessageServer::processMessage(const std::string& messagePayload
 }
 
 picojson::object MessageServer::processPingCommand() {
-#ifdef DEBUG_MESSAGESERVER
-  std::cout << "MessageServer::processMessage(): ping command received." << std::endl;
-#endif
+  spdlog::info("MessageServer: ping command received");
   // Construct reply message
   picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
@@ -107,9 +90,7 @@ picojson::object MessageServer::processPingCommand() {
 }
 
 picojson::object MessageServer::processStopCommand() {
-#ifdef DEBUG_MESSAGESERVER
-  std::cout << "MessageServer::processMessage(): stop command received." << std::endl;
-#endif
+  spdlog::info("MessageServer: stop command received");
   // Stop target thread and self
   if (mainThread_) {
     mainThread_->stop();
@@ -123,9 +104,7 @@ picojson::object MessageServer::processStopCommand() {
 }
 
 picojson::object MessageServer::processPauseCommand() {
-#ifdef DEBUG_MESSAGESERVER
-  std::cout << "MessageServer::processMessage(): pause command received." << std::endl;
-#endif
+  spdlog::info("MessageServer: pause command received");
   // Stop target thread and self
   if (mainThread_) {
     mainThread_->stop();
@@ -138,9 +117,8 @@ picojson::object MessageServer::processPauseCommand() {
 }
 
 picojson::object MessageServer::processResumeCommand() {
-#ifdef DEBUG_MESSAGESERVER
-  std::cout << "MessageServer::processMessage(): resume command received." << std::endl;
-#endif
+  spdlog::info("MessageServer: resume command received");
+
   if (mainThread_) {
     if (mainThread_->getDAQStatus() == DAQStatus::Paused) {
       mainThread_->start();
@@ -154,9 +132,8 @@ picojson::object MessageServer::processResumeCommand() {
 }
 
 picojson::object MessageServer::processGetStatusCommand() {
-#ifdef DEBUG_MESSAGESERVER
-  std::cout << "MessageServer::processMessage(): getStatus command received." << std::endl;
-#endif
+  spdlog::info("MessageServer: getStatus command received");
+
   // Construct reply message
   picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
@@ -177,6 +154,8 @@ picojson::object MessageServer::processGetStatusCommand() {
 }
 
 picojson::object MessageServer::processStartNewOutputFileCommand() {
+  spdlog::info("MessageServer: startNewOutputFile command received");
+
   // Switch output file to a new one
   mainThread_->startNewOutputFile();
 
@@ -184,5 +163,35 @@ picojson::object MessageServer::processStartNewOutputFileCommand() {
   picojson::object replyMessage{};
   replyMessage["status"] = picojson::value("ok");
   replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
+  return replyMessage;
+}
+
+picojson::object MessageServer::processRegisterRead(const picojson::object& command) {
+  spdlog::info("MessageServer: registerRead command received");
+
+  picojson::object replyMessage{};
+  replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
+  replyMessage["status"] = picojson::value("error");
+
+  if (command.count("address") == 0) {
+    replyMessage["message"] = picojson::value("'address' field is missing");
+    return replyMessage;
+  }
+  if (!command.at("address").is<f64>()) {
+    replyMessage["message"] = picojson::value("'address' field must be a number");
+    return replyMessage;
+  }
+  const u16 address = static_cast<u16>(command.at("address").get<f64>());
+  try {
+    replyMessage["registerAddress"] = picojson::value(static_cast<f64>(address));
+    const auto readResult = mainThread_->readRegister16(address);
+    if (readResult) {
+      replyMessage["status"] = picojson::value("ok");
+      replyMessage["registerValue"] = picojson::value(static_cast<f64>(readResult.value()));
+    }
+  } catch (...) {
+    spdlog::error("Failed to read address {:08x}", address);
+    replyMessage["message"] = picojson::value("register read access failed");
+  }
   return replyMessage;
 }

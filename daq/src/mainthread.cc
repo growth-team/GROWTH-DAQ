@@ -164,7 +164,7 @@ void MainThread::openOutputEventListFile() {
   eventListFile_.reset(new EventListFileROOT(outputFileName_, adcBoard_->detectorID, configurationFile_));
 #else
   outputFileName_ = timeutil::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
-  eventListFile_.reset(new EventListFileFITS(outputFileName_, adcBoard_->detectorID, configurationFile_,       //
+  eventListFile_.reset(new EventListFileFITS(outputFileName_, adcBoard_->detectorID(), configurationFile_,     //
                                              adcBoard_->getNSamplesInEventListFile(), exposureInSec_.count(),  //
                                              fpgaType_, fpgaVersion_));
 #endif

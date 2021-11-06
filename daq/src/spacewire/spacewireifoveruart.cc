@@ -6,7 +6,7 @@
 #include <thread>
 #include <cassert>
 
-SpaceWireIFOverUART::SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(),deviceName_(deviceName) {}
+SpaceWireIFOverUART::SpaceWireIFOverUART(const std::string& deviceName) : SpaceWireIF(), deviceName_(deviceName) {}
 
 bool SpaceWireIFOverUART::open() {
   auto serial = std::make_unique<SerialPortBoostAsio>(deviceName_, BAUD_RATE);

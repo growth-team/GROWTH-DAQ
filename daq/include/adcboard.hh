@@ -74,6 +74,9 @@ class GROWTH_FY2015_ADC {
    */
   const std::vector<u8>& readGPSDataFIFO();
 
+  /** Reads a 16-bit word from the specified address. */
+  std::optional<u16> readRegister16(const u32 address);
+
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
   void reset();
@@ -243,19 +246,7 @@ class GROWTH_FY2015_ADC {
   size_t getNSamplesInEventListFile() const;
   void dumpMustExistKeywords();
   void loadConfigurationFile(const std::string& inputFileName);
-
-  const size_t nChannels = 4;
-  std::string detectorID{};
-  size_t preTriggerSamples = 4;
-  size_t postTriggerSamples = 1000;
-  std::vector<enum TriggerMode> triggerModes{
-      TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold,
-      TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold};
-  size_t samplesInEventPacket = 1000;
-  size_t downSamplingFactorForSavedWaveform = 1;
-  std::vector<bool> channelEnable{};
-  std::vector<u16> triggerThresholds{};
-  std::vector<u16> triggerCloseThresholds{};
+  std::string detectorID() const { acquisitionConfig_.detectorID; }
 
  private:
   template <typename T, typename Y>
@@ -269,6 +260,9 @@ class GROWTH_FY2015_ADC {
 
   void dumpThread(const std::chrono::seconds dumpInterval);
 
+  void dumpParameters();
+  void programDigitizer();
+
   // clang-format off
   static constexpr u32 ADDRESS_GPS_TIME_REGISTER            = 0x20000002;
   static constexpr u32 ADDRESS_GPS_DATA_FIFO_RESET_REGISTER = 0x20001000;
@@ -280,6 +274,21 @@ class GROWTH_FY2015_ADC {
   static constexpr u32 ADDRESS_FPGA_VERSION_REGISTER_L = 0x30000004;
   static constexpr u32 ADDRESS_FPGA_VERSION_REGISTER_H = 0x30000006;
   // clang-format on
+
+  struct AcquisitionConfig {
+    std::string detectorID{};
+    size_t preTriggerSamples = 4;
+    size_t postTriggerSamples = 1000;
+    std::vector<enum TriggerMode> triggerModes{
+        TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold,
+        TriggerMode::StartThreshold_NSamples_CloseThreshold, TriggerMode::StartThreshold_NSamples_CloseThreshold};
+    size_t samplesInEventPacket = 1000;
+    size_t downSamplingFactorForSavedWaveform = 1;
+    std::vector<bool> channelEnable{};
+    std::vector<u16> triggerThresholds{};
+    std::vector<u16> triggerCloseThresholds{};
+  };
+  AcquisitionConfig acquisitionConfig_;
 
   std::unique_ptr<SpaceWireIFOverUART> spwif_{};
   RMAPEnginePtr rmapEngine_{};

@@ -49,6 +49,7 @@ class MessageServer {
   picojson::object processResumeCommand();
   picojson::object processGetStatusCommand();
   picojson::object processStartNewOutputFileCommand();
+  picojson::object processRegisterRead(const picojson::object& command);
 
   zmq::context_t context_{};
   zmq::socket_t socket_;

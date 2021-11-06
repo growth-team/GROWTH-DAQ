@@ -128,9 +128,7 @@ void TCPServerAcceptedSocket::close() {
   status_ = State::TCPSocketInitialized;
 }
 
- void TCPServerAcceptedSocket::setAddress(const sockaddr_in& address) {
-   clientAddress_ = address;
-}
+void TCPServerAcceptedSocket::setAddress(const sockaddr_in& address) { clientAddress_ = address; }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////

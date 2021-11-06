@@ -50,7 +50,7 @@ void RMAPInitiator::read(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress
 }
 
 void RMAPInitiator::write(const RMAPTargetNode* rmapTargetNode, u32 memoryAddress, const u8* data, u32 length,
-           i32 timeoutDurationMillisec) {
+                          i32 timeoutDurationMillisec) {
   commandPacket_->setInitiatorLogicalAddress(getInitiatorLogicalAddress());
   commandPacket_->setWrite();
   commandPacket_->setCommand();
