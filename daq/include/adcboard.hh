@@ -77,6 +77,11 @@ class GROWTH_FY2015_ADC {
   /** Reads a 16-bit word from the specified address. */
   std::optional<u16> readRegister16(const u32 address);
 
+  /** Reads a 16-bit word from the specified address.
+   * @return true if write is successful
+   */
+  bool writeRegister16(const u32 address, const u16 value);
+
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
   void reset();

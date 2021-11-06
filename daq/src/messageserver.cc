@@ -66,8 +66,8 @@ picojson::object MessageServer::processMessage(const std::string& messagePayload
           return processGetStatusCommand();
         } else if (it.second.to_str() == "startNewOutputFile") {
           return processStartNewOutputFileCommand();
-        } else if (it.second.to_str() == "registerRead") {
-          return processRegisterRead(v.get<picojson::object>());
+        } else if (it.second.to_str() == "registerRead" || it.second.to_str() == "registerWrite") {
+          return processRegisterReadWrite(v.get<picojson::object>());
         }
       }
     }
@@ -166,8 +166,9 @@ picojson::object MessageServer::processStartNewOutputFileCommand() {
   return replyMessage;
 }
 
-picojson::object MessageServer::processRegisterRead(const picojson::object& command) {
-  spdlog::info("MessageServer: registerRead command received");
+picojson::object MessageServer::processRegisterReadWrite(const picojson::object& command) {
+  const std::string& commandStr = command.at("command").to_str();
+  spdlog::info("MessageServer: {} command received", commandStr);
 
   picojson::object replyMessage{};
   replyMessage["unixTime"] = picojson::value(static_cast<f64>(timeutil::getUNIXTimeAsUInt64()));
@@ -181,17 +182,35 @@ picojson::object MessageServer::processRegisterRead(const picojson::object& comm
     replyMessage["message"] = picojson::value("'address' field must be a number");
     return replyMessage;
   }
-  const u16 address = static_cast<u16>(command.at("address").get<f64>());
-  try {
-    replyMessage["registerAddress"] = picojson::value(static_cast<f64>(address));
-    const auto readResult = mainThread_->readRegister16(address);
-    if (readResult) {
-      replyMessage["status"] = picojson::value("ok");
-      replyMessage["registerValue"] = picojson::value(static_cast<f64>(readResult.value()));
+  const u32 address = static_cast<u32>(command.at("address").get<f64>());
+  replyMessage["registerAddress"] = picojson::value(static_cast<f64>(address));
+  if (commandStr == "registerWrite") {
+    if (command.count("value") == 0 || !command.at("value").is<f64>()) {
+      replyMessage["message"] =
+          picojson::value("write value must be specified as a number for a registerWrite command");
+      return replyMessage;
     }
-  } catch (...) {
-    spdlog::error("Failed to read address {:08x}", address);
-    replyMessage["message"] = picojson::value("register read access failed");
+    const u16 value = static_cast<u16>(command.at("value").get<f64>());
+    try {
+      const auto writeResult = mainThread_->writeRegister16(address, value);
+      if (writeResult) {
+        replyMessage["status"] = picojson::value("ok");
+      }
+    } catch (...) {
+      spdlog::error("Failed to write address {:08x}", address);
+      replyMessage["message"] = picojson::value("register write access failed");
+    }
+  } else {
+    try {
+      const auto readResult = mainThread_->readRegister16(address);
+      if (readResult) {
+        replyMessage["status"] = picojson::value("ok");
+        replyMessage["registerValue"] = picojson::value(static_cast<f64>(readResult.value()));
+      }
+    } catch (...) {
+      spdlog::error("Failed to read address {:08x}", address);
+      replyMessage["message"] = picojson::value("register read access failed");
+    }
   }
   return replyMessage;
 }

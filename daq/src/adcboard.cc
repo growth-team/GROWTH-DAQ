@@ -145,6 +145,14 @@ std::optional<u16> GROWTH_FY2015_ADC::readRegister16(const u32 address) {
     return {};
   }
 }
+bool GROWTH_FY2015_ADC::writeRegister16(const u32 address, const u16 value) {
+  try {
+    reg_->write(address, value);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
 
 void GROWTH_FY2015_ADC::reset() {
   channelManager_->stopAcquisition();

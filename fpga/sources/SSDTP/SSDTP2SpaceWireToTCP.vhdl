@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    13:37:03 05/03/2010 
--- Design Name: 
--- Module Name:    spw_receive_module2 - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    13:37:03 05/03/2010
+-- Design Name:
+-- Module Name:    spw_receive_module2 - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 -- 2010-12-24 Takayuki Yuasa
 --  a bug in isTimecode was fixed.
 ----------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ architecture Behavioral of SSDTP2SpaceWireToTCP is
   signal isTimecode_reg : std_logic                    := '0';
 
   signal spwReceiveFIFOHasData : std_logic := '0';
-  
+
   type TCPSendStates is (
     Idle, Sending, OutputToSendFIFO, OutputToSendFIFO2, Wait1Clock, Finalize
     );
@@ -172,7 +172,7 @@ begin
   fifoFromSpWFull        <= fifoBuffer1Full        when switch = sdramBuf1TCPBuf2 else fifoBuffer2Full;
   fifoToTCPFull          <= fifoBuffer1Full        when switch = sdramBuf2TCPBuf1 else fifoBuffer2Full;
 
-  -- tcp send control   
+  -- tcp send control
   TCPSendProcess : process(clock, reset)
   begin
     if(reset = '1')then
