@@ -62,23 +62,6 @@ add_subdirectory(external/yaml-cpp)
 add_subdirectory(external) # For cfitsio and serial
 
 #=============================================
-# Include path
-#=============================================
-include_directories(SYSTEM
-  include
-  include/picojson
-  external/serial/include
-  external/libzmq/include
-  external/asio/asio/include
-  external/cppzmq
-  external/cfitsio
-  external/spdlog/include
-  external/yaml-cpp/include
-  ${ROOT_INCLUDE_DIRS}
-  src
-)
-
-#=============================================
 # Link directories
 #=============================================
 link_directories(
@@ -113,6 +96,59 @@ add_executable(growth_reg
   src/registeraccessautomator.cc
   ${SPW_SOURCE_FILES}
   ${GROWTH_FPGA_SOURCE_FILES}
+)
+
+add_executable(growth_cli
+  cli/growth_cli.cc
+)
+
+#---------------------------------------------
+# Include directories
+#---------------------------------------------
+target_include_directories(growth_daq
+  PRIVATE
+  include
+  src
+  SYSTEM PUBLIC
+  include/picojson
+  external/serial/include
+  external/libzmq/include
+  external/asio/asio/include
+  external/cppzmq
+  external/cfitsio
+  external/cxxopts/include
+  external/spdlog/include
+  external/yaml-cpp/include
+  ${ROOT_INCLUDE_DIRS}
+)
+
+target_include_directories(growth_reg
+  PRIVATE
+  include
+  src
+  SYSTEM PUBLIC
+  include/picojson
+  external/serial/include
+  external/libzmq/include
+  external/asio/asio/include
+  external/cppzmq
+  external/cfitsio
+  external/cxxopts/include
+  external/spdlog/include
+  external/yaml-cpp/include
+  ${ROOT_INCLUDE_DIRS}
+)
+
+target_include_directories(growth_cli
+  PRIVATE
+  include
+  src
+  SYSTEM PUBLIC
+  include/picojson
+  external/libzmq/include
+  external/cppzmq
+  external/cxxopts/include
+  external/spdlog/include
 )
 
 #---------------------------------------------
@@ -156,6 +192,11 @@ target_link_libraries(growth_daq
 target_link_libraries(growth_reg
   yaml-cpp
   serial
+  ${STD_CPLUSPLUS_FS}
+)
+
+target_link_libraries(growth_cli
+  libzmq
   ${STD_CPLUSPLUS_FS}
 )
 #=============================================

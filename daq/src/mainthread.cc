@@ -18,8 +18,16 @@ void MainThread::stop() { stopped_ = true; }
 void MainThread::join() { thread_.join(); }
 void MainThread::run() {
   setDAQStatus(DAQStatus::Running);
-  adcBoard_.reset(new GROWTH_FY2015_ADC(deviceName_));
-
+  while (true) {
+    try {
+      adcBoard_.reset(new GROWTH_FY2015_ADC(deviceName_));
+      break;
+    } catch (...) {
+      constexpr u32 waitDurationSec = 5;
+      spdlog::error("Failed to open {}. Retrying in {} seconds... (press Ctrl+C to stop)", deviceName_, waitDurationSec);
+      std::this_thread::sleep_for(std::chrono::seconds(waitDurationSec));
+    }
+  }
   fpgaType_ = adcBoard_->getFPGAType();
   fpgaVersion_ = adcBoard_->getFPGAVersion();
   setWaitDurationBetweenEventRead();

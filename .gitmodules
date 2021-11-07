@@ -25,3 +25,6 @@
 [submodule "daq/external/asio"]
 	path = daq/external/asio
 	url = https://github.com/chriskohlhoff/asio
+[submodule "daq/external/cxxopts"]
+	path = daq/external/cxxopts
+	url = https://github.com/jarro2783/cxxopts

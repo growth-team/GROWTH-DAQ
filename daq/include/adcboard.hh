@@ -82,6 +82,14 @@ class GROWTH_FY2015_ADC {
    */
   bool writeRegister16(const u32 address, const u16 value);
 
+  /** Reads a 32-bit word from the specified address. */
+  std::optional<u32> readRegister32(const u32 address);
+
+  /** Reads a 32-bit word from the specified address.
+   * @return true if write is successful
+   */
+  bool writeRegister32(const u32 address, const u32 value);
+
   /** Reset ChannelManager and ConsumerManager modules on VHDL.
    */
   void reset();
@@ -251,7 +259,7 @@ class GROWTH_FY2015_ADC {
   size_t getNSamplesInEventListFile() const;
   void dumpMustExistKeywords();
   void loadConfigurationFile(const std::string& inputFileName);
-  std::string detectorID() const { acquisitionConfig_.detectorID; }
+  std::string detectorID() const { return acquisitionConfig_.detectorID; }
 
  private:
   template <typename T, typename Y>

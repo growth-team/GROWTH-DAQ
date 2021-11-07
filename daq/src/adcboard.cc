@@ -145,7 +145,26 @@ std::optional<u16> GROWTH_FY2015_ADC::readRegister16(const u32 address) {
     return {};
   }
 }
+
 bool GROWTH_FY2015_ADC::writeRegister16(const u32 address, const u16 value) {
+  try {
+    reg_->write(address, value);
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
+std::optional<u32> GROWTH_FY2015_ADC::readRegister32(const u32 address) {
+  try {
+    const u32 value = reg_->read32(address);
+    return value;
+  } catch (...) {
+    return {};
+  }
+}
+
+bool GROWTH_FY2015_ADC::writeRegister32(const u32 address, const u32 value) {
   try {
     reg_->write(address, value);
     return true;

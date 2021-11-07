@@ -33,6 +33,7 @@ class MessageServer {
     if (thread_.joinable()) {
       throw std::runtime_error("started twice");
     }
+    stopped_ = false;
     thread_ = std::thread(&MessageServer::run, this);
   }
   void stop() { stopped_ = true; }

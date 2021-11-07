@@ -30,10 +30,8 @@ int main(int argc, char* argv[]) {
 
   // Run
   mainThread->start();
-  if (exposureInSec <= 0) {
-    messageServer->start();
-    messageServer->join();
-  }
+  messageServer->start();
+  messageServer->join();
   mainThread->join();
 
   return 0;

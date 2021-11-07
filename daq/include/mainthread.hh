@@ -56,6 +56,12 @@ class MainThread {
   /** Reads a 16-bit word from the specified address. */
   bool writeRegister16(const u32 address, const u16 value) { return adcBoard_->writeRegister16(address, value); }
 
+  /** Reads a 32-bit word from the specified address. */
+  std::optional<u32> readRegister32(const u32 address) { return adcBoard_->readRegister32(address); }
+
+  /** Reads a 32-bit word from the specified address. */
+  bool writeRegister32(const u32 address, const u32 value) { return adcBoard_->writeRegister32(address, value); }
+
  private:
   void setDAQStatus(DAQStatus status);
   void readAnsSaveGPSRegister();
