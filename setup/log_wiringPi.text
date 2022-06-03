@@ -1,105 +1,12 @@
-~/work/install /home/pi/git/GROWTH-DAQ/setup
+~/work/install ~/git/GROWTH-DAQ/setup
 Cloning into 'wiringpi'...
-~/work/install/wiringpi ~/work/install /home/pi/git/GROWTH-DAQ/setup
+~/work/install/wiringpi ~/work/install ~/git/GROWTH-DAQ/setup
 wiringPi Build script
 =====================
 
+fgrep: /proc/cpuinfo: No such file or directory
 
 WiringPi Library
 [UnInstall]
-[Compile] wiringPi.c
-[Compile] wiringSerial.c
-[Compile] wiringShift.c
-[Compile] piThread.c
-[Compile] piHiPri.c
-[Compile] wiringPiSPI.c
-[Compile] wiringPiI2C.c
-[Compile] softPwm.c
-wiringPi.c:1327:21: warning: ‘digitalWrite8Dummy’ defined but not used [-Wunused-function]
- static         void digitalWrite8Dummy       (UNU struct wiringPiNodeStruct *node, UNU int pin, UNU int value) { return ; }
-                     ^~~~~~~~~~~~~~~~~~
-wiringPi.c:1326:21: warning: ‘digitalRead8Dummy’ defined but not used [-Wunused-function]
- static unsigned int digitalRead8Dummy        (UNU struct wiringPiNodeStruct *node, UNU int UNU pin)            { return 0 ; }
-                     ^~~~~~~~~~~~~~~~~
-[Compile] softTone.c
-[Compile] mcp23008.c
-[Compile] mcp23016.c
-[Compile] mcp23017.c
-[Compile] mcp23s08.c
-[Compile] mcp23s17.c
-[Compile] sr595.c
-[Compile] pcf8574.c
-[Compile] pcf8591.c
-[Compile] mcp3002.c
-[Compile] mcp3004.c
-[Compile] mcp4802.c
-[Compile] mcp3422.c
-[Compile] max31855.c
-[Compile] max5322.c
-[Compile] ads1115.c
-[Compile] sn3218.c
-[Compile] bmp180.c
-[Compile] htu21d.c
-[Compile] ds18b20.c
-[Compile] rht03.c
-[Compile] drcSerial.c
-[Compile] drcNet.c
-[Compile] pseudoPins.c
-[Compile] wpiExtensions.c
-drcNet.c: In function ‘authenticate’:
-drcNet.c:112:24: warning: ‘%s’ directive writing up to 1023 bytes into a region of size 1021 [-Wformat-overflow=]
-drcNet.c:89:14:
-       return &buf [10] ;
-              ~~~~~~~~~  
-drcNet.c:112:24:
-   sprintf (salted, "$6$%s$", challenge) ;
-                        ^~
-drcNet.c:112:3: note: ‘sprintf’ output between 5 and 1028 bytes into a destination of size 1024
-   sprintf (salted, "$6$%s$", challenge) ;
-   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-[Link (Dynamic)]
-[Install Headers]
-[Install Dynamic Lib]
-
-WiringPi Devices Library
-[UnInstall]
-[Compile] ds1302.c
-[Compile] maxdetect.c
-[Compile] piNes.c
-[Compile] piFace.c
-[Compile] gertboard.c
-[Compile] lcd128x64.c
-[Compile] lcd.c
-[Compile] scrollPhat.c
-[Compile] piGlow.c
-[Link (Dynamic)]
-[Install Headers]
-[Install Dynamic Lib]
-
-GPIO Utility
-[Compile] gpio.c
-[Compile] readall.c
-[Link]
-[Install]
-
-All Done.
-
-NOTE: To compile programs with wiringPi, you need to add:
-    -lwiringPi
-  to your compile line(s) To use the Gertboard, MaxDetect, etc.
-  code (the devLib), you need to also add:
-    -lwiringPiDev
-  to your compile line(s).
-
-gpio version: 2.60
-Copyright (c) 2012-2018 Gordon Henderson
-This is free software with ABSOLUTELY NO WARRANTY.
-For details type: gpio -warranty
-
-Raspberry Pi Details:
-  Type: Pi 4B, Revision: 02, Memory: 4096MB, Maker: Sony 
-  * Device tree is enabled.
-  *--> Raspberry Pi 4 Model B Rev 1.2
-  * This Raspberry Pi supports user-level GPIO access.
-~/work/install /home/pi/git/GROWTH-DAQ/setup
-/home/pi/git/GROWTH-DAQ/setup
+make: ldconfig: No such file or directory
+make: *** [uninstall] Error 1

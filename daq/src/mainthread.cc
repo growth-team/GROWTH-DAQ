@@ -10,7 +10,9 @@ MainThread::MainThread(std::string deviceName, std::string configurationFile, u3
       switchOutputFile_(false) {}
 void MainThread::start() {
   if (thread_.joinable()) {
-    throw std::runtime_error("started twice");
+    spdlog::info("Waiting for the old main thread to join...");
+    thread_.join();
+    spdlog::info("The old main thread has joined.");
   }
   thread_ = std::thread(&MainThread::run, this);
 }
