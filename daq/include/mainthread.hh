@@ -32,16 +32,9 @@ class MainThread {
   DAQStatus getDAQStatus() const { return daqStatus_; }
   size_t getNEvents() const { return nEvents_; }
   size_t getNEventsOfCurrentOutputFile() const { return nEventsOfCurrentOutputFile_; }
-  std::chrono::seconds getElapsedTime() const {
-    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - startTime_);
-  }
-  std::chrono::seconds getElapsedTimeOfCurrentOutputFile() const {
-    const auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() -
-                                                                           startTimeOfCurrentOutputFile_);
-    return (daqStatus_ == DAQStatus::Running) ? duration : std::chrono::seconds{};
-  }
-
-  std::string getOutputFileName() const { return outputFileName_.empty() ? "None" : outputFileName_; }
+  std::chrono::seconds getElapsedTime() const;
+  std::chrono::seconds getElapsedTimeOfCurrentOutputFile() const;
+  std::string getOutputFileName() const;
 
   /** This method is called to close the current output event list file,
    * and create a new file with a new time stamp. This method is called by

@@ -10,7 +10,9 @@ MainThread::MainThread(std::string deviceName, std::string configurationFile, u3
       switchOutputFile_(false) {}
 void MainThread::start() {
   if (thread_.joinable()) {
-    throw std::runtime_error("started twice");
+    spdlog::info("Waiting for the old main thread to join...");
+    thread_.join();
+    spdlog::info("The old main thread has joined.");
   }
   thread_ = std::thread(&MainThread::run, this);
 }
@@ -24,7 +26,8 @@ void MainThread::run() {
       break;
     } catch (...) {
       constexpr u32 waitDurationSec = 5;
-      spdlog::error("Failed to open {}. Retrying in {} seconds... (press Ctrl+C to stop)", deviceName_, waitDurationSec);
+      spdlog::error("Failed to open {}. Retrying in {} seconds... (press Ctrl+C to stop)", deviceName_,
+                    waitDurationSec);
       std::this_thread::sleep_for(std::chrono::seconds(waitDurationSec));
     }
   }
@@ -129,6 +132,17 @@ void MainThread::run() {
 
   spdlog::info("Acquisition is complete");
 }
+
+std::chrono::seconds MainThread::getElapsedTime() const {
+  return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - startTime_);
+}
+std::chrono::seconds MainThread::getElapsedTimeOfCurrentOutputFile() const {
+  const auto duration = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() -
+                                                                         startTimeOfCurrentOutputFile_);
+  return (daqStatus_ == DAQStatus::Running) ? duration : std::chrono::seconds{};
+}
+
+std::string MainThread::getOutputFileName() const { return outputFileName_.empty() ? "None" : outputFileName_; }
 
 /** This method is called to close the current output event list file,
  * and create a new file with a new time stamp. This method is called by
