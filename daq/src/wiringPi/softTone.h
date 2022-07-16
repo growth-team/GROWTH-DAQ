@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-extern int  softToneCreate (int pin) ;
-extern void softToneWrite  (int pin, int frewq) ;
+extern int softToneCreate(int pin);
+extern void softToneWrite(int pin, int frewq);
 
 #ifdef __cplusplus
 }

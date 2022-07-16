@@ -1,4 +1,6 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update
 RUN apt install -y \
@@ -26,13 +28,18 @@ RUN apt install -y \
   libyaml-cpp-dev \
   libzmq3-dev \
   python-dev \
-  python-smbus \
-  python-zmq \
   ruby \
   ruby-dev \
   ruby-ffi \
   swig \
   texinfo \
   wget \
-  wicd-curses \
   zlib1g-dev
+RUN apt install -y \
+  gcc-8 \
+  g++-8 \
+  && apt remove -y gcc-9 g++-9
+RUN ln -sf /usr/bin/g++-8 /usr/bin/g++ && \
+  ln -sf /usr/bin/g++-8 /usr/bin/c++ && \
+  ln -sf /usr/bin/gcc-8 /usr/bin/gcc && \
+  ln -sf /usr/bin/gcc-8 /usr/bin/cc

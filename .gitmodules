@@ -1,18 +1,30 @@
 [submodule "daq/include/picojson"]
 	path = daq/include/picojson
 	url = https://github.com/kazuho/picojson
-[submodule "daq/include/SpaceWireRMAPLibrary"]
-	path = daq/include/SpaceWireRMAPLibrary
-	url = https://github.com/yuasatakayuki/SpaceWireRMAPLibrary.git
-[submodule "daq/include/CxxUtilities"]
-	path = daq/include/CxxUtilities
-	url = https://github.com/yuasatakayuki/CxxUtilities.git
-[submodule "daq/include/XMLUtilities"]
-	path = daq/include/XMLUtilities
-	url = https://github.com/sakuraisoki/XMLUtilities.git
 [submodule "lib/Adafruit_Python_SSD1306"]
 	path = lib/Adafruit_Python_SSD1306
 	url = https://github.com/adafruit/Adafruit_Python_SSD1306
 [submodule "daq/external/cppzmq"]
 	path = daq/external/cppzmq
 	url = https://github.com/zeromq/cppzmq
+[submodule "daq/external/serial"]
+	path = daq/external/serial
+	url = https://github.com/wjwwood/serial.git
+[submodule "daq/external/libzmq"]
+	path = daq/external/libzmq
+	url = https://github.com/zeromq/libzmq.git
+[submodule "daq/external/yaml-cpp"]
+	path = daq/external/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "daq/external/spdlog"]
+	path = daq/external/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "daq/external/boost"]
+	path = daq/external/boost
+	url = https://github.com/boostorg/boost
+[submodule "daq/external/asio"]
+	path = daq/external/asio
+	url = https://github.com/chriskohlhoff/asio
+[submodule "daq/external/cxxopts"]
+	path = daq/external/cxxopts
+	url = https://github.com/jarro2783/cxxopts

@@ -1,0 +1,72 @@
+[
+    {
+        "module": "hitpattern",
+        "command": "set",
+        "arguments": {
+            "ch": 0,
+            "lowerThreshold": 2100,
+            "upperThreshold": 2400,
+            "width": 512,
+            "delay": 256
+        }
+    },
+    {
+        "module": "hitpattern",
+        "command": "set",
+        "arguments": {
+            "ch": 1,
+            "lowerThreshold": 2100,
+            "upperThreshold": 2400,
+            "width": 512,
+            "delay": 256
+        }
+    },
+    {
+        "module": "hitpattern",
+        "command": "set",
+        "arguments": {
+            "ch": 2,
+            "lowerThreshold": 2100,
+            "upperThreshold": 2400,
+            "width": 512,
+            "delay": 256
+        }
+    },
+    {
+        "module": "hitpattern",
+        "command": "set",
+        "arguments": {
+            "ch": 3,
+            "lowerThreshold": 2100,
+            "upperThreshold": 2400,
+            "width": 512,
+            "delay": 256
+        }
+    },
+
+    {
+        "module": "slowdac",
+        "command": "set",
+        "arguments": {
+            "ch": 0,
+            "gain": 1,
+            "outputValue": 512
+        }
+    },
+    {
+        "module": "slowdac",
+        "command": "set",
+        "arguments": {
+            "ch": 1,
+            "gain": 1,
+            "outputValue": 256
+        }
+    },
+    {
+        "module": "gpio",
+        "command": "set",
+        "arguments": {
+            "outputEnable": true
+        }
+    }
+]

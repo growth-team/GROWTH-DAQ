@@ -10,7 +10,7 @@
 int main(int argc, char* argv[]) {
   using namespace std;
   std::string deviceName = "/dev/null";
-  auto adcBoard          = new GROWTH_FY2015_ADC(deviceName);
+  auto adcBoard = new GROWTH_FY2015_ADC(deviceName);
 
   if (argc < 2) {
     cerr << "Provide configuration file." << endl;
