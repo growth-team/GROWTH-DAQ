@@ -14,6 +14,7 @@ void MainThread::start() {
     thread_.join();
     spdlog::info("The old main thread has joined.");
   }
+  spdlog::info("Starting a new main thread.");
   thread_ = std::thread(&MainThread::run, this);
 }
 void MainThread::stop() { stopped_ = true; }
@@ -22,7 +23,8 @@ void MainThread::run() {
   setDAQStatus(DAQStatus::Running);
   while (true) {
     try {
-      adcBoard_.reset(new GROWTH_FY2015_ADC(deviceName_));
+      adcBoard_.reset();
+      adcBoard_ = std::make_unique<GROWTH_FY2015_ADC>(deviceName_);
       break;
     } catch (...) {
       constexpr u32 waitDurationSec = 5;

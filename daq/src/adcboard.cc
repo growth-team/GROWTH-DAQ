@@ -80,14 +80,14 @@ GROWTH_FY2015_ADC::GROWTH_FY2015_ADC(std::string deviceName)
 }
 
 GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC() {
-  spdlog::info("ADCBoard: Waiting for threads to join");
+  spdlog::info("ADCBoard: Destructor is called. Waiting for threads to join...");
   stopDumpThread_ = true;
   stopEventPacketReadThread_ = true;
   dumpThreadWaitCondition_.notify_one();
   dumpThread_.join();
   spdlog::info("ADCBoard: Dump thread joined");
   eventPacketReadThread_.join();
-  spdlog::info("ADCBoard: Event-packet-read thread joined");
+  spdlog::info("ADCBoard: EventPacketReadThread thread joined");
 }
 
 void GROWTH_FY2015_ADC::startDumpThread() {

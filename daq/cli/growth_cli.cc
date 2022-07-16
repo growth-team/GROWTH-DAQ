@@ -97,7 +97,8 @@ class MessageClient {
     return true;
   }
 
-  bool executeCommandWrite(const std::string& command, const u32 address, const u32 value, const bool dumpRawJsonReply) {
+  bool executeCommandWrite(const std::string& command, const u32 address, const u32 value,
+                           const bool dumpRawJsonReply) {
     picojson::object object;
     if (command == "write16") {
       object["command"] = picojson::value("registerWrite16");
@@ -211,7 +212,7 @@ class MessageClient {
     }
     return true;
   }
-    
+
   bool parseAndExecute(const std::vector<std::string>& arguments, bool dumpRawJsonReply) {
     auto itr = arguments.begin();
     while (itr < arguments.end()) {
@@ -314,12 +315,14 @@ class MessageClient {
 void showImplementedCommands() {
   using ArgumentList = std::vector<std::string>;
   using CommandEntry = std::tuple<std::string, ArgumentList, std::string>;
-  const std::vector<CommandEntry> commandList{
-      CommandEntry{"read16", {"ADDRESS"}, "Read 16-bit word"},            //
-      CommandEntry{"read32", {"ADDRESS"}, "Read 32-bit word"},            //
-      CommandEntry{"write16", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
-      CommandEntry{"write32", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
-  };
+  const std::vector<CommandEntry> commandList{CommandEntry{"read16", {"ADDRESS"}, "Read 16-bit word"},            //
+                                              CommandEntry{"read32", {"ADDRESS"}, "Read 32-bit word"},            //
+                                              CommandEntry{"write16", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
+                                              CommandEntry{"write32", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
+                                              CommandEntry{"start_new_file", {}, "Start new file"},               //
+                                              CommandEntry{"stop", {}, "Stop data acquisition completely"},       //
+                                              CommandEntry{"pause", {}, "Pause data acquisition"},                //
+                                              CommandEntry{"resume", {}, "Resume data acquisition"}};
 
   std::cout << "Available commands:" << '\n';
   for (const auto [commandName, argumentList, helpMessage] : commandList) {
