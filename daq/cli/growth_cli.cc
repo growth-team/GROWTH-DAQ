@@ -133,6 +133,86 @@ class MessageClient {
     return true;
   }
 
+  bool executeCommandStartNewFile(const std::string& command, const bool dumpRawJsonReply) {
+    picojson::object object;
+    object["command"] = picojson::value("startNewOutputFile");
+    sendCommand(object);
+
+    const auto maybeReplyJsonObject = receiveReply();
+    if (maybeReplyJsonObject) {
+      const auto replyJsonObject = maybeReplyJsonObject.value();
+      if (dumpRawJsonReply) {
+        std::cout << picojson::value(replyJsonObject).serialize() << std::endl;
+      } else {
+        // Dump read value only
+        std::cout << replyJsonObject.at("status").to_str() << std::endl;
+      }
+    } else {
+      spdlog::error("Replied message was not a valid JSON object");
+    }
+    return true;
+  }
+
+  bool executeCommandStop(const std::string& command, const bool dumpRawJsonReply) {
+    picojson::object object;
+    object["command"] = picojson::value("stop");
+    sendCommand(object);
+
+    const auto maybeReplyJsonObject = receiveReply();
+    if (maybeReplyJsonObject) {
+      const auto replyJsonObject = maybeReplyJsonObject.value();
+      if (dumpRawJsonReply) {
+        std::cout << picojson::value(replyJsonObject).serialize() << std::endl;
+      } else {
+        // Dump read value only
+        std::cout << replyJsonObject.at("status").to_str() << std::endl;
+      }
+    } else {
+      spdlog::error("Replied message was not a valid JSON object");
+    }
+    return true;
+  }
+
+  bool executeCommandPause(const std::string& command, const bool dumpRawJsonReply) {
+    picojson::object object;
+    object["command"] = picojson::value("pause");
+    sendCommand(object);
+
+    const auto maybeReplyJsonObject = receiveReply();
+    if (maybeReplyJsonObject) {
+      const auto replyJsonObject = maybeReplyJsonObject.value();
+      if (dumpRawJsonReply) {
+        std::cout << picojson::value(replyJsonObject).serialize() << std::endl;
+      } else {
+        // Dump read value only
+        std::cout << replyJsonObject.at("status").to_str() << std::endl;
+      }
+    } else {
+      spdlog::error("Replied message was not a valid JSON object");
+    }
+    return true;
+  }
+
+  bool executeCommandResume(const std::string& command, const bool dumpRawJsonReply) {
+    picojson::object object;
+    object["command"] = picojson::value("resume");
+    sendCommand(object);
+
+    const auto maybeReplyJsonObject = receiveReply();
+    if (maybeReplyJsonObject) {
+      const auto replyJsonObject = maybeReplyJsonObject.value();
+      if (dumpRawJsonReply) {
+        std::cout << picojson::value(replyJsonObject).serialize() << std::endl;
+      } else {
+        // Dump read value only
+        std::cout << replyJsonObject.at("status").to_str() << std::endl;
+      }
+    } else {
+      spdlog::error("Replied message was not a valid JSON object");
+    }
+    return true;
+  }
+
   bool parseAndExecute(const std::vector<std::string>& arguments, bool dumpRawJsonReply) {
     auto itr = arguments.begin();
     while (itr < arguments.end()) {
@@ -140,6 +220,14 @@ class MessageClient {
       const bool commandResult = [&]() {
         if (command == "ping") {
           return executeCommandPing(dumpRawJsonReply);
+        } else if (command == "start_new_file") {
+          return executeCommandStartNewFile(command, dumpRawJsonReply);
+        } else if (command == "stop") {
+          return executeCommandStop(command, dumpRawJsonReply);
+        } else if (command == "pause") {
+          return executeCommandPause(command, dumpRawJsonReply);
+        } else if (command == "resume") {
+          return executeCommandResume(command, dumpRawJsonReply);
         } else if (command == "read16" || command == "read32") {
           itr++;
           if (itr == arguments.end()) {
@@ -227,12 +315,14 @@ class MessageClient {
 void showImplementedCommands() {
   using ArgumentList = std::vector<std::string>;
   using CommandEntry = std::tuple<std::string, ArgumentList, std::string>;
-  const std::vector<CommandEntry> commandList{
-      CommandEntry{"read16", {"ADDRESS"}, "Read 16-bit word"},            //
-      CommandEntry{"read32", {"ADDRESS"}, "Read 32-bit word"},            //
-      CommandEntry{"write16", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
-      CommandEntry{"write32", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
-  };
+  const std::vector<CommandEntry> commandList{CommandEntry{"read16", {"ADDRESS"}, "Read 16-bit word"},            //
+                                              CommandEntry{"read32", {"ADDRESS"}, "Read 32-bit word"},            //
+                                              CommandEntry{"write16", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
+                                              CommandEntry{"write32", {"ADDRESS", "DATA"}, "Write 32-bit word"},  //
+                                              CommandEntry{"start_new_file", {}, "Start new file"},               //
+                                              CommandEntry{"stop", {}, "Stop data acquisition completely"},       //
+                                              CommandEntry{"pause", {}, "Pause data acquisition"},                //
+                                              CommandEntry{"resume", {}, "Resume data acquisition"}};
 
   std::cout << "Available commands:" << '\n';
   for (const auto [commandName, argumentList, helpMessage] : commandList) {
