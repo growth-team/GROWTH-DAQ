@@ -65,7 +65,7 @@ architecture Behavioral of UserModule_ConsumerManager_EventFIFO is
       data_count : out std_logic_vector(9 downto 0)
     );
   end component;
-  
+
   ---------------------------------------------------
   --Declarations of Signals
   ---------------------------------------------------
@@ -134,27 +134,9 @@ begin
   ---------------------------------------------------
   --Instantiations of Components
   ---------------------------------------------------
---  inst_fifo : UserModule_Fifo
---    port map(
---      --data
---      DataIn         => FifoDataIn,
---      DataOut        => FifoDataOut,
---      --controll
---      ReadEnable     => FifoReadEnable,
---      WriteEnable    => FifoWriteEnable,
---      --status
---      Empty          => FifoEmpty,
---      Full           => FifoFull,
---      ReadDataCount  => open,
---      WriteDataCount => FifoDataCount,
---      --clock and reset
---      ReadClock      => Clock,
---      WriteClock     => Clock,
---      GlobalReset    => GlobalReset
---      );
-  
+
   Reset <= not GlobalReset;
-  
+
   instanceOfFIFO : fifo16x1k
     port map (
       srst          => Reset,

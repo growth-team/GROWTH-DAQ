@@ -22,13 +22,10 @@ use work.UserModule_Library.all;
 --Entity Declaration
 ---------------------------------------------------
 entity UserModule_ChModule_Buffer is
-  generic(
-    ChNumber : std_logic_vector(2 downto 0) := (others => '0')
-    );
   port(
     ChModule2InternalModule : in  Signal_ChModule2InternalModule;
     AdcDataIn               : in  std_logic_vector(AdcResolution-1 downto 0);
-    DataOut                 : out std_logic_vector(FifoDataWidth-1 downto 0);
+    DataOut                 : out std_logic_vector(BufferFifoDataWidth-1 downto 0);
     --control
     TriggerIn               : in  std_logic;
     BufferNoGood            : out std_logic;
@@ -52,7 +49,7 @@ architecture Behavioral of UserModule_ChModule_Buffer is
   ---------------------------------------------------
   --Declarations of Components
   ---------------------------------------------------
-  component fifo16x16k
+  component fifo18x16k
     port (
       rst : in std_logic;
       wr_clk : in std_logic;
@@ -72,14 +69,15 @@ architecture Behavioral of UserModule_ChModule_Buffer is
   --Declarations of Signals
   ---------------------------------------------------
   --Signals
-  constant WidthOfWaveformBufferFIFODataCount : integer := 14;
+  constant WidthOfWaveformBufferFIFODataCount : integer := 14; -- fifo18x16k (2^14=16k)
+  constant DepthOfWaveformBufferFIFO          : integer := 2**WidthOfWaveformBufferFIFODataCount;
 
   signal WriteEnable    : std_logic                                                       := '0';
   signal Empty          : std_logic                                                       := '0';
   signal Full           : std_logic                                                       := '0';
   signal WriteDataCount : std_logic_vector(WidthOfWaveformBufferFIFODataCount-1 downto 0) := (others => '0');
   signal ReadDataCount  : std_logic_vector(WidthOfWaveformBufferFIFODataCount-1 downto 0) := (others => '0');
-  signal DataIn         : std_logic_vector(FifoDataWidth-1 downto 0);
+  signal DataIn         : std_logic_vector(BufferFifoDataWidth-1 downto 0);
 
   signal NoRoomForMoreEvent_internal : std_logic := '0';
   signal Busy                        : std_logic := '0';
@@ -97,7 +95,7 @@ architecture Behavioral of UserModule_ChModule_Buffer is
 
   type UserModule_StateMachine_State is (
     Initialize, Idle, WaitVetoOff, WaitTriggerOff, Triggered,
-    WriteHeader_1, WriteHeader_2, WriteHeader_3, WriteHeader_4, WriteHeader_5,
+    WriteHeader_1, WriteHeader_2, WriteHeader_3, WriteHeader_4
     Finalize
     );
   signal UserModule_state : UserModule_StateMachine_State := Initialize;
@@ -112,7 +110,7 @@ begin
   ---------------------------------------------------
   Reset <= not GlobalReset;
 
-  instanceOfFIFO : fifo16x16k
+  instanceOfFIFO : fifo18x16k
     port map (
       rst           => Reset,
       wr_clk        => WriteClock,
@@ -136,7 +134,7 @@ begin
                 conv_integer(ReadDataCount)
                  >= conv_integer(ChModule2InternalModule.SizeOfHeader)+
                 conv_integer(ChModule2InternalModule.NumberOfSamples)
-                )) else '0';
+                ) of Full = '1') else '0';
   BufferNoGood       <= Full or NoRoomForMoreEvent_internal or Busy;
   NoRoomForMoreEvent <= NoRoomForMoreEvent_internal;
   NoRoomForMoreEvent_internal
@@ -169,8 +167,7 @@ begin
                                         --move to next state
           UserModule_state <= Idle;
         when Idle =>
-          DataIn(15)           <= '1';  --start flag
-          DataIn(14 downto 12) <= ChNumber;  --ChNumber of this module
+          DataIn(17 downto 16) <= BUFFER_FIFO_CONTROL_FLAG_FIRST_DATA;
           DataIn(11 downto 0)  <= AdcDataIn;
           if (TriggerIn = '1' and Full = '0' and NoRoomForMoreEvent_internal = '0') then
             RealTime_latched <= Realtime;
@@ -188,36 +185,30 @@ begin
           end if;
         when WaitTriggerOff =>
           if (TriggerIn = '0') then
-                                        --Write Header Separator
-            DataIn(15 downto 12) <= HEADER_FLAG;  --header flag
-            DataIn(9 downto 0)  <= "00"&x"05";  --indicate that size of header is 'three words'
+            DataIn(17 downto 16) <= BUFFER_FIFO_CONTROL_FLAG_HEADER;
+            DataIn(15 downto 0)  <= RealTime_latched(WidthOfRealTime-1 downto 32);
             UserModule_state     <= WriteHeader_1;
           else
-            DataIn(15)           <= '0';
-            DataIn(14 downto 12) <= "000";
+            DataIn(17 downto 16) <= BUFFER_FIFO_CONTROL_FLAG_DATA;
+            DataIn(15 downto 12) <= "0000";
             DataIn(11 downto 0)  <= AdcDataIn;
           end if;
         when WriteHeader_1 =>
-          DataIn           <= RealTime_latched(WidthOfRealTime-1 downto 32);
+          DataIn           <= RealTime_latched(31 downto 16);
           UserModule_state <= WriteHeader_2;
         when WriteHeader_2 =>
-          DataIn           <= RealTime_latched(31 downto 16);
+          DataIn           <= RealTime_latched(15 downto 0);
           UserModule_state <= WriteHeader_3;
         when WriteHeader_3 =>
-          DataIn           <= RealTime_latched(15 downto 0);
+          DataIn           <= ChModule2InternalModule.TriggerCount(31 downto 16);
           UserModule_state <= WriteHeader_4;
         when WriteHeader_4 =>
-          DataIn           <= ChModule2InternalModule.TriggerCount(31 downto 16);
-          UserModule_state <= WriteHeader_5;
-        when WriteHeader_5 =>
           DataIn           <= ChModule2InternalModule.TriggerCount(15 downto 0);
+          UserModule_state <= WriteHeader_4;
           UserModule_state <= Finalize;
         when Finalize =>
           WriteEnable <= '0';
-                                             --moshimo, header wo kakikonde iru aida ni,
-                                             --tsugino trigger ga tatte itara, tadashiku shori
-                                             --dekinai node, NG wo ON ni shite, trigger off made
-                                             --matsu koto ni suru
+          -- Wait until trigger is off.
           if (TriggerIn = '0') then
             Busy             <= '0';
             UserModule_state <= Idle;

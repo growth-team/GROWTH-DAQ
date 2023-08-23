@@ -35,15 +35,20 @@ package UserModule_Library is
 
   -- ADC configuration
   constant NADCChannels : integer := 4;
-  constant ADCResolution : integer := 12;      --10bit ADC
-  
+  constant ADCResolution : integer := 12;
+
   -- Channel module configuration
   constant MaximumOfDelay                    : integer := 32;    --32clk delay
-  constant DepthOfWaveformBufferFIFO         : integer := 8191;  --8191depth
+  constant BufferFifoDataWidth               : integer := 18;    -- control flag 2 bits + data 16 bits (ADC sample or header)
   constant FifoDataWidth                     : integer := 16;    --fifo=16bit word
   constant MaximumOfProducerAndConsumerNodes : integer := 16;
   constant NumberOfProducerNodes             : integer := 4;
   constant NumberOfConsumerNodes             : integer := 4;
+
+  constant BUFFER_FIFO_CONTROL_FLAG_FIRST_DATA : std_logic_vector(1 downto 0) := "01";
+  constant BUFFER_FIFO_CONTROL_FLAG_DATA : std_logic_vector(1 downto 0) := "00";
+  constant BUFFER_FIFO_CONTROL_FLAG_HEADER : std_logic_vector(1 downto 0) := "10";
+  constant BUFFER_FIFO_CONTROL_FLAG_END : std_logic_vector(1 downto 0) := "11";
 
   constant HEADER_FLAG : std_logic_vector(3 downto 0) := "0100";
 
@@ -68,7 +73,7 @@ package UserModule_Library is
   constant WidthOfNumberOfSamples : integer := 16;  --max sample=2^16=65536
   constant WidthOfDepthOfDelay    : integer := 7;  --max depth=2^7=128
   constant WidthOfSizeOfHeader    : integer := 4;  --max depth=2^4=16words
-  constant SizeOfHeader           : integer := 6;  --stop word (1w) + real time (3w) + trigger count (2w)
+  constant SizeOfHeader           : integer := 5;  --real time (3 words) + trigger count (2 words)
   constant WidthOfRealTime        : integer := 48;  --max length(@50MHz)=65days
   constant WidthOfTriggerBus      : integer := 8;  -- 8 lines
 
@@ -194,5 +199,5 @@ package UserModule_Library is
   type Data_Vector is array (integer range <>) of std_logic_vector(15 downto 0);
   type Signal_std_logic_vector8 is array (integer range <>) of std_logic_vector(7 downto 0);
   type ArrayOf_Signed8bitInteger is array (integer range <>) of integer range -128 to 127;
-  
+
 end UserModule_Library;

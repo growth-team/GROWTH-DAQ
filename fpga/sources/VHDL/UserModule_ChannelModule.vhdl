@@ -133,9 +133,6 @@ architecture Behavioral of UserModule_ChannelModule is
   end component;
 
   component UserModule_ChModule_Buffer
-    generic(
-      ChNumber : std_logic_vector(2 downto 0)
-      );
     port(
       ChModule2InternalModule : in  Signal_ChModule2InternalModule;
       AdcDataIn               : in  std_logic_vector(AdcResolution-1 downto 0);
@@ -180,6 +177,9 @@ architecture Behavioral of UserModule_ChannelModule is
   -- EventBuffer and UserModule_ChModule_PulseProcessor are directly connected for faster calculation.
 
   component UserModule_ChModule_PulseProcessor is
+    generic(
+      ChNumber : std_logic_vector(2 downto 0)
+      );
     port(
       hasEvent              : in  std_logic;
       EventBufferDataOut    : in  std_logic_vector(FifoDataWidth-1 downto 0);
@@ -561,9 +561,6 @@ begin
       );
 
   inst_BufferModule : UserModule_ChModule_Buffer
-    generic map(
-      ChNumber => ChNumber
-      )
     port map(
       ChModule2InternalModule => ChModule2InternalModule,
       AdcDataIn               => delayed_AdcData,
@@ -583,6 +580,9 @@ begin
       );
 
   instanceOfUserModule_ChModule_PulseProcessor : UserModule_ChModule_PulseProcessor
+    generic map(
+      ChNumber => ChNumber
+      )
     port map(
       hasEvent              => hasEvent,
       EventBufferDataOut    => EventBufferDataOut,
