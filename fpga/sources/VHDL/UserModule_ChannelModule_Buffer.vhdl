@@ -52,27 +52,7 @@ architecture Behavioral of UserModule_ChModule_Buffer is
   ---------------------------------------------------
   --Declarations of Components
   ---------------------------------------------------
---      component UserModule_Fifo
---              port(
---                      --data
---                      DataIn          : in std_logic_VECTOR(15 downto 0);
---                      DataOut         : out std_logic_VECTOR(15 downto 0);
---                      --controll
---                      ReadEnable      : in std_logic;
---                      WriteEnable     : in std_logic;
---                      --status
---                      Empty                   : out std_logic;
---                      Full                    : out std_logic;
---                      ReadDataCount   : out std_logic_VECTOR(9 downto 0);
---                      WriteDataCount  : out std_logic_VECTOR(9 downto 0);
---                      --clock and reset
---                      ReadClock       : in std_logic; 
---                      WriteClock      : in std_logic;
---                      GlobalReset     : in    std_logic
---              );
---      end component;
-
-  component fifo16x8k
+  component fifo16x16k
     port (
       rst : in std_logic;
       wr_clk : in std_logic;
@@ -83,8 +63,8 @@ architecture Behavioral of UserModule_ChModule_Buffer is
       dout : out std_logic_vector(15 downto 0);
       full : out std_logic;
       empty : out std_logic;
-      rd_data_count : out std_logic_vector(12 downto 0);
-      wr_data_count : out std_logic_vector(12 downto 0)
+      rd_data_count : out std_logic_vector(13 downto 0);
+      wr_data_count : out std_logic_vector(13 downto 0)
     );
   end component;
 
@@ -92,7 +72,7 @@ architecture Behavioral of UserModule_ChModule_Buffer is
   --Declarations of Signals
   ---------------------------------------------------
   --Signals
-  constant WidthOfWaveformBufferFIFODataCount : integer := 13;
+  constant WidthOfWaveformBufferFIFODataCount : integer := 14;
 
   signal WriteEnable    : std_logic                                                       := '0';
   signal Empty          : std_logic                                                       := '0';
@@ -130,27 +110,9 @@ begin
   ---------------------------------------------------
   --Instantiations of Components
   ---------------------------------------------------
---      inst_fifo : UserModule_Fifo
---              port map(
---                      --data
---                      DataIn  => DataIn,
---                      DataOut => DataOut,
---                      --controll
---                      ReadEnable      => ReadEnable,
---                      WriteEnable     => WriteEnable,
---                      --status
---                      Empty                   => Empty,
---                      Full                    => Full,
---                      ReadDataCount   => ReadDataCount,
---                      WriteDataCount  => WriteDataCount,
---                      --clock and reset
---                      ReadClock       => ReadClock,
---                      WriteClock      => WriteClock,
---                      GlobalReset     => GlobalReset
---              );
   Reset <= not GlobalReset;
-  
-  instanceOfFIFO : fifo16x8k
+
+  instanceOfFIFO : fifo16x16k
     port map (
       rst           => Reset,
       wr_clk        => WriteClock,
