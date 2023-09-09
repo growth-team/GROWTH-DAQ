@@ -25,7 +25,7 @@ entity UserModule_ChModule_Buffer is
   port(
     ChModule2InternalModule : in  Signal_ChModule2InternalModule;
     AdcDataIn               : in  std_logic_vector(AdcResolution-1 downto 0);
-    DataOut                 : out std_logic_vector(BufferFifoDataWidth-1 downto 0);
+    DataOut                 : out std_logic_vector(WaveformBufferDataWidth-1 downto 0);
     --control
     TriggerIn               : in  std_logic;
     BufferNoGood            : out std_logic;
@@ -54,10 +54,10 @@ architecture Behavioral of UserModule_ChModule_Buffer is
       rst : in std_logic;
       wr_clk : in std_logic;
       rd_clk : in std_logic;
-      din : in std_logic_vector(15 downto 0);
+      din : in std_logic_vector(WaveformBufferDataWidth-1 downto 0);
       wr_en : in std_logic;
       rd_en : in std_logic;
-      dout : out std_logic_vector(15 downto 0);
+      dout : out std_logic_vector(WaveformBufferDataWidth-1 downto 0);
       full : out std_logic;
       empty : out std_logic;
       rd_data_count : out std_logic_vector(13 downto 0);
@@ -77,7 +77,7 @@ architecture Behavioral of UserModule_ChModule_Buffer is
   signal Full           : std_logic                                                       := '0';
   signal WriteDataCount : std_logic_vector(WidthOfWaveformBufferFIFODataCount-1 downto 0) := (others => '0');
   signal ReadDataCount  : std_logic_vector(WidthOfWaveformBufferFIFODataCount-1 downto 0) := (others => '0');
-  signal DataIn         : std_logic_vector(BufferFifoDataWidth-1 downto 0);
+  signal DataIn         : std_logic_vector(WaveformBufferDataWidth-1 downto 0);
 
   signal NoRoomForMoreEvent_internal : std_logic := '0';
   signal Busy                        : std_logic := '0';
@@ -95,7 +95,7 @@ architecture Behavioral of UserModule_ChModule_Buffer is
 
   type UserModule_StateMachine_State is (
     Initialize, Idle, WaitVetoOff, WaitTriggerOff, Triggered,
-    WriteHeader_1, WriteHeader_2, WriteHeader_3, WriteHeader_4
+    WriteHeader_1, WriteHeader_2, WriteHeader_3, WriteHeader_4,
     Finalize
     );
   signal UserModule_state : UserModule_StateMachine_State := Initialize;
@@ -134,7 +134,7 @@ begin
                 conv_integer(ReadDataCount)
                  >= conv_integer(ChModule2InternalModule.SizeOfHeader)+
                 conv_integer(ChModule2InternalModule.NumberOfSamples)
-                ) of Full = '1') else '0';
+                ) or Full = '1') else '0';
   BufferNoGood       <= Full or NoRoomForMoreEvent_internal or Busy;
   NoRoomForMoreEvent <= NoRoomForMoreEvent_internal;
   NoRoomForMoreEvent_internal
@@ -194,16 +194,16 @@ begin
             DataIn(11 downto 0)  <= AdcDataIn;
           end if;
         when WriteHeader_1 =>
-          DataIn           <= RealTime_latched(31 downto 16);
+          DataIn           <= BUFFER_FIFO_CONTROL_FLAG_HEADER & RealTime_latched(31 downto 16);
           UserModule_state <= WriteHeader_2;
         when WriteHeader_2 =>
-          DataIn           <= RealTime_latched(15 downto 0);
+          DataIn           <= BUFFER_FIFO_CONTROL_FLAG_HEADER & RealTime_latched(15 downto 0);
           UserModule_state <= WriteHeader_3;
         when WriteHeader_3 =>
-          DataIn           <= ChModule2InternalModule.TriggerCount(31 downto 16);
+          DataIn           <= BUFFER_FIFO_CONTROL_FLAG_HEADER & ChModule2InternalModule.TriggerCount(31 downto 16);
           UserModule_state <= WriteHeader_4;
         when WriteHeader_4 =>
-          DataIn           <= ChModule2InternalModule.TriggerCount(15 downto 0);
+          DataIn           <= BUFFER_FIFO_CONTROL_FLAG_HEADER & ChModule2InternalModule.TriggerCount(15 downto 0);
           UserModule_state <= WriteHeader_4;
           UserModule_state <= Finalize;
         when Finalize =>

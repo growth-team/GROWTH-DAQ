@@ -21,8 +21,8 @@ entity UserModule_ChModule_PulseProcessor is
   );
   port(
     hasEvent              : in  std_logic;
-    EventBufferDataOut    : in  std_logic_vector(FifoDataWidth-1 downto 0);
-    EventBufferReadEnable : out std_logic;
+    WaveformBufferDataOut    : in  std_logic_vector(WaveformBufferDataWidth-1 downto 0);
+    WaveformBufferReadEnable : out std_logic;
     --
     Consumer2ConsumerMgr  : out Signal_Consumer2ConsumerMgr;
     ConsumerMgr2Consumer  : in  Signal_ConsumerMgr2Consumer;
@@ -90,7 +90,7 @@ begin
     elsif (Clock'event and Clock = '1') then
       case UserModule_state is
         when Initialize =>
-          EventBufferReadEnable            <= '0';
+          WaveformBufferReadEnable            <= '0';
           Consumer2ConsumerMgr.Data        <= (others => '0');
           Consumer2ConsumerMgr.WriteEnable <= '0';
           Consumer2ConsumerMgr.EventReady  <= '0';
@@ -153,24 +153,24 @@ begin
           -- Packet Word 1
           Consumer2ConsumerMgr.Data        <= ConsumerMgr2Consumer.EventPacket_NumberOfWaveform;
           -- Start reading EventBuffer
-          EventBufferReadEnable <= '1';
+          WaveformBufferReadEnable <= '1';
           UserModule_state                 <= Send_2;
 
         when Send_2 =>
-          Consumer2ConsumerMgr.Data <= EventBufferDataOut(15 downto 0);
-          if (EventBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_FIRST_DATA) then
+          Consumer2ConsumerMgr.Data <= WaveformBufferDataOut(15 downto 0);
+          if (WaveformBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_FIRST_DATA) then
             Consumer2ConsumerMgr.WriteEnable <= '1';
             WaveformWriteCount <= WaveformWriteCount + 1;
 
             -- Initialize PhaMax/PhaMin
-            PhaMax      <= EventBufferDataOut(15 downto 0);
+            PhaMax      <= WaveformBufferDataOut(15 downto 0);
             PhaMaxTime  <= (others => '0');
-            PhaMin      <= EventBufferDataOut(15 downto 0);
+            PhaMin      <= WaveformBufferDataOut(15 downto 0);
             PhaMinTime  <= (others => '0');
-            PhaFirst    <= EventBufferDataOut(15 downto 0);
-            PhaPrevious <= EventBufferDataOut(15 downto 0);
+            PhaFirst    <= WaveformBufferDataOut(15 downto 0);
+            PhaPrevious <= WaveformBufferDataOut(15 downto 0);
             MaxDerivative <= (others => '0');
-            Baseline <= EventBufferDataOut(15 downto 0);
+            Baseline <= WaveformBufferDataOut(15 downto 0);
 
             UserModule_state   <= Send_3;
           else
@@ -178,8 +178,8 @@ begin
           end if;
 
         when Send_3 =>
-            Consumer2ConsumerMgr.Data <= EventBufferDataOut(15 downto 0);
-            if (EventBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_DATA) then
+            Consumer2ConsumerMgr.Data <= WaveformBufferDataOut(15 downto 0);
+            if (WaveformBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_DATA) then
               -- Write waveform data until the header flag appears or the number of waveform samples reaches the limit.
               if (WaveformWriteCount < ConsumerMgr2Consumer.EventPacket_NumberOfWaveform) then
                 -- Continue writing waveform data
@@ -189,41 +189,41 @@ begin
               enf if;
 
               -- Update PhaPrevious
-              PhaPrevious <= EventBufferDataOut(15 downto 0);
+              PhaPrevious <= WaveformBufferDataOut(15 downto 0);
 
               -- Analysis: PhaMax
-              if (PhaMax < EventBufferDataOut(15 downto 0)) then
-                PhaMax     <= EventBufferDataOut(15 downto 0);
+              if (PhaMax < WaveformBufferDataOut(15 downto 0)) then
+                PhaMax     <= WaveformBufferDataOut(15 downto 0);
                 PhaMaxTime <= WaveformWriteCount;
               end if;
 
               -- Analysis: PhaMin
-              if (PhaMin > EventBufferDataOut(15 downto 0)) then
-                PhaMin     <= EventBufferDataOut(15 downto 0);
+              if (PhaMin > WaveformBufferDataOut(15 downto 0)) then
+                PhaMin     <= WaveformBufferDataOut(15 downto 0);
                 PhaMinTime <= WaveformWriteCount;
               end if;
 
               -- Analysis: MaxDerivative
-              if(EventBufferDataOut(15 downto 0)<PhaPrevious)then
-                if (MaxDerivative < (PhaPrevious-EventBufferDataOut(15 downto 0))) then
-                  MaxDerivative <= PhaPrevious-EventBufferDataOut(15 downto 0);
+              if(WaveformBufferDataOut(15 downto 0)<PhaPrevious)then
+                if (MaxDerivative < (PhaPrevious-WaveformBufferDataOut(15 downto 0))) then
+                  MaxDerivative <= PhaPrevious-WaveformBufferDataOut(15 downto 0);
                 end if;
               else
-                if (MaxDerivative < (EventBufferDataOut(15 downto 0)-PhaPrevious)) then
-                  MaxDerivative <= EventBufferDataOut(15 downto 0)-PhaPrevious;
+                if (MaxDerivative < (WaveformBufferDataOut(15 downto 0)-PhaPrevious)) then
+                  MaxDerivative <= WaveformBufferDataOut(15 downto 0)-PhaPrevious;
                 end if;
               end if;
 
               -- Analysis: Baseline
               if (WaveformWriteCount < NumberOf_BaselineSample) then
-                Baseline <= Baseline + EventBufferDataOut(15 downto 0);
+                Baseline <= Baseline + WaveformBufferDataOut(15 downto 0);
               end if;
 
-            elsif (EventBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_HEADER) then
+            elsif (WaveformBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_HEADER) then
               Consumer2ConsumerMgr.WriteEnable <= '1';
-            elsif (EventBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_END) then
+            elsif (WaveformBufferDataOut(17 downto 16) = BUFFER_FIFO_CONTROL_FLAG_END) then
               Consumer2ConsumerMgr.WriteEnable <= '0';
-              EventBufferReadEnable <= '0';
+              WaveformBufferReadEnable <= '0';
               -- Analysis: PhaLast
               PhaLast <= PhaPrevious;
               -- Analysis: Baseline

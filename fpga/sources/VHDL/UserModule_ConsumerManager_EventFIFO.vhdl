@@ -78,8 +78,8 @@ architecture Behavioral of UserModule_ConsumerManager_EventFIFO is
   signal FifoFull         : std_logic                    := '0';
   signal FifoReadEnable   : std_logic                    := '0';
   signal FifoDataCount    : std_logic_vector(9 downto 0) := (others => '0');
-  signal FifoDataIn       : std_logic_vector(FifoDataWidth-1 downto 0);
-  signal FifoDataOut      : std_logic_vector(FifoDataWidth-1 downto 0);
+  signal FifoDataIn       : std_logic_vector(EventPackeBufferDataWidth-1 downto 0);
+  signal FifoDataOut      : std_logic_vector(EventPackeBufferDataWidth-1 downto 0);
 
   signal LoopI     : integer range 0 to NumberOfConsumerNodes := 0;
   signal Granting  : std_logic                                := '0';

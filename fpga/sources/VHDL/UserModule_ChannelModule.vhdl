@@ -136,7 +136,7 @@ architecture Behavioral of UserModule_ChannelModule is
     port(
       ChModule2InternalModule : in  Signal_ChModule2InternalModule;
       AdcDataIn               : in  std_logic_vector(AdcResolution-1 downto 0);
-      DataOut                 : out std_logic_vector(FifoDataWidth-1 downto 0);
+      DataOut                 : out std_logic_vector(WaveformBufferDataWidth-1 downto 0);
       --control
       TriggerIn               : in  std_logic;
       BufferNoGood            : out std_logic;
@@ -172,18 +172,14 @@ architecture Behavioral of UserModule_ChannelModule is
       );
   end component;
 
-  -- 20140718
-  -- UserModule_ChModule_EventMgrModule is no longer used.
-  -- EventBuffer and UserModule_ChModule_PulseProcessor are directly connected for faster calculation.
-
   component UserModule_ChModule_PulseProcessor is
     generic(
       ChNumber : std_logic_vector(2 downto 0)
       );
     port(
       hasEvent              : in  std_logic;
-      EventBufferDataOut    : in  std_logic_vector(FifoDataWidth-1 downto 0);
-      EventBufferReadEnable : out std_logic;
+      WaveformBufferDataOut    : in  std_logic_vector(WaveformBufferDataWidth-1 downto 0);
+      WaveformBufferReadEnable : out std_logic;
       --
       Consumer2ConsumerMgr  : out Signal_Consumer2ConsumerMgr;
       ConsumerMgr2Consumer  : in  Signal_ConsumerMgr2Consumer;
@@ -273,8 +269,8 @@ architecture Behavioral of UserModule_ChannelModule is
 
   --Counters
 
-  signal EventBufferReadEnable : std_logic := '0';
-  signal EventBufferDataOut    : std_logic_vector(FifoDataWidth-1 downto 0);
+  signal WaveformBufferReadEnable : std_logic := '0';
+  signal WaveformBufferDataOut    : std_logic_vector(WaveformBufferDataWidth-1 downto 0);
 
   --State Machines' State-variables
   type iBus_beWritten_StateMachine_State is
@@ -564,7 +560,7 @@ begin
     port map(
       ChModule2InternalModule => ChModule2InternalModule,
       AdcDataIn               => delayed_AdcData,
-      DataOut                 => EventBufferDataOut,
+      DataOut                 => WaveformBufferDataOut,
       --control
       TriggerIn               => InternalModule2ChModule.TriggerOut,
       BufferNoGood            => BufferNoGood,
@@ -572,7 +568,7 @@ begin
       BufferEmpty             => BufferEmpty,
       hasEvent                => hasEvent,
       --read out control signals
-      ReadEnable              => EventBufferReadEnable,
+      ReadEnable              => WaveformBufferReadEnable,
       --clock and reset
       WriteClock              => AdcClockIn,
       ReadClock               => ReadClock,
@@ -585,8 +581,8 @@ begin
       )
     port map(
       hasEvent              => hasEvent,
-      EventBufferDataOut    => EventBufferDataOut,
-      EventBufferReadEnable => EventBufferReadEnable,
+      WaveformBufferDataOut    => WaveformBufferDataOut,
+      WaveformBufferReadEnable => WaveformBufferReadEnable,
       --
       Consumer2ConsumerMgr  => Consumer2ConsumerMgr,
       ConsumerMgr2Consumer  => ConsumerMgr2Consumer,

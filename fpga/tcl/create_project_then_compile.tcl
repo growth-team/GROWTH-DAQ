@@ -21,10 +21,10 @@ update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
 update_compile_order -fileset sources_1
 
-create_ip -name fifo_generator -vendor xilinx.com -library ip -module_name fifo16x16k -dir $root_dir/ip/
+create_ip -name fifo_generator -vendor xilinx.com -library ip -module_name fifo18x16k -dir $root_dir/ip/
 set_property -dict [list \
   CONFIG.Fifo_Implementation {Independent_Clocks_Block_RAM} \
-  CONFIG.Input_Data_Width  {16} \
+  CONFIG.Input_Data_Width  {18} \
   CONFIG.Input_Depth {16384} \
   CONFIG.Enable_ECC {false} \
   CONFIG.Enable_Safety_Circuit {false} \
@@ -33,8 +33,8 @@ set_property -dict [list \
   CONFIG.Read_Data_Count {true} \
   CONFIG.Write_Data_Count {true} \
   CONFIG.Use_Embedded_Registers {true} \
-] [get_ips fifo16x16k]
-generate_target {synthesis instantiation_template} [get_files $root_dir/ip/fifo16x16k.xcix] -force
+] [get_ips fifo18x16k]
+generate_target {synthesis instantiation_template} [get_files $root_dir/ip/fifo18x16k.xcix] -force
 
 add_files -norecurse $root_dir/ip/fifo8x1k.xcix
 add_files -norecurse $root_dir/ip/fifo9x1k.xcix

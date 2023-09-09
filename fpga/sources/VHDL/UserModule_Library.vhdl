@@ -39,8 +39,8 @@ package UserModule_Library is
 
   -- Channel module configuration
   constant MaximumOfDelay                    : integer := 32;    --32clk delay
-  constant BufferFifoDataWidth               : integer := 18;    -- control flag 2 bits + data 16 bits (ADC sample or header)
-  constant FifoDataWidth                     : integer := 16;    --fifo=16bit word
+  constant WaveformBufferDataWidth           : integer := 18;    -- control flag 2 bits + data 16 bits (ADC sample or header)
+  constant EventPackeBufferDataWidth         : integer := 16;    --Event Packet Buffer FIFO = 16bit word
   constant MaximumOfProducerAndConsumerNodes : integer := 16;
   constant NumberOfProducerNodes             : integer := 4;
   constant NumberOfConsumerNodes             : integer := 4;
@@ -181,7 +181,7 @@ package UserModule_Library is
   type Signal_Consumer2ConsumerMgr is record
     EventReady  : std_logic;
     WriteEnable : std_logic;
-    Data        : std_logic_vector(FifoDataWidth-1 downto 0);
+    Data        : std_logic_vector(EventPackeBufferDataWidth-1 downto 0);
   end record;
   type Signal_ConsumerMgr2Consumer is record
     Grant                        : std_logic;
