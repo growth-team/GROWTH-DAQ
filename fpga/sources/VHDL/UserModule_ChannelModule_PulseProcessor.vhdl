@@ -37,18 +37,6 @@ end UserModule_ChModule_PulseProcessor;
 ---------------------------------------------------
 architecture Behavioral of UserModule_ChModule_PulseProcessor is
 
-  ---------------------------------------------------
-  --Declarations of Components
-  ---------------------------------------------------
-  component UserModule_Ram
-    port(
-      Address     : in  std_logic_vector(9 downto 0);
-      DataIn      : in  std_logic_vector(15 downto 0);
-      DataOut     : out std_logic_vector(15 downto 0);
-      WriteEnable : in  std_logic;
-      Clock       : in  std_logic
-      );
-  end component;
 
   ---------------------------------------------------
   --Declarations of Signals
@@ -94,7 +82,6 @@ begin
           Consumer2ConsumerMgr.Data        <= (others => '0');
           Consumer2ConsumerMgr.WriteEnable <= '0';
           Consumer2ConsumerMgr.EventReady  <= '0';
-          RamWriteEnable                   <= '0';
           PhaMax                           <= (others => '0');
           PhaMaxTime                   <= (others => '0');
           PhaMin                           <= (others => '1');
@@ -105,7 +92,7 @@ begin
         when Idle =>
           Baseline <= (others => '0');
           LoopI    <= 0;
-          WaveformWriteCount <= (others => '0')
+          WaveformWriteCount <= (others => '0');
 
           if (hasEvent = '1') then
             -- Request write access to the Event Packet Buffer
@@ -170,7 +157,7 @@ begin
             PhaFirst    <= WaveformBufferDataOut(15 downto 0);
             PhaPrevious <= WaveformBufferDataOut(15 downto 0);
             MaxDerivative <= (others => '0');
-            Baseline <= WaveformBufferDataOut(15 downto 0);
+            Baseline <= x"0000" & WaveformBufferDataOut(15 downto 0);
 
             UserModule_state   <= Send_3;
           else
@@ -186,7 +173,7 @@ begin
                 Consumer2ConsumerMgr.WriteEnable <= '1';
               else
                 Consumer2ConsumerMgr.WriteEnable <= '0';
-              enf if;
+              end if;
 
               -- Update PhaPrevious
               PhaPrevious <= WaveformBufferDataOut(15 downto 0);

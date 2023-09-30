@@ -172,23 +172,6 @@ architecture Behavioral of UserModule_ChannelModule is
       );
   end component;
 
-  component UserModule_ChModule_PulseProcessor is
-    generic(
-      ChNumber : std_logic_vector(2 downto 0)
-      );
-    port(
-      hasEvent              : in  std_logic;
-      WaveformBufferDataOut    : in  std_logic_vector(WaveformBufferDataWidth-1 downto 0);
-      WaveformBufferReadEnable : out std_logic;
-      --
-      Consumer2ConsumerMgr  : out Signal_Consumer2ConsumerMgr;
-      ConsumerMgr2Consumer  : in  Signal_ConsumerMgr2Consumer;
-      --clock and reset
-      Clock                 : in  std_logic;
-      GlobalReset           : in  std_logic
-      );
-  end component;
-
   ---------------------------------------------------
   --Declarations of Signals
   ---------------------------------------------------
@@ -270,11 +253,10 @@ architecture Behavioral of UserModule_ChannelModule is
   --Counters
 
   signal WaveformBufferReadEnable : std_logic := '0';
-  signal WaveformBufferDataOut    : std_logic_vector(WaveformBufferDataWidth-1 downto 0);
+  signal WaveformBufferDataOut    : std_logic_vector(WaveformBufferDataWidth-1 downto 0) := (others => '0');
 
   --State Machines' State-variables
-  type iBus_beWritten_StateMachine_State is
-    (Initialize, Idle, WaitDone);
+  type iBus_beWritten_StateMachine_State is (Initialize, Idle, WaitDone);
   signal iBus_beWritten_state : iBus_beWritten_StateMachine_State := Initialize;
 
   type iBus_beRead_StateMachine_State is
@@ -575,7 +557,7 @@ begin
       GlobalReset             => GlobalReset
       );
 
-  instanceOfUserModule_ChModule_PulseProcessor : UserModule_ChModule_PulseProcessor
+  instanceOfUserModule_ChModule_PulseProcessor : entity work.UserModule_ChModule_PulseProcessor
     generic map(
       ChNumber => ChNumber
       )
