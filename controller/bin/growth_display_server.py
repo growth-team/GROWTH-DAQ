@@ -11,6 +11,11 @@ import zmq
 import json
 import signal
 
+import Adafruit_GPIO.Platform as Platform
+# Force it to pretend it is running on a Raspberry Pi 2/3/4 BCM2835/BCM2708
+Platform.platform_detect = lambda: Platform.RASPBERRY_PI
+
+
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -63,7 +68,13 @@ class DisplayThread(threading.Thread):
         #font = ImageFont.truetype('fonts/PixelCharas.ttf', font_size, encoding='unic')
 
         # Calculate font width, height
-        self.font_width, self.font_height = self.font.getsize("0")
+        #self.font_width, self.font_height = self.font.getsize("0")
+        left, top, right, bottom = self.font.getbbox("0")
+        self.font_width = right - left
+        self.font_height = bottom - top
+        #left, top, right, bottom = self.font.getbbox("0")
+        #self.font_width = right - left
+        #self.font_height = bottom - top
 
         # Adjust font height if necessary (comment in)
         # font_height+=1
@@ -149,7 +160,7 @@ def run_server():
     while True:
         # Wait until a message from a client is received
         request = responder.recv()
-        print "Recieved request: [%s]" % request
+        #print "Recieved request: [%s]" % request
         # Convert to a JSON object
         json_command = json.loads(request)
         json_reply = {}
@@ -186,8 +197,9 @@ def run_server():
             print(json_command)
             print("---------------------------------------------")
             json_reply = {"status": "error", "message": "invalid command"}
-        responder.send(json.dumps(json_reply))
-
+        #responder.send(json.dumps(json_reply))
+        responder.send_string(json.dumps(json_reply))
+        
     # Finalize
     display_thread.stop()
 

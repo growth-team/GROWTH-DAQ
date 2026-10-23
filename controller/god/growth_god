@@ -9,8 +9,11 @@
 # Short-Description: growth_god
 ### END INIT INFO
 
-RUBY_PATH=/usr/local/bin/ruby
-GOD=/usr/local/bin/god
+#RUBY_PATH=/usr/local/bin/ruby
+RUBY_PATH=/usr/local/rbenv/shims/ruby
+PYTHON_PATH=/usr/local/pyenv/shims/python
+#GOD=/usr/local/bin/god
+GOD=/usr/local/rbenv/shims/god
 LOG_FILE=/var/log/god.log
 GOD_CONFIG_FILE=/etc/god/growth.god.conf
 

@@ -1,8 +1,0 @@
-DetectorID: growth-fy2016t
-PreTriggerSamples: 20
-PostTriggerSamples: 1000
-SamplesInEventPacket: 1
-DownSamplingFactorForSavedWaveform: 1
-ChannelEnable: [yes,yes,yes,yes]
-TriggerThresholds: [2112,2103,2101,2106]
-TriggerCloseThresholds: [2066, 2055, 2056, 2069]

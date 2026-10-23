@@ -1,16 +1,55 @@
-require "pi_piper"
+require "rpi_gpio"
 require "json"
 require "logger"
 
 module GROWTH
 	class GPIO
-		# Construct Pin instances
-		@@hv  = [PiPiper::Pin.new(:pin => 27, :direction => :out), # Rev1.1 HV0
-		            PiPiper::Pin.new(:pin => 22, :direction => :out)] # Rev1.1 HV1
-		@@slide_switch = PiPiper::Pin.new(:pin => 21, :direction => :in)
+		# PiPiper::Pin 互換のラッパークラス (rpi_gpio ベース)
+		class Pin
+			attr_reader :pin, :direction
 
-			#~ LED = [PiPiper::Pin.new(:pin => 26, :direction => :out),
-						#~ PiPiper::Pin.new(:pin => 20, :direction => :out)]
+			def initialize(options = {})
+				@pin = options[:pin]
+				@direction = options[:direction]
+
+				RPi::GPIO.set_numbering :bcm
+				RPi::GPIO.set_warnings(false)
+
+				case @direction
+				when :out
+					RPi::GPIO.setup(@pin, as: :output)
+				when :in
+					RPi::GPIO.setup(@pin, as: :input)
+				end
+			end
+
+			def on
+				RPi::GPIO.set_high(@pin)
+			end
+
+			def off
+				RPi::GPIO.set_low(@pin)
+			end
+
+			def on?
+				RPi::GPIO.high?(@pin)
+			end
+
+			def read
+                                RPi::GPIO.high?(@pin) ? 1 : 0
+                        end
+                        #def read
+                        #        RPi::GPIO.get_value(@pin)
+			#end
+		end
+
+		# Construct Pin instances
+		@@hv  = [Pin.new(:pin => 27, :direction => :out), # Rev1.1 HV0
+		         Pin.new(:pin => 22, :direction => :out)] # Rev1.1 HV1
+		@@slide_switch = Pin.new(:pin => 21, :direction => :in)
+
+			#~ LED = [Pin.new(:pin => 26, :direction => :out),
+						#~ Pin.new(:pin => 20, :direction => :out)]
 
 		# Logger instance
 		@@logger = Logger.new(STDOUT)
